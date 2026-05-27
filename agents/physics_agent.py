@@ -6,8 +6,9 @@ from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from agents.formatter import extract_json, standard_response
-from agents.llm_client import VLLMClient
+from agents.formatter import extract_json
+from agents.llm_client import LLMClient
+from agents.models.state import BaseAgent, AgentInput, AgentOutput
 from tools.calculator import solve_by_formula
 
 
@@ -33,11 +34,11 @@ class PhysicsRetriever:
         return best_ex, best_score
 
 
-class PhysicsAgent:
+class PhysicsAgent(BaseAgent):
     """Physics pipeline: formula tool first, local LLM second, retrieval fallback third."""
 
-    def __init__(self, kb_path: Optional[str] = None, llm: Optional[VLLMClient] = None):
-        self.llm = llm or VLLMClient()
+    def __init__(self, kb_path: Optional[str] = None, llm: Optional[LLMClient] = None):
+        self.llm = llm or LLMClient()
         self.retriever = PhysicsRetriever(kb_path)
 
     def solve_with_llm(self, question: str) -> Optional[Dict[str, Any]]:
@@ -60,16 +61,20 @@ class PhysicsAgent:
             return None
         return None
 
-    def solve(self, question: str) -> Dict[str, Any]:
+    def solve(self, agent_input: AgentInput) -> AgentOutput:
+        question = agent_input.question
         calc = solve_by_formula(question)
         if calc:
-            return standard_response(
-                calc.answer,
-                "The calculator tool matched a physics formula pattern and computed the result step by step.",
-                unit=calc.unit,
-                cot=calc.cot,
-                premises=["symbolic calculator", "physics formula library"],
+            return AgentOutput(
+                answer=calc.answer,
+                reasoning="The calculator tool matched a physics formula pattern and computed the result step by step.",
                 confidence=calc.confidence,
+                metadata={
+                    "unit": calc.unit,
+                    "cot": calc.cot,
+                    "premises": ["symbolic calculator", "physics formula library"],
+                },
+                agent_name="PhysicsAgent",
             )
 
         llm_obj = self.solve_with_llm(question)
@@ -77,25 +82,42 @@ class PhysicsAgent:
             ans = llm_obj.get("answer", "Unknown")
             unit = llm_obj.get("unit", "")
             cot = llm_obj.get("cot", [])
-            return standard_response(ans, "A local open-source LLM produced a structured solution, then the formatter normalized the output.", unit=unit, cot=cot, premises=llm_obj.get("premises"), confidence=llm_obj.get("confidence", 0.65))
+            return AgentOutput(
+                answer=ans,
+                reasoning="A local open-source LLM produced a structured solution, then the formatter normalized the output.",
+                confidence=llm_obj.get("confidence", 0.65),
+                metadata={
+                    "unit": unit,
+                    "cot": cot,
+                    "premises": llm_obj.get("premises", []),
+                },
+                agent_name="PhysicsAgent",
+            )
 
         ex, score = self.retriever.best(question)
         if ex and score >= 0.78:
             cot = ex.get("cot", "")
             cot_list = cot.split("\n") if isinstance(cot, str) else list(cot or [])
-            return standard_response(
-                ex.get("answer", "Unknown"),
-                f"No local LLM was configured. The retrieval fallback used the nearest solved training problem ({ex.get('id')}) with similarity {score:.3f}.",
-                unit=ex.get("unit", ""),
-                cot=cot_list[:8],
-                premises=[f"retrieved_example_id={ex.get('id')}", f"similarity={score:.3f}"],
+            return AgentOutput(
+                answer=ex.get("answer", "Unknown"),
+                reasoning=f"No local LLM was configured. The retrieval fallback used the nearest solved training problem ({ex.get('id')}) with similarity {score:.3f}.",
                 confidence=round(min(0.82, score), 3),
+                metadata={
+                    "unit": ex.get("unit", ""),
+                    "cot": cot_list[:8],
+                    "premises": [f"retrieved_example_id={ex.get('id')}", f"similarity={score:.3f}"],
+                },
+                agent_name="PhysicsAgent",
             )
 
-        return standard_response(
-            "Unknown",
-            "No formula pattern matched, no local LLM endpoint was configured, and retrieval similarity was too low for a reliable answer.",
-            unit="",
-            cot=["Route=physics", "Formula solver failed", "LLM disabled or failed", "Retrieval fallback below threshold"],
+        return AgentOutput(
+            answer="Unknown",
+            reasoning="No formula pattern matched, no local LLM endpoint was configured, and retrieval similarity was too low for a reliable answer.",
             confidence=0.15,
+            metadata={
+                "unit": "",
+                "cot": ["Route=physics", "Formula solver failed", "LLM disabled or failed", "Retrieval fallback below threshold"],
+            },
+            agent_name="PhysicsAgent",
         )
+

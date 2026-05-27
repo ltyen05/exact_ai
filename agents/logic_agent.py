@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 import json
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-from agents.formatter import extract_json, standard_response
-from agents.llm_client import VLLMClient
+from agents.formatter import extract_json
+from agents.llm_client import LLMClient
+from agents.models.state import BaseAgent, AgentInput, AgentOutput
 from tools.z3_logic import Atom, HornKB, Rule, parse_fol_to_kb, pred_name
 
 
@@ -39,8 +38,8 @@ class LogicNLParserAgent:
     is included so the project can run without a model for smoke tests.
     """
 
-    def __init__(self, llm: Optional[VLLMClient] = None):
-        self.llm = llm or VLLMClient()
+    def __init__(self, llm: Optional[LLMClient] = None):
+        self.llm = llm or LLMClient()
 
     def parse_with_llm(self, premises_nl: List[str], question: str) -> Optional[Dict[str, Any]]:
         if not self.llm.enabled:
@@ -181,8 +180,8 @@ class Z3ReasonerAgent:
 
 
 class ExplanationAgent:
-    def __init__(self, llm: Optional[VLLMClient] = None):
-        self.llm = llm or VLLMClient()
+    def __init__(self, llm: Optional[LLMClient] = None):
+        self.llm = llm or LLMClient()
 
     def explain(self, question: str, answer: str, atom: Optional[Atom], kb: HornKB, premises_nl: List[str], cot: List[str]) -> str:
         if self.llm.enabled:
@@ -209,13 +208,17 @@ class ExplanationAgent:
         return f"The available premises do not provide enough support for a stronger conclusion, so the answer is {answer}."
 
 
-class LogicAgent:
-    def __init__(self, llm: Optional[VLLMClient] = None):
+class LogicAgent(BaseAgent):
+    def __init__(self, llm: Optional[LLMClient] = None):
         self.parser = LogicNLParserAgent(llm)
         self.reasoner = Z3ReasonerAgent()
         self.explainer = ExplanationAgent(llm)
 
-    def solve(self, question: str, premises_nl: List[str], premises_fol: Optional[List[str]] = None) -> Dict[str, Any]:
+    def solve(self, agent_input: AgentInput) -> AgentOutput:
+        question = agent_input.question
+        premises_nl = agent_input.premises_nl or []
+        premises_fol = agent_input.premises_fol
+
         kb, parsed = self.parser.build_kb(premises_nl, question, premises_fol)
         choices = split_choices(question)
         if choices:
@@ -230,4 +233,15 @@ class LogicAgent:
             cot = ["Parsed premises into a Horn-rule knowledge base.", "Ran forward chaining and Z3 entailment checks."]
         explanation = self.explainer.explain(question, answer, atom, kb, premises_nl, cot)
         fol_evidence = atom.label() if atom else None
-        return standard_response(answer, explanation, fol=fol_evidence, cot=cot, confidence=round(conf, 3))
+
+        return AgentOutput(
+            answer=answer,
+            reasoning=explanation,
+            confidence=round(conf, 3),
+            metadata={
+                "fol": fol_evidence,
+                "cot": cot,
+            },
+            agent_name="LogicAgent"
+        )
+

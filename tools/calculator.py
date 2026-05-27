@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
 from agents.formatter import format_number
+import sympy as sp
 
 
 @dataclass
@@ -186,3 +187,78 @@ def solve_by_formula(question: str) -> Optional[CalcResult]:
                 return CalcResult(format_number(u[0]), "V", [f"After frequency scaling by {factor}, XL'={xl_new} Ω and XC'={xc_new} Ω, so the circuit is at resonance and U_R=U={u[0]} V."], 0.93)
 
     return None
+
+
+def solve_with_sympy(quantities: Dict[str, float], formulas: List[str], target: str) -> Optional[float]:
+    """
+    Symbolically solve a system of physics equations for a target variable using SymPy.
+    
+    Args:
+        quantities: Dict mapping symbol name (e.g. 'C') to float value (e.g. 100e-6).
+        formulas: List of equation strings (e.g. ['E = 0.5 * C * U**2']).
+        target: The target symbol name to solve for (e.g. 'E').
+    
+    Returns:
+        The calculated float value, or None if it cannot be solved.
+    """
+    try:
+        # Determine all symbol names in formulas and quantities
+        symbol_names = set(quantities.keys()) | {target}
+        for formula in formulas:
+            # Find all words that could be symbols
+            symbol_names.update(re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', formula))
+        
+        # Remove math function names, constants and numbers
+        math_names = {'sqrt', 'sin', 'cos', 'tan', 'pi', 'exp', 'log', 'abs', 'Eq'}
+        symbol_names = {name for name in symbol_names if name not in math_names and not name.isdigit()}
+        
+        # Define SymPy symbols
+        symbols_dict = {name: sp.Symbol(name) for name in symbol_names}
+        
+        # Construct equations
+        equations = []
+        for formula in formulas:
+            formula = formula.strip()
+            if not formula:
+                continue
+            if '=' in formula:
+                lhs_str, rhs_str = formula.split('=', 1)
+                lhs = sp.sympify(lhs_str.strip(), locals=symbols_dict)
+                rhs = sp.sympify(rhs_str.strip(), locals=symbols_dict)
+                equations.append(sp.Eq(lhs, rhs))
+            else:
+                expr = sp.sympify(formula, locals=symbols_dict)
+                equations.append(sp.Eq(expr, 0))
+        
+        # Substitute known quantities
+        subs_dict = {symbols_dict[k]: v for k, v in quantities.items() if k in symbols_dict}
+        substituted_eqs = [eq.subs(subs_dict) for eq in equations]
+        
+        # Solve for target symbol
+        target_symbol = symbols_dict.get(target)
+        if not target_symbol:
+            target_symbol = sp.Symbol(target)
+            
+        solutions = sp.solve(substituted_eqs, target_symbol)
+        
+        if solutions:
+            # Handle multiple solutions (e.g. real vs complex, positive vs negative)
+            # Find real, positive values first (common in physics)
+            best_val = None
+            for sol in solutions:
+                if isinstance(sol, dict):
+                    sol = sol.get(target_symbol)
+                try:
+                    val_float = float(sp.N(sol))
+                    if best_val is None:
+                        best_val = val_float
+                    elif val_float > 0 and best_val <= 0:
+                        best_val = val_float
+                except Exception:
+                    continue
+            if best_val is not None:
+                return best_val
+    except Exception:
+        pass
+    return None
+

@@ -2,10 +2,24 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
 
-from agents.pipeline import ExactPipeline
+from dotenv import load_dotenv
+import sys
+
+# Reconfigure stdout/stderr to support unicode characters on Windows console
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
+# Load environment variables from .env file
+load_dotenv()
+
+from agents.graph import ExactGraph
+from agents.llm.openrouter_client import OpenRouterClient
 from eval.p1_evaluator import eval_logic, eval_physics, summarize
 
 ROOT = Path(__file__).resolve().parent
@@ -24,11 +38,14 @@ def load_json_or_jsonl(path: str) -> List[Dict[str, Any]]:
 
 
 def cmd_infer(args: argparse.Namespace) -> None:
-    pipe = ExactPipeline(physics_kb_path=args.physics_kb)
+    llm = OpenRouterClient()
+    graph = ExactGraph(llm=llm, physics_kb_path=args.physics_kb)
+
     records = load_json_or_jsonl(args.input)
     outputs = []
     for rec in records:
-        outputs.extend(pipe.predict_record(rec))
+        outputs.extend(graph.predict_record(rec))
+    
     out_text = "\n".join(json.dumps(o, ensure_ascii=False) for o in outputs)
     if args.output:
         Path(args.output).write_text(out_text + "\n", encoding="utf-8")
@@ -37,12 +54,26 @@ def cmd_infer(args: argparse.Namespace) -> None:
 
 
 def cmd_eval(args: argparse.Namespace) -> None:
-    pipe = ExactPipeline(physics_kb_path=args.physics)
+    llm = OpenRouterClient()
+    graph = ExactGraph(llm=llm, physics_kb_path=args.physics)
+    
+    # Keep original eval logic - it expects ExactPipeline interface
+    # Create adapter
+    class GraphAdapter:
+        def __init__(self, graph):
+            self.graph = graph
+        
+        def predict(self, payload):
+            return self.graph.predict(payload)
+    
     results = []
+    adapter = GraphAdapter(graph)
+    
     if args.logic:
-        results.append(eval_logic(args.logic, pipe, max_records=args.max_records, use_fol=not args.no_fol))
+        results.append(eval_logic(args.logic, adapter, max_records=args.max_records, use_fol=not args.no_fol))
     if args.physics:
-        results.append(eval_physics(args.physics, pipe, max_records=args.max_records))
+        results.append(eval_physics(args.physics, adapter, max_records=args.max_records))
+    
     summary = summarize(results)
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     if args.details:
@@ -50,7 +81,9 @@ def cmd_eval(args: argparse.Namespace) -> None:
 
 
 def cmd_demo(args: argparse.Namespace) -> None:
-    pipe = ExactPipeline(physics_kb_path=str(DEFAULT_PHYSICS))
+    llm = OpenRouterClient()
+    graph = ExactGraph(llm=llm, physics_kb_path=str(DEFAULT_PHYSICS))
+
     samples = [
         {
             "type": "physics",
@@ -70,7 +103,7 @@ def cmd_demo(args: argparse.Namespace) -> None:
         },
     ]
     for s in samples:
-        print(json.dumps(pipe.predict(s), ensure_ascii=False, indent=2))
+        print(json.dumps(graph.predict(s), ensure_ascii=False, indent=2))
 
 
 def build_parser() -> argparse.ArgumentParser:
