@@ -1,38 +1,96 @@
+"""FastAPI entry point for the EXACT 2026 LangGraph workflow."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
-from fastapi import FastAPI
-from pydantic import BaseModel
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel, ConfigDict
+import uvicorn
 
-from agents.pipeline import ExactPipeline
+from agents.llm import OpenRouterClient
+from agents.workflows import ExactGraph, WorkflowExecutionError
+
+
+load_dotenv()
 
 ROOT = Path(__file__).resolve().parent
-pipe = ExactPipeline(physics_kb_path=str(ROOT / "data" / "Physics_Problems_Text_Only_removeQA.json"))
-app = FastAPI(title="EXACT 2026 Multi-Agent QA")
+DEFAULT_PHYSICS_KB = ROOT / "data" / "Physics_Problems_Text_Only_removeQA.json"
+
+OPENROUTER_API_KEY_ENV = "OR_TOKEN"
+
+llm = OpenRouterClient(api_key_env=OPENROUTER_API_KEY_ENV)
+graph = ExactGraph(llm=llm, physics_kb_path=str(DEFAULT_PHYSICS_KB))
+
+app = FastAPI(title="EXACT 2026 Multi-Agent QA", version="2.0-langgraph")
 
 
 class QueryPayload(BaseModel):
-    type: str | None = None
-    query_type: str | None = None
+    """Accept only the public question and optional natural-language premises."""
+
+    model_config = ConfigDict(extra="forbid")
+
     question: str
-    premises_NL: list[str] | None = None
     premises: list[str] | None = None
-    premises_FOL: list[str] | None = None
-    id: str | None = None
+
+
+def get_graph() -> ExactGraph:
+    """Return the initialized LangGraph service used by prediction endpoints."""
+    return graph
 
 
 @app.get("/health")
-def health() -> Dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, Any]:
+    """Report whether the API and configured LLM are available."""
+    return {
+        "status": "ok",
+        "llm_enabled": llm.enabled,
+    }
+
+
+@app.get("/info")
+def info() -> dict[str, Any]:
+    """Describe the workflow capabilities and configured LLM endpoint."""
+    return {
+        "version": "2.0-langgraph",
+        "system": "EXACT 2026 Multi-Agent QA",
+        "llm": {
+            "provider": llm.provider,
+            "enabled": llm.enabled,
+            "model": llm.model,
+            "base_url": llm.base_url,
+        },
+        "features": [
+            "Logic verification with Z3",
+            "Physics formula generation and SymPy computation",
+            "LangGraph workflow routing",
+            "LangSmith step tracing",
+        ],
+    }
 
 
 @app.post("/predict")
-def predict(payload: Dict[str, Any]) -> Dict[str, Any]:
-    # Normalize possible API names into dataset names.
-    if "premises_NL" in payload and "premises-NL" not in payload:
-        payload["premises-NL"] = payload.pop("premises_NL")
-    if "premises_FOL" in payload and "premises-FOL" not in payload:
-        payload["premises-FOL"] = payload.pop("premises_FOL")
-    return pipe.predict(payload)
+def predict(
+    payload: QueryPayload,
+    workflow: ExactGraph = Depends(get_graph),
+) -> dict[str, Any]:
+    """Route one input question through the graph and return its formatted answer."""
+    data = payload.model_dump(exclude_none=True)
+    question = data["question"].strip()
+    if not question:
+        raise HTTPException(status_code=422, detail="A non-empty question is required.")
+    data["question"] = question
+    try:
+        return workflow.predict(data)
+    except WorkflowExecutionError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Prediction failed.") from exc
+
+
+if __name__ == "__main__":
+    uvicorn.run("api:app", host="127.0.0.1", port=8000)
