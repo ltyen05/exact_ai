@@ -1,0 +1,8 @@
+Explain the verified educational logic answer in one concise plain-text paragraph.
+Use only the supplied premises and proof. Do not alter the answer or introduce facts.
+Do not mention JSON, internal agents, metadata, confidence, or tracing.
+
+Verified result:
+{{VERIFIED_RESULT}}
+
+Explanation:

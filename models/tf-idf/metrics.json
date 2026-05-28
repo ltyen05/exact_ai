@@ -1,0 +1,227 @@
+{
+  "train": {
+    "count": 1240,
+    "accuracy": 1.0,
+    "macro": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "weighted": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "per_class": {
+      "1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 293
+      },
+      "2": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 947
+      }
+    },
+    "confusion_matrix": {
+      "labels": [
+        "1",
+        "2"
+      ],
+      "matrix": [
+        [
+          293,
+          0
+        ],
+        [
+          0,
+          947
+        ]
+      ]
+    },
+    "classification_report": {
+      "1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 293.0
+      },
+      "2": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 947.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 1240.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 1240.0
+      }
+    }
+  },
+  "valid": {
+    "count": 348,
+    "accuracy": 1.0,
+    "macro": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "weighted": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "per_class": {
+      "1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 77
+      },
+      "2": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 271
+      }
+    },
+    "confusion_matrix": {
+      "labels": [
+        "1",
+        "2"
+      ],
+      "matrix": [
+        [
+          77,
+          0
+        ],
+        [
+          0,
+          271
+        ]
+      ]
+    },
+    "classification_report": {
+      "1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 77.0
+      },
+      "2": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 271.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 348.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 348.0
+      }
+    }
+  },
+  "test": {
+    "count": 177,
+    "accuracy": 1.0,
+    "macro": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "weighted": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "per_class": {
+      "1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 41
+      },
+      "2": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 136
+      }
+    },
+    "confusion_matrix": {
+      "labels": [
+        "1",
+        "2"
+      ],
+      "matrix": [
+        [
+          41,
+          0
+        ],
+        [
+          0,
+          136
+        ]
+      ]
+    },
+    "classification_report": {
+      "1": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 41.0
+      },
+      "2": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 136.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 177.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 177.0
+      }
+    }
+  },
+  "artifacts": {
+    "vectorizer": "models\\tf-idf\\vectorizer.joblib",
+    "model": "models\\tf-idf\\model.joblib",
+    "label_map": "models\\tf-idf\\label_map.json",
+    "metrics": "models\\tf-idf\\metrics.json"
+  },
+  "config": {
+    "class_weight": "balanced",
+    "solver": "liblinear",
+    "max_iter": 1000,
+    "seed": 42
+  }
+}

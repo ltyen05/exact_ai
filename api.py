@@ -1,83 +1,96 @@
+"""FastAPI entry point for the EXACT 2026 LangGraph workflow."""
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel, ConfigDict
+import uvicorn
 
-# Load environment variables
+from agents.llm import OpenRouterClient
+from agents.workflows import ExactGraph, WorkflowExecutionError
+
+
 load_dotenv()
 
-from agents.graph import ExactGraph
-from agents.llm.openrouter_client import OpenRouterClient
-
 ROOT = Path(__file__).resolve().parent
-DEFAULT_PHYSICS = ROOT / "data" / "Physics_Problems_Text_Only_removeQA.json"
+DEFAULT_PHYSICS_KB = ROOT / "data" / "Physics_Problems_Text_Only_removeQA.json"
 
-# Initialize LLM and graph
-llm = OpenRouterClient()
-graph = ExactGraph(llm=llm, physics_kb_path=str(DEFAULT_PHYSICS))
+OPENROUTER_API_KEY_ENV = "OR_TOKEN"
 
-app = FastAPI(title="EXACT 2026 Multi-Agent QA with LangGraph")
+llm = OpenRouterClient(api_key_env=OPENROUTER_API_KEY_ENV)
+graph = ExactGraph(llm=llm, physics_kb_path=str(DEFAULT_PHYSICS_KB))
+
+app = FastAPI(title="EXACT 2026 Multi-Agent QA", version="2.0-langgraph")
 
 
 class QueryPayload(BaseModel):
-    type: str | None = None
-    query_type: str | None = None
+    """Accept only the public question and optional natural-language premises."""
+
+    model_config = ConfigDict(extra="forbid")
+
     question: str
-    premises_NL: list[str] | None = None
     premises: list[str] | None = None
-    premises_FOL: list[str] | None = None
-    id: str | None = None
+
+
+def get_graph() -> ExactGraph:
+    """Return the initialized LangGraph service used by prediction endpoints."""
+    return graph
 
 
 @app.get("/health")
-def health() -> Dict[str, str]:
-    """Health check endpoint."""
-    return {"status": "ok", "llm_enabled": llm.enabled}
-
-
-@app.post("/predict")
-def predict(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Predict answer for a single query.
-    Uses LangGraph workflow with routing based on query type.
-    
-    Example:
-    {
-        "type": "logic",
-        "question": "Does John graduate with honors?",
-        "premises-NL": ["If student has GPA > 3.5, they graduate with honors.", "John has GPA 3.8."]
+def health() -> dict[str, Any]:
+    """Report whether the API and configured LLM are available."""
+    return {
+        "status": "ok",
+        "llm_enabled": llm.enabled,
     }
-    """
-    # Normalize possible API names into dataset names
-    if "premises_NL" in payload and "premises-NL" not in payload:
-        payload["premises-NL"] = payload.pop("premises_NL")
-    if "premises_FOL" in payload and "premises-FOL" not in payload:
-        payload["premises-FOL"] = payload.pop("premises_FOL")
-    
-    return graph.predict(payload)
 
 
 @app.get("/info")
-def info() -> Dict[str, Any]:
-    """Get system information."""
+def info() -> dict[str, Any]:
+    """Describe the workflow capabilities and configured LLM endpoint."""
     return {
         "version": "2.0-langgraph",
         "system": "EXACT 2026 Multi-Agent QA",
         "llm": {
+            "provider": llm.provider,
             "enabled": llm.enabled,
-            "model": llm.model if llm.enabled else None,
-            "base_url": llm.base_url if llm.enabled else None,
+            "model": llm.model,
+            "base_url": llm.base_url,
         },
         "features": [
-            "Logic problem solving with Z3",
-            "Physics problem solving",
+            "Logic verification with Z3",
+            "Physics formula generation and SymPy computation",
             "LangGraph workflow routing",
-            "LangSmith tracing",
+            "LangSmith step tracing",
         ],
     }
 
+
+@app.post("/predict")
+def predict(
+    payload: QueryPayload,
+    workflow: ExactGraph = Depends(get_graph),
+) -> dict[str, Any]:
+    """Route one input question through the graph and return its formatted answer."""
+    data = payload.model_dump(exclude_none=True)
+    question = data["question"].strip()
+    if not question:
+        raise HTTPException(status_code=422, detail="A non-empty question is required.")
+    data["question"] = question
+    try:
+        return workflow.predict(data)
+    except WorkflowExecutionError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Prediction failed.") from exc
+
+
+if __name__ == "__main__":
+    uvicorn.run("api:app", host="127.0.0.1", port=8000)

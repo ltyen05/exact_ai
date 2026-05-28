@@ -1,1 +1,0 @@
-Write a concise explanation for EXACT 2026. It must be faithful to the tool trace and cite premise numbers or formulas used. Do not invent new premises.

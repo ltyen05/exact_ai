@@ -5,9 +5,11 @@ fastapi>=0.110.0
 uvicorn>=0.29.0
 pydantic>=2.0.0
 numpy>=1.24.0
+joblib>=1.3.0
+scikit-learn>=1.4.0
 
 # LangChain & LangGraph for workflow management
 langchain>=0.1.0
 langgraph>=0.0.1
-langsmith>=0.1.0  # For observability and tracing
+langsmith>=0.1.98  # For traceable input/output processors
 python-dotenv>=1.0.0  # For environment variables

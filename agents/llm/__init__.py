@@ -1,6 +1,10 @@
 """LLM clients package."""
 
-from agents.llm.base import LLMClientBase
-from agents.llm.openrouter_client import OpenRouterClient
+from agents.llm.llm_provider import LLMClientBase
+from agents.llm.openrouter_provider import OpenRouterClient
+from agents.llm.vllm_provider import VLLMClient
 
-__all__ = ["LLMClientBase", "OpenRouterClient"]
+# Default client alias
+LLMClient = OpenRouterClient
+
+__all__ = ["LLMClientBase", "OpenRouterClient", "VLLMClient", "LLMClient"]
