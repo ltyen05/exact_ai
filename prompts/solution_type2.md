@@ -71,11 +71,22 @@ Hard rules:
 15. solution_steps should describe the computation plan, not the final numeric result.
 16. Always include both mode and answer_type at the top level, and include sympy_spec for computational mode.
 
-Selected rules:
-{{RULE_PACKS}}
+Domain guidance:
+- Core formulas/constants: point charge field magnitude E = Abs(k*q/r**2); capacitor energy W = C*U**2/2; capacitor charge Q = C*U; capacitance C = Q/U; voltage U = Q/C; series resistors R_total = R1 + R2; Ohm law I = U/R; series RLC X_L = 2*pi*f*L, X_C = 1/(2*pi*f*C), Z = sqrt(R**2 + (X_L - X_C)**2); resonance f_res = 1/(2*pi*sqrt(L*C)); angular resonance omega = 1/sqrt(L*C); solenoid field B = mu_0*N*I/ell; Faraday EMF E_ind = -N*(phi_final - phi_initial)/t; self-inductance L_self = Abs(epsilon)*delta_t/Abs(I_final - I_initial).
+- Direct mode: use only for conceptual, yes_no_conceptual, or conceptual multiple-choice questions; do not create sympy_spec for theory-only questions.
+- Electric fields: define helper distances/components before use; use signed q in vector components E = k*q*r_vector/|r_vector|**3; use Abs only for final magnitudes.
+- Common electric geometries: for an equilateral triangle ABN, define A=(0,0), B=(a,0), N=(a/2,a*sqrt(3)/2), then sum signed field components. For a midpoint on AB, define A=0, B=AB, M=AB/2 and use signed one-dimensional components. For same-sign zero-field points between two charges, use the square-root distance ratio from k*Abs(q1)/AM**2 = k*Abs(q2)/BM**2 and AM+BM=AB; never use a cube-root relation.
+- Perpendicular bisector: prefer coordinates xA=-d_AB/2, xB=d_AB/2, yA=0, yB=0, xM=0, yM=ell; define AM/BM with sqrt(d_mid**2 + ell**2) before components.
+- Triangle/geometry: do not put helper coordinates/distances in known_values unless parsed explicitly; define helpers in equations.
+- Induction/EMF: if magnitude is requested or sign/direction is not requested, make final target nonnegative with Abs(...) or a magnitude formula.
+- AC circuits: if RLC topology is absent, assume series only when dataset convention allows it and mark assumption circuit_type=series_assumed. For yes/no resonance comparisons, compute f_res and compare with parsed expected frequency; keep f as operating/given frequency and never copy it into f_res. For resonance power/current/voltage, use the purely resistive relation P=U**2/R, P=I**2*R, I=U/R, U=I*R, or Z=R as appropriate. For frequency scaling, define frequency_ratio, XL_new = frequency_ratio*XL and XC_new = XC/frequency_ratio before computing Z, current, resistor voltage, or power. For changed-frequency resonance questions with I_res and I_new, define U = I_res*R, Z_new = U/I_new, X_net_new = sqrt(Z_new**2 - R**2), X_res = X_net_new/Abs(frequency_ratio - 1/frequency_ratio), then scale XL directly and XC inversely. For a two-section circuit where AM is R1 in series with C, MB is R2 in series with L, LC*omega**2 = 1, and uAM is in quadrature/90 degrees out of phase with uMB, avoid complex impedance and do not use j; for total real power with RMS voltage U across AB, use R_total = R1 + R2 and P = U**2/R_total with known_values U, R1, R2 only.
+- Uncertainty: use parsed numeric central values; if propagation variables are not parsed, prefer direct conceptual explanation over invented formulas.
 
 Retrieved hints, if any. Use only as formula/strategy hints; parsed_question is authoritative:
 {{RAG_HINTS}}
+
+Deterministic draft from trusted rules, if any. Use as a high-priority scaffold, but keep parsed_question authoritative:
+{{DETERMINISTIC_HINTS}}
 
 parsed_question:
 {{PARSED_QUESTION}}

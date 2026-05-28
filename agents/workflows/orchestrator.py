@@ -47,6 +47,16 @@ class ClassifyNode:
 class FormatterNode:
     """Unify outputs from both subgraphs into the public response contract."""
 
+    @staticmethod
+    def _format_cot(value: Any) -> list[str] | None:
+        if isinstance(value, str):
+            text = value.strip()
+            return [line.strip() for line in text.splitlines() if line.strip()] or None
+        if isinstance(value, list):
+            steps = [str(step).strip() for step in value if str(step).strip()]
+            return steps or None
+        return None
+
     @trace_step("formatter.output")
     def __call__(self, state: WorkflowState) -> dict[str, Any]:
         """Publish only answer, explanation and encouraged reasoning fields."""
@@ -71,8 +81,9 @@ class FormatterNode:
         fol = str(result.get("fol") or "").strip()
         if fol:
             output["fol"] = fol
-        if cot:
-            output["cot"] = [str(step) for step in cot]
+        cot_steps = self._format_cot(cot)
+        if cot_steps:
+            output["cot"] = cot_steps
         if premises:
             output["premises"] = [str(premise) for premise in premises]
         return {"output": output}

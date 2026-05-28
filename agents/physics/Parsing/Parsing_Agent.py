@@ -25,8 +25,17 @@ SYMBOL_REPLACEMENTS = {
 }
 UNIT_TO_SI: dict[str, tuple[float, str]] = {
     "cm": (1e-2, "m"),
+    "cm2": (1e-4, "m2"),
+    "cm^2": (1e-4, "m2"),
+    "cm²": (1e-4, "m2"),
     "mm": (1e-3, "m"),
+    "mm2": (1e-6, "m2"),
+    "mm^2": (1e-6, "m2"),
+    "mm²": (1e-6, "m2"),
     "km": (1e3, "m"),
+    "m2": (1.0, "m2"),
+    "m^2": (1.0, "m2"),
+    "m²": (1.0, "m2"),
     "microc": (1e-6, "C"),
     "muc": (1e-6, "C"),
     "μc": (1e-6, "C"),
@@ -56,6 +65,11 @@ UNIT_TO_SI: dict[str, tuple[float, str]] = {
     "hz": (1.0, "Hz"),
     "ohm": (1.0, "Ohm"),
     "ω": (1.0, "Ohm"),
+    "j": (1.0, "J"),
+    "mj": (1e-3, "J"),
+    "μj": (1e-6, "J"),
+    "µj": (1e-6, "J"),
+    "microj": (1e-6, "J"),
 }
 UNIT_PATTERN = "|".join(
     re.escape(unit)
@@ -122,6 +136,18 @@ class ParsingAgent:
         )
 
     @staticmethod
+    def _build_retry_prompt(question: str, response_preview: str) -> str:
+        return (
+            "Return exactly one complete valid JSON object parsing this physics question. "
+            "No markdown, no prose, no calculation. Required fields: question, domain, target, "
+            "givens, relations, question_kind. Use ASCII symbols such as mu_0, ell, omega; "
+            "convert stated numeric quantities to SI floats where possible.\n\n"
+            f"Question:\n{question}\n\n"
+            f"Previous invalid response preview:\n{response_preview}\n\n"
+            "JSON:"
+        )
+
+    @staticmethod
     def _present(value: Any) -> bool:
         if value in (None, "", False):
             return False
@@ -149,6 +175,8 @@ class ParsingAgent:
                 compact[key] = value
         compact = self._normalize_compact(compact, question)
         self._apply_unit_corrections(compact, question)
+        self._normalize_resonance_yes_no(compact, question)
+        self._normalize_formula_only_question(compact, question)
         self._apply_requested_form(compact, question)
         self._normalize_perpendicular_bisector_geometry(compact)
         return compact
@@ -203,6 +231,80 @@ class ParsingAgent:
             if corrected is None:
                 continue
             item["si_value"], item["si_unit"] = corrected
+
+    @staticmethod
+    def _operating_frequency_from_text(question: str) -> float | None:
+        number = r"(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)"
+        patterns = (
+            rf"\bfrequency\b(?:\s+is|\s*=|\s+of|\s+at)?\s*{number}\s*hz\b",
+            rf"\b{number}\s*hz\b.*\b(?:resonant|resonance)\s+frequency\b",
+            rf"\b(?:resonate|resonant|resonance)\b.*?\b{number}\s*hz\b",
+        )
+        for pattern in patterns:
+            match = re.search(pattern, question, flags=re.IGNORECASE)
+            if match:
+                return float(match.group("value"))
+        return None
+
+    @staticmethod
+    def _is_resonance_yes_no_question(question: str) -> bool:
+        text = question.lower()
+        if not any(term in text for term in ("resonance", "resonate", "resonant")):
+            return False
+        return (
+            "does resonance occur" in text
+            or "resonance occur" in text
+            or "resonate at" in text
+            or "resonates at" in text
+            or bool(re.search(r"\b(does|do|is|are|will|can)\b.*\?", text))
+        )
+
+    def _normalize_resonance_yes_no(self, compact: dict[str, Any], question: str) -> None:
+        if not self._is_resonance_yes_no_question(question):
+            return
+        givens = compact.get("givens")
+        if not isinstance(givens, list):
+            return
+        values = self._numeric_by_symbol(givens)
+        if "f" not in values and "frequency" not in values:
+            frequency = self._operating_frequency_from_text(question)
+            if frequency is not None:
+                givens.append({"symbol": "f", "si_value": frequency, "si_unit": "Hz", "uncertainty": None})
+                values["f"] = frequency
+        if not all(symbol in values for symbol in ("L", "C")) or ("f" not in values and "frequency" not in values):
+            return
+        compact["question_kind"] = "yes_no_computational"
+        compact["target"] = {"symbol": "f_res", "unit": "Hz"}
+        expected_symbol = "f" if "f" in values else "frequency"
+        compact["comparison"] = {
+            "present": True,
+            "computed_quantity_symbol": "f_res",
+            "given_quantity_symbol": expected_symbol,
+            "given_si_value": values[expected_symbol],
+            "given_si_unit": "Hz",
+        }
+        answer_format = compact.get("answer_format")
+        if not isinstance(answer_format, dict):
+            answer_format = {}
+        answer_format["requested_form"] = "yes_no"
+        compact["answer_format"] = answer_format
+
+    @staticmethod
+    def _normalize_formula_only_question(compact: dict[str, Any], question: str) -> None:
+        text = question.lower()
+        if compact.get("givens"):
+            return
+        if not any(term in text for term in ("formula", "expression", "what is", "define")):
+            return
+        if "resonant angular frequency" not in text and "resonance angular frequency" not in text:
+            return
+        compact["question_kind"] = "conceptual"
+        compact["target"] = {"symbol": "answer", "unit": ""}
+        answer_format = compact.get("answer_format")
+        if not isinstance(answer_format, dict):
+            answer_format = {}
+        answer_format["requested_form"] = "conceptual"
+        compact["answer_format"] = answer_format
 
     @staticmethod
     def _distance_item(symbol: str, expression: str, value: float, unit: str = "m") -> dict[str, Any]:
@@ -293,6 +395,32 @@ class ParsingAgent:
             "Valid JSON:"
         )
 
+    @staticmethod
+    def _heuristic_parse(question: str) -> dict[str, Any] | None:
+        text = _normalize_text(question).lower()
+        if "solenoid" in text and "magnetic field" in text:
+            current_match = re.search(
+                r"current[^0-9+-]*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*a\b",
+                text,
+            )
+            turns_match = re.search(
+                r"(?:turns per meter|turn per meter|n)\s*(?:is|=)?\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))",
+                text,
+            )
+            if current_match and turns_match:
+                return {
+                    "question": question,
+                    "domain": "Sources of Magnetic Fields",
+                    "target": {"symbol": "B", "unit": "T"},
+                    "givens": [
+                        {"symbol": "I", "si_value": float(current_match.group(1)), "si_unit": "A", "uncertainty": None},
+                        {"symbol": "n", "si_value": float(turns_match.group(1)), "si_unit": "1/m", "uncertainty": None},
+                    ],
+                    "relations": ["long solenoid"],
+                    "question_kind": "computational",
+                }
+        return None
+
     def run(self, input_data: Any) -> dict[str, Any]:
         """Return semantic JSON extracted from one physics question."""
         if self.llm_provider is None:
@@ -306,6 +434,16 @@ class ParsingAgent:
             stage="physics.parsing",
         )
         parsed = extract_json(response)
+        if not isinstance(parsed, dict):
+            response_preview = response[:200] if response else "(empty)"
+            retry_response = self.llm_provider.chat(
+                [{"role": "user", "content": self._build_retry_prompt(question, response_preview)}],
+                temperature=0.0,
+                max_tokens=self.config.get("retry_max_tokens", self.config.get("repair_max_tokens", 2048)),
+                response_format={"type": "json_object"},
+                stage="physics.parsing.retry",
+            )
+            parsed = extract_json(retry_response)
         if not isinstance(parsed, dict):
             # Repair attempt 1: standard repair prompt
             repair_response = self.llm_provider.chat(
@@ -327,6 +465,9 @@ class ParsingAgent:
             )
             parsed = extract_json(repair_response_2)
         if not isinstance(parsed, dict):
+            heuristic = self._heuristic_parse(question)
+            if isinstance(heuristic, dict):
+                return self._compact_output(heuristic, question)
             response_preview = response[:200] if response else "(empty)"
             raise ValueError(
                 f"Physics parser response must be a JSON object. "

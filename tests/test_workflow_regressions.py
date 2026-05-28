@@ -15,6 +15,7 @@ os.environ["LANGCHAIN_TRACING_V2"] = "false"
 
 import api
 from agents.llm.openrouter_provider import OpenRouterClient
+from agents.physics.Explain import ExplainAgent
 from agents.physics.Parsing import ParsingAgent
 from agents.physics.Solution.llm_provider import LLMSolutionProvider
 from agents.physics.Solution.rag_provider import RAGSolutionProvider
@@ -60,6 +61,10 @@ class RecordingLLM:
             }
         )
         return self.responses[stage]
+
+
+def solution_llm(payload: dict[str, Any]) -> RecordingLLM:
+    return RecordingLLM({"physics.solution": json.dumps(payload)})
 
 
 class CalculatorTests(unittest.TestCase):
@@ -191,6 +196,91 @@ class ParsingTests(unittest.TestCase):
                 self.assertEqual(output["givens"][0]["si_unit"], "F")
                 self.assertEqual(output["givens"][1]["si_value"], expected_voltage)
 
+    def test_parser_normalizes_resonance_yes_no_question(self) -> None:
+        question = "An AC circuit consists of R=10 Ω, L=0.05 H, C=100 μF. When the frequency is 225 Hz, does resonance occur?"
+        llm = RecordingLLM(
+            {
+                "physics.parsing": json.dumps(
+                    {
+                        "question": question,
+                        "domain": "Alternating-Current Circuits",
+                        "target": {"symbol": "answer", "unit": ""},
+                        "givens": [
+                            {"symbol": "R", "si_value": 10, "si_unit": "Ohm", "uncertainty": None},
+                            {"symbol": "L", "si_value": 0.05, "si_unit": "H", "uncertainty": None},
+                            {"symbol": "C", "si_value": 0.1, "si_unit": "F", "uncertainty": None},
+                        ],
+                        "relations": ["AC circuit"],
+                        "question_kind": "computational",
+                    }
+                )
+            }
+        )
+        output = ParsingAgent(llm_provider=llm).run(question)
+
+        self.assertEqual(output["question_kind"], "yes_no_computational")
+        self.assertEqual(output["target"], {"symbol": "f_res", "unit": "Hz"})
+        self.assertEqual(output["comparison"]["given_quantity_symbol"], "f")
+        self.assertEqual(output["comparison"]["given_si_value"], 225)
+        self.assertAlmostEqual(output["givens"][2]["si_value"], 100e-6)
+        self.assertEqual(output["givens"][3]["symbol"], "f")
+
+    def test_parser_normalizes_literal_resonance_frequency_comparison(self) -> None:
+        question = "A series RLC circuit has R=75 Ω, L=0.2 H, C=40 μF. Is 56.3 Hz the resonant frequency?"
+        llm = RecordingLLM(
+            {
+                "physics.parsing": json.dumps(
+                    {
+                        "question": question,
+                        "domain": "Alternating-Current Circuits",
+                        "target": {"symbol": "f_res", "unit": "Hz"},
+                        "givens": [
+                            {"symbol": "R", "si_value": 75, "si_unit": "Ohm", "uncertainty": None},
+                            {"symbol": "L", "si_value": 0.2, "si_unit": "H", "uncertainty": None},
+                            {"symbol": "C", "si_value": 0.04, "si_unit": "F", "uncertainty": None},
+                        ],
+                        "relations": ["series RLC circuit", "compare resonant frequency with 56.3 Hz"],
+                        "question_kind": "yes_no_computational",
+                        "comparison": {
+                            "present": True,
+                            "computed_quantity_symbol": "f_res",
+                            "given_quantity_symbol": "56.3",
+                            "given_si_value": 56.3,
+                            "given_si_unit": "Hz",
+                        },
+                    }
+                )
+            }
+        )
+        output = ParsingAgent(llm_provider=llm).run(question)
+
+        self.assertEqual(output["comparison"]["given_quantity_symbol"], "f")
+        self.assertEqual(output["comparison"]["given_si_value"], 56.3)
+        self.assertEqual(output["givens"][3], {"symbol": "f", "si_value": 56.3, "si_unit": "Hz", "uncertainty": None})
+        self.assertAlmostEqual(output["givens"][2]["si_value"], 40e-6)
+
+    def test_parser_marks_formula_only_resonant_angular_frequency_conceptual(self) -> None:
+        question = "What is the resonant angular frequency of an LC circuit?"
+        llm = RecordingLLM(
+            {
+                "physics.parsing": json.dumps(
+                    {
+                        "question": question,
+                        "domain": "Alternating-Current Circuits",
+                        "target": {"symbol": "omega_res", "unit": "rad/s"},
+                        "givens": [],
+                        "relations": ["LC circuit"],
+                        "question_kind": "computational",
+                    }
+                )
+            }
+        )
+        output = ParsingAgent(llm_provider=llm).run(question)
+
+        self.assertEqual(output["question_kind"], "conceptual")
+        self.assertEqual(output["target"], {"symbol": "answer", "unit": ""})
+        self.assertEqual(output["answer_format"]["requested_form"], "conceptual")
+
     def test_parser_template_is_loaded_once_at_initialization(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             prompt_path = Path(directory) / "parser.md"
@@ -219,6 +309,7 @@ class ParsingTests(unittest.TestCase):
         llm = RecordingLLM(
             {
                 "physics.parsing": "The field doubles because B is proportional to N.",
+                "physics.parsing.retry": "still not json",
                 "physics.parsing.repair": json.dumps(
                     {
                         "question": "If you double the number of turns of a solenoid, but keep its length and current the same, how does the magnetic field change?",
@@ -234,7 +325,7 @@ class ParsingTests(unittest.TestCase):
         output = ParsingAgent(llm_provider=llm).run(
             "If you double the number of turns of a solenoid, but keep its length and current the same, how does the magnetic field change?"
         )
-        self.assertEqual([call["stage"] for call in llm.calls], ["physics.parsing", "physics.parsing.repair"])
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.parsing", "physics.parsing.retry", "physics.parsing.repair"])
         self.assertEqual(output["question_kind"], "conceptual")
         self.assertEqual(output["givens"][0]["symbol"], "ell")
         self.assertIn("ell", output["relations"][0])
@@ -293,12 +384,55 @@ class ParsingTests(unittest.TestCase):
         llm = RecordingLLM(
             {
                 "physics.parsing": "not json",
+                "physics.parsing.retry": "still not json",
                 "physics.parsing.repair": "still not json",
                 "physics.parsing.repair2": "still not json",
             }
         )
         with self.assertRaisesRegex(ValueError, "Physics parser response must be a JSON object"):
             ParsingAgent(llm_provider=llm).run("Conceptual question")
+
+    def test_parser_retries_compact_json_after_truncated_response(self) -> None:
+        question = "The current through the solenoid is 2 A and the number of turns per meter is 1500. Calculate the magnetic field inside."
+        llm = RecordingLLM(
+            {
+                "physics.parsing": '{"question": "The current through the solenoid is 2 A", "domain": ',
+                "physics.parsing.retry": json.dumps(
+                    {
+                        "question": question,
+                        "domain": "Sources of Magnetic Fields",
+                        "target": {"symbol": "B", "unit": "T"},
+                        "givens": [
+                            {"symbol": "I", "si_value": 2, "si_unit": "A", "uncertainty": None},
+                            {"symbol": "n", "si_value": 1500, "si_unit": "1/m", "uncertainty": None},
+                        ],
+                        "relations": ["long solenoid"],
+                        "question_kind": "computational",
+                    }
+                ),
+            }
+        )
+        output = ParsingAgent(llm_provider=llm).run(question)
+
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.parsing", "physics.parsing.retry"])
+        self.assertEqual(output["target"]["symbol"], "B")
+
+    def test_parser_uses_heuristic_fallback_for_solenoid_when_all_json_attempts_fail(self) -> None:
+        question = "The current through the solenoid is 2 A, the number of turns per meter is 1500. Calculate the magnetic field inside."
+        llm = RecordingLLM(
+            {
+                "physics.parsing": "not json",
+                "physics.parsing.retry": "still not json",
+                "physics.parsing.repair": "still not json",
+                "physics.parsing.repair2": "still not json",
+            }
+        )
+        output = ParsingAgent(llm_provider=llm).run(question)
+
+        self.assertEqual(output["target"]["symbol"], "B")
+        givens = {item["symbol"]: item["si_value"] for item in output["givens"]}
+        self.assertEqual(givens["I"], 2.0)
+        self.assertEqual(givens["n"], 1500.0)
 
 class PhysicsWorkflowTests(unittest.TestCase):
     def test_solution_validator_treats_formula_identifiers_as_symbols(self) -> None:
@@ -338,6 +472,48 @@ class PhysicsWorkflowTests(unittest.TestCase):
                 }
             )
 
+    def test_solution_provider_normalizes_lambda_and_charge_aliases(self) -> None:
+        llm = solution_llm(
+            {
+                "mode": "computational",
+                "answer_type": "numeric",
+                "sympy_spec": {
+                    "target_symbol": "E",
+                    "target_unit": "N/C",
+                    "equations": ["E = k * lambda * L / (r * sqrt(r**2 + L**2))", "F = k * charge_q2 / r**2"],
+                    "known_values": {"charge_q2": 2e-9, "lambda": 3e-6},
+                },
+                "solution_steps": [],
+            }
+        )
+        provider = LLMSolutionProvider(llm)
+        parsed = {
+            "question": "Find E.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "E", "unit": "N/C"},
+            "givens": [{"symbol": "q2", "si_value": 2e-9}, {"symbol": "r", "si_value": 0.2}, {"symbol": "L", "si_value": 0.1}],
+            "question_kind": "computational",
+        }
+        output = provider.get_solution("Find E.", parsed)
+        self.assertIn("lambda_", " ".join(output["sympy_spec"]["equations"]))
+        self.assertIn("q2", output["sympy_spec"]["known_values"])
+
+    def test_zero_field_solution_respects_requested_distance_symbol(self) -> None:
+        parsed = {
+            "question": "Find distance BM where field is zero.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "BM", "unit": "m"},
+            "givens": [
+                {"symbol": "q1", "si_value": 9e-8},
+                {"symbol": "q2", "si_value": -16e-8},
+                {"symbol": "AB", "si_value": 0.12},
+            ],
+            "relations": ["electric field is zero"],
+            "question_kind": "computational",
+        }
+        output = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        self.assertEqual(output["sympy_spec"]["target_symbol"], "BM")
+
     def test_solution_provider_repairs_invalid_dependency_closure_once(self) -> None:
         llm = RecordingLLM(
             {
@@ -354,6 +530,7 @@ class PhysicsWorkflowTests(unittest.TestCase):
                         "solution_steps": [],
                     }
                 ),
+                "physics.solution.retry": "still not json",
                 "physics.solution.repair": json.dumps(
                     {
                         "mode": "computational",
@@ -376,8 +553,52 @@ class PhysicsWorkflowTests(unittest.TestCase):
         )
         provider = LLMSolutionProvider(llm)
         output = provider.get_solution("Find E.", {"question": "Find E.", "target": {"symbol": "E_M", "unit": "N/C"}})
-        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution", "physics.solution.repair"])
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution", "physics.solution.retry", "physics.solution.repair"])
         self.assertIn("r1 = AM", output["sympy_spec"]["equations"])
+
+    def test_solution_provider_retries_after_unresolved_symbols(self) -> None:
+        llm = RecordingLLM(
+            {
+                "physics.solution": json.dumps(
+                    {
+                        "mode": "computational",
+                        "answer_type": "numeric",
+                        "sympy_spec": {
+                            "target_symbol": "R2",
+                            "target_unit": "Ohm",
+                            "equations": ["Z = sqrt(R2**2 + (2 * pi * f * L - 1 / (2 * pi * f * C))**2)"],
+                            "known_values": {"Z": 100},
+                        },
+                        "solution_steps": [],
+                    }
+                ),
+                "physics.solution.retry": json.dumps(
+                    {
+                        "mode": "computational",
+                        "answer_type": "numeric",
+                        "sympy_spec": {
+                            "target_symbol": "R2",
+                            "target_unit": "Ohm",
+                            "equations": ["R2 = sqrt(Z**2 - X_net**2)"],
+                            "known_values": {"Z": 100, "X_net": 60},
+                        },
+                        "solution_steps": ["Use only parsed impedance and net reactance values."],
+                    }
+                ),
+            }
+        )
+        parsed = {
+            "question": "Find R2 from total impedance Z = 100 Ohm and net reactance X_net = 60 Ohm.",
+            "domain": "Alternating-Current Circuits",
+            "target": {"symbol": "R2", "unit": "Ohm"},
+            "givens": [{"symbol": "Z", "si_value": 100}, {"symbol": "X_net", "si_value": 60}],
+            "question_kind": "computational",
+        }
+        provider = LLMSolutionProvider(llm)
+        output = provider.get_solution(parsed["question"], parsed)
+
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution", "physics.solution.retry"])
+        self.assertEqual(output["sympy_spec"]["equations"], ["R2 = sqrt(Z**2 - X_net**2)"])
 
     def test_solution_provider_repairs_non_json_initial_response(self) -> None:
         llm = RecordingLLM(
@@ -405,10 +626,24 @@ class PhysicsWorkflowTests(unittest.TestCase):
         self.assertEqual(output["sympy_spec"]["target_symbol"], "E")
         self.assertTrue(provider.last_prompt_diagnostics["used_repair"])
 
-    def test_solution_provider_falls_back_to_deterministic_on_non_json(self) -> None:
+    def test_solution_provider_retries_general_solution_on_non_json(self) -> None:
         llm = RecordingLLM(
             {
                 "physics.solution": "not json",
+                "physics.solution.retry": json.dumps(
+                    {
+                        "mode": "computational",
+                        "answer_type": "numeric",
+                        "formula_ids": ["ac.resonance.frequency"],
+                        "sympy_spec": {
+                            "target_symbol": "f_res",
+                            "target_unit": "Hz",
+                            "equations": ["f_res = 1 / (2 * pi * sqrt(L * C))"],
+                            "known_values": {"L": 0.1, "C": 50e-6},
+                        },
+                        "solution_steps": ["Use the LC resonance frequency relation."],
+                    }
+                ),
             }
         )
         parsed = {
@@ -424,7 +659,7 @@ class PhysicsWorkflowTests(unittest.TestCase):
         }
         provider = LLMSolutionProvider(llm)
         output = provider._request_solution(provider._build_prompt(parsed), parsed)
-        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution"])
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution", "physics.solution.retry"])
         self.assertEqual(output["formula_ids"], ["ac.resonance.frequency"])
 
     def test_solution_provider_retries_compact_json_after_truncated_response(self) -> None:
@@ -583,8 +818,9 @@ class PhysicsWorkflowTests(unittest.TestCase):
         self.assertLessEqual(len(prompt), 12000)
         self.assertEqual(diagnostics["prompt_chars"], len(prompt))
         self.assertEqual(diagnostics["rag_chars"], 0)
-        self.assertIn("electric", diagnostics["selected_rule_pack"])
-        self.assertIn("perpendicular_bisector", diagnostics["selected_rule_pack"])
+        self.assertEqual(diagnostics["selected_rule_pack"], ["prompt"])
+        self.assertIn("Domain guidance:", prompt)
+        self.assertIn("Perpendicular bisector", prompt)
         self.assertNotIn("{{RULE_PACKS}}", prompt)
         self.assertNotIn("{{RAG_HINTS}}", prompt)
 
@@ -738,7 +974,7 @@ class PhysicsWorkflowTests(unittest.TestCase):
         self.assertIn("Z = Abs(ZL)", spec["equations"])
         self.assertEqual(spec["known_values"]["omega"], 100)
 
-    def test_solution_provider_falls_back_to_deterministic_ac_formula_after_invalid_llm_spec(self) -> None:
+    def test_solution_provider_retries_ac_formula_after_invalid_llm_spec(self) -> None:
         llm = RecordingLLM(
             {
                 "physics.solution": json.dumps(
@@ -753,7 +989,21 @@ class PhysicsWorkflowTests(unittest.TestCase):
                         },
                         "solution_steps": [],
                     }
-                )
+                ),
+                "physics.solution.retry": json.dumps(
+                    {
+                        "mode": "computational",
+                        "answer_type": "numeric",
+                        "formula_ids": ["ac.rms_current_resistive_equivalent"],
+                        "sympy_spec": {
+                            "target_symbol": "I_rms",
+                            "target_unit": "A",
+                            "equations": ["R_total = R1 + R2", "I_rms = U / R_total"],
+                            "known_values": {"U": 80, "R1": 20, "R2": 30},
+                        },
+                        "solution_steps": ["Use the equivalent series resistance and RMS Ohm law."],
+                    }
+                ),
             }
         )
         parsed = {
@@ -768,6 +1018,7 @@ class PhysicsWorkflowTests(unittest.TestCase):
             "question_kind": "computational",
         }
         output = LLMSolutionProvider(llm).get_solution(parsed["question"], parsed)
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution", "physics.solution.retry"])
         self.assertEqual(output["formula_ids"], ["ac.rms_current_resistive_equivalent"])
 
     def test_equilateral_electric_field_vector_uses_signed_components(self) -> None:
@@ -784,7 +1035,47 @@ class PhysicsWorkflowTests(unittest.TestCase):
             "answer_format": {"requested_form": "vector"},
             "geometry": {"present": True, "type": "equilateral_triangle"},
         }
-        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        solution = LLMSolutionProvider(
+            solution_llm(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "formula_ids": ["electrostatics.point_charge_field_vector", "electrostatics.net_field_vector_cartesian"],
+                    "sympy_spec": {
+                        "target_symbol": "E_net_magnitude",
+                        "target_unit": "N/C",
+                        "equations": [
+                            "Ax = 0",
+                            "Ay = 0",
+                            "Bx = a",
+                            "By = 0",
+                            "Nx = a / 2",
+                            "Ny = a * sqrt(3) / 2",
+                            "dx1 = Nx - Ax",
+                            "dy1 = Ny - Ay",
+                            "r1 = sqrt(dx1**2 + dy1**2)",
+                            "dx2 = Nx - Bx",
+                            "dy2 = Ny - By",
+                            "r2 = sqrt(dx2**2 + dy2**2)",
+                            "E1x = k * q1 * dx1 / r1**3",
+                            "E1y = k * q1 * dy1 / r1**3",
+                            "E2x = k * q2 * dx2 / r2**3",
+                            "E2y = k * q2 * dy2 / r2**3",
+                            "Ex_net = E1x + E2x",
+                            "Ey_net = E1y + E2y",
+                            "E_net_magnitude = sqrt(Ex_net**2 + Ey_net**2)",
+                        ],
+                        "known_values": {"q1": 4e-10, "q2": -4e-10, "a": 0.02, "k": 9e9},
+                    },
+                    "solution_steps": ["Use signed vector components for both charges."],
+                    "vector_spec": {
+                        "component_symbols": ["Ex_net", "Ey_net"],
+                        "magnitude_symbol": "E_net_magnitude",
+                        "direction": "parallel to AB, from A to B when Ex_net is positive and Ey_net is zero",
+                    },
+                }
+            )
+        ).get_solution(parsed["question"], parsed)
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
         vector = computed["verified_output"]["vector_result"]
 
@@ -809,7 +1100,37 @@ class PhysicsWorkflowTests(unittest.TestCase):
             "question_kind": "computational",
             "geometry": {"present": True, "type": "midpoint_1d"},
         }
-        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        solution = LLMSolutionProvider(
+            solution_llm(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "formula_ids": ["electrostatics.point_charge_field_vector", "electrostatics.net_field_vector_cartesian"],
+                    "sympy_spec": {
+                        "target_symbol": "E_net_magnitude",
+                        "target_unit": "N/C",
+                        "equations": [
+                            "Ax = 0",
+                            "Bx = AB",
+                            "Mx = AB / 2",
+                            "dx1 = Mx - Ax",
+                            "dx2 = Mx - Bx",
+                            "E1x = k * q1 * dx1 / Abs(dx1)**3",
+                            "E2x = k * q2 * dx2 / Abs(dx2)**3",
+                            "E_net_x = E1x + E2x",
+                            "E_net_magnitude = Abs(E_net_x)",
+                        ],
+                        "known_values": {"q1": 4e-10, "q2": -4e-10, "AB": 0.02, "k": 9e9},
+                    },
+                    "solution_steps": ["Use signed 1D field components at the midpoint."],
+                    "vector_spec": {
+                        "component_symbols": ["E_net_x"],
+                        "magnitude_symbol": "E_net_magnitude",
+                        "direction": "along AB according to the sign of E_net_x",
+                    },
+                }
+            )
+        ).get_solution(parsed["question"], parsed)
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
         vector = computed["verified_output"]["vector_result"]
 
@@ -831,7 +1152,27 @@ class PhysicsWorkflowTests(unittest.TestCase):
             "relations": ["RLC circuit"],
             "question_kind": "computational",
         }
-        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        solution = LLMSolutionProvider(
+            solution_llm(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "formula_ids": ["rlc.series.impedance"],
+                    "sympy_spec": {
+                        "target_symbol": "Z",
+                        "target_unit": "Ohm",
+                        "equations": [
+                            "X_L = 2 * pi * f * L",
+                            "X_C = 1 / (2 * pi * f * C)",
+                            "Z = sqrt(R**2 + (X_L - X_C)**2)",
+                        ],
+                        "known_values": {"R": 20, "L": 0.5, "C": 100e-6, "f": 50},
+                    },
+                    "solution_steps": ["Use the series RLC impedance formula."],
+                    "assumptions": {"circuit_type": "series_assumed"},
+                }
+            )
+        ).get_solution(parsed["question"], parsed)
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
 
         self.assertEqual(solution["assumptions"]["circuit_type"], "series_assumed")
@@ -850,11 +1191,73 @@ class PhysicsWorkflowTests(unittest.TestCase):
             "question_kind": "computational",
             "answer_format": {"requested_form": "numeric"},
         }
-        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        solution = LLMSolutionProvider(
+            solution_llm(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "formula_ids": ["ac.resonance.power_from_voltage_resistance"],
+                    "sympy_spec": {
+                        "target_symbol": "P",
+                        "target_unit": "W",
+                        "equations": ["P = U**2 / R"],
+                        "known_values": {"U": 180, "R": 90},
+                    },
+                    "solution_steps": ["At resonance the impedance is purely resistive."],
+                }
+            )
+        ).get_solution(parsed["question"], parsed)
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
 
         self.assertEqual(solution["formula_ids"], ["ac.resonance.power_from_voltage_resistance"])
         self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 360)
+
+    def test_phase_balanced_two_section_circuit_power_prompt_guidance(self) -> None:
+        parsed = {
+            "question": (
+                "Circuit AB consists of segment AM, which has resistor R1 = 10 Ohm in series with capacitor C, "
+                "and segment MB, which has resistor R2 = 90 Ohm in series with inductor L. "
+                "Given that LComega² = 1 and uAM is 90° out of phase with uMB. "
+                "An RMS voltage U = 100 V is applied across AB. What is the total power consumed by circuit AB?"
+            ),
+            "domain": "Alternating-Current Circuits",
+            "target": {"symbol": "P", "unit": "W"},
+            "givens": [
+                {"symbol": "R1", "si_value": 10},
+                {"symbol": "R2", "si_value": 90},
+                {"symbol": "U", "si_value": 100},
+            ],
+            "relations": ["LC*omega**2 = 1", "uAM is in quadrature with uMB", "U is RMS voltage across AB"],
+            "question_kind": "computational",
+        }
+        llm = RecordingLLM(
+            {
+                "physics.solution": json.dumps(
+                    {
+                        "mode": "computational",
+                        "answer_type": "numeric",
+                        "sympy_spec": {
+                            "target_symbol": "P",
+                            "target_unit": "W",
+                            "equations": ["R_total = R1 + R2", "P = U**2 / R_total"],
+                            "known_values": {"U": 100, "R1": 10, "R2": 90},
+                        },
+                        "solution_steps": ["Use the phase-balance rule for the two-section circuit."],
+                    }
+                )
+            }
+        )
+        provider = LLMSolutionProvider(llm)
+        solution = provider.get_solution(parsed["question"], parsed)
+        equations = solution["sympy_spec"]["equations"]
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution"])
+        self.assertEqual(solution["formula_ids"], ["ac.two_section_phase_balanced_power"])
+        self.assertEqual(equations, ["R_total = R1 + R2", "P = U**2 / R_total"])
+        self.assertNotIn("j", " ".join(equations))
+        self.assertNotIn("Z_total", " ".join(equations))
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 100)
 
     def test_resonance_inductance_from_frequency_and_capacitance(self) -> None:
         parsed = {
@@ -868,7 +1271,22 @@ class PhysicsWorkflowTests(unittest.TestCase):
             "relations": ["circuit needs to resonate"],
             "question_kind": "computational",
         }
-        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        solution = LLMSolutionProvider(
+            solution_llm(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "formula_ids": ["ac.resonance.inductance_from_frequency_capacitance"],
+                    "sympy_spec": {
+                        "target_symbol": "L",
+                        "target_unit": "H",
+                        "equations": ["L = 1 / (4 * pi**2 * f**2 * C)"],
+                        "known_values": {"f": 50, "C": 200e-6},
+                    },
+                    "solution_steps": ["Rearrange the resonance frequency relation for L."],
+                }
+            )
+        ).get_solution(parsed["question"], parsed)
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
 
         self.assertEqual(solution["formula_ids"], ["ac.resonance.inductance_from_frequency_capacitance"])
@@ -877,7 +1295,7 @@ class PhysicsWorkflowTests(unittest.TestCase):
             1 / (4 * math.pi**2 * 50**2 * 200e-6),
         )
 
-    def test_frequency_aliases_accept_extra_known_values(self) -> None:
+    def test_frequency_aliases_reject_extra_known_values(self) -> None:
         parsed = {
             "question": "Compute the angular resonance frequency.",
             "domain": "Alternating-Current Circuits",
@@ -900,11 +1318,8 @@ class PhysicsWorkflowTests(unittest.TestCase):
             },
             "solution_steps": [],
         }
-        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
-        self.assertAlmostEqual(
-            computed["verified_output"]["final_answer"]["value"],
-            1 / math.sqrt(0.5 * 2e-6),
-        )
+        with self.assertRaisesRegex(WorkflowExecutionError, "untrusted numeric value f"):
+            PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
 
     def test_frequency_scaled_resistor_voltage_at_new_resonance_does_not_need_r(self) -> None:
         parsed = {
@@ -919,7 +1334,28 @@ class PhysicsWorkflowTests(unittest.TestCase):
             "relations": ["series circuit", "frequency is doubled"],
             "question_kind": "computational",
         }
-        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        solution = LLMSolutionProvider(
+            solution_llm(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "formula_ids": ["ac.resonance.resistor_voltage_equals_source_voltage"],
+                    "sympy_spec": {
+                        "target_symbol": "U_R",
+                        "target_unit": "V",
+                        "equations": [
+                            "frequency_ratio = 2",
+                            "XL_new = frequency_ratio * XL",
+                            "XC_new = XC / frequency_ratio",
+                            "U_R = U",
+                        ],
+                        "known_values": {"XL": 40, "XC": 160, "U": 100},
+                    },
+                    "solution_steps": ["After doubling frequency, the reactances match and the resistor gets the source voltage."],
+                    "assumptions": {"circuit_type": "series_assumed"},
+                }
+            )
+        ).get_solution(parsed["question"], parsed)
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
 
         self.assertEqual(solution["formula_ids"], ["ac.resonance.resistor_voltage_equals_source_voltage"])
@@ -940,7 +1376,30 @@ class PhysicsWorkflowTests(unittest.TestCase):
             "relations": ["RLC series circuit", "at resonant frequency", "frequency changed"],
             "question_kind": "computational",
         }
-        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        solution = LLMSolutionProvider(
+            solution_llm(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "formula_ids": ["ac.resonance_shift.inductive_reactance"],
+                    "sympy_spec": {
+                        "target_symbol": "ZL",
+                        "target_unit": "Ohm",
+                        "equations": [
+                            "frequency_ratio = f_2 / f",
+                            "U = I * R",
+                            "Z_new = U / I_2",
+                            "X_net_new = sqrt(Z_new**2 - R**2)",
+                            "X_res = X_net_new / Abs(frequency_ratio - 1 / frequency_ratio)",
+                            "ZL = frequency_ratio * X_res",
+                        ],
+                        "known_values": {"R": 30, "f": 50, "f_2": 100, "I": 2, "I_2": 1.6},
+                    },
+                    "solution_steps": ["Use resonance current to get source voltage, then changed-frequency impedance."],
+                    "assumptions": {"circuit_type": "series_assumed"},
+                }
+            )
+        ).get_solution(parsed["question"], parsed)
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
 
         self.assertEqual(solution["formula_ids"], ["ac.resonance_shift.inductive_reactance"])
@@ -958,7 +1417,22 @@ class PhysicsWorkflowTests(unittest.TestCase):
             ],
             "question_kind": "computational",
         }
-        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        solution = LLMSolutionProvider(
+            solution_llm(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "formula_ids": ["magnetism.solenoid_magnetic_field"],
+                    "sympy_spec": {
+                        "target_symbol": "B",
+                        "target_unit": "T",
+                        "equations": ["B = mu_0 * N * I / ell"],
+                        "known_values": {"ell": 1, "N": 2000, "I": 3},
+                    },
+                    "solution_steps": ["Use the long-solenoid magnetic-field formula."],
+                }
+            )
+        ).get_solution(parsed["question"], parsed)
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
 
         self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 0.00754, places=5)
@@ -976,7 +1450,25 @@ class PhysicsWorkflowTests(unittest.TestCase):
             ],
             "question_kind": "computational",
         }
-        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        solution = LLMSolutionProvider(
+            solution_llm(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "formula_ids": ["inductance.self_inductance_from_emf_current_change"],
+                    "sympy_spec": {
+                        "target_symbol": "L_self",
+                        "target_unit": "H",
+                        "equations": [
+                            "delta_I = I_final - I_initial",
+                            "L_self = Abs(epsilon) * delta_t / Abs(delta_I)",
+                        ],
+                        "known_values": {"epsilon": 0.3, "I_initial": 2, "I_final": 0, "delta_t": 0.05},
+                    },
+                    "solution_steps": ["Use the magnitude form of the self-inductance EMF relation."],
+                }
+            )
+        ).get_solution(parsed["question"], parsed)
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
 
         self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 0.0075)
@@ -1021,7 +1513,22 @@ class PhysicsWorkflowTests(unittest.TestCase):
             "question_kind": "computational",
             "geometry": {"present": True, "type": "collinear"},
         }
-        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        solution = LLMSolutionProvider(
+            solution_llm(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "formula_ids": ["electrostatics.zero_field_point_two_charges_1d"],
+                    "sympy_spec": {
+                        "target_symbol": "BM",
+                        "target_unit": "m",
+                        "equations": ["BM = AB * sqrt(Abs(q2)) / (sqrt(Abs(q1)) + sqrt(Abs(q2)))"],
+                        "known_values": {"q1": 4e-6, "q2": 9e-6, "AB": 0.1},
+                    },
+                    "solution_steps": ["Use the square-root distance ratio for equal field magnitudes."],
+                }
+            )
+        ).get_solution(parsed["question"], parsed)
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
 
         equation_text = " ".join(solution["sympy_spec"]["equations"])
@@ -1070,7 +1577,34 @@ class PhysicsWorkflowTests(unittest.TestCase):
         output = graph.predict({"question": "Calculate stored energy."})
         self.assertEqual(set(output), {"answer", "explanation", "cot", "premises"})
         self.assertEqual(output["answer"], "0.045 J")
+        self.assertIsInstance(output["cot"], list)
+        self.assertGreaterEqual(len(output["cot"]), 3)
         self.assertEqual(output["premises"], ["E = C * U**2 / 2"])
+
+    def test_explain_agent_builds_reasoning_list_from_solution_and_sympy_result(self) -> None:
+        agent = ExplainAgent()
+        parsed = {
+            "question": "Calculate stored energy.",
+            "target": {"symbol": "E", "unit": "J"},
+        }
+        solution_output = {
+            "mode": "computational",
+            "answer_type": "numeric",
+            "sympy_spec": {
+                "target_symbol": "E",
+                "target_unit": "J",
+                "equations": ["E = C * U**2 / 2"],
+                "known_values": {"C": 0.0001, "U": 30},
+            },
+            "solution_steps": [],
+        }
+        verified = agent._build_verified_output(parsed, solution_output)
+        cot = agent.build_cot(parsed, solution_output, verified)
+
+        self.assertIsInstance(cot, list)
+        self.assertGreaterEqual(len(cot), 3)
+        self.assertTrue(any("E = C * U**2 / 2" in step for step in cot))
+        self.assertTrue(any(step.startswith("Therefore, E = 0.045") for step in cot))
 
     def test_geometry_and_constants_feed_computation(self) -> None:
         output = PhysicsWorkflow().compute_sympy(
@@ -1176,7 +1710,183 @@ class PhysicsWorkflowTests(unittest.TestCase):
         formatted = FormatterNode()({"result": computed["result"]})["output"]
         self.assertEqual(formatted["answer"], "Yes")
         self.assertNotIn("fol", formatted)
-        self.assertNotIn("cot", formatted)
+        self.assertIsInstance(formatted["cot"], list)
+        self.assertGreaterEqual(len(formatted["cot"]), 3)
+        self.assertTrue(any(step.startswith("Step 1") for step in formatted["cot"]))
+        self.assertIn("premises", formatted)
+
+    def test_ac_resonance_yes_no_computes_no_without_frequency_alias(self) -> None:
+        parsed = {
+            "question": "An AC circuit consists of R=10 Ohm, L=0.05 H, C=100 microF. When the frequency is 225 Hz, does resonance occur?",
+            "domain": "Alternating-Current Circuits",
+            "target": {"symbol": "f_res", "unit": "Hz"},
+            "givens": [
+                {"symbol": "R", "si_value": 10, "si_unit": "Ohm"},
+                {"symbol": "L", "si_value": 0.05, "si_unit": "H"},
+                {"symbol": "C", "si_value": 100e-6, "si_unit": "F"},
+                {"symbol": "f", "si_value": 225, "si_unit": "Hz"},
+            ],
+            "relations": ["compare resonance with f = 225 Hz"],
+            "question_kind": "yes_no_computational",
+            "comparison": {
+                "present": True,
+                "computed_quantity_symbol": "f_res",
+                "given_quantity_symbol": "f",
+                "given_si_value": 225,
+                "given_si_unit": "Hz",
+            },
+        }
+        llm = RecordingLLM(
+            {
+                "physics.solution": json.dumps(
+                    {
+                        "mode": "computational",
+                        "answer_type": "yes_no",
+                        "formula_ids": ["ac.resonance.frequency"],
+                        "sympy_spec": {
+                            "target_symbol": "f_res",
+                            "target_unit": "Hz",
+                            "equations": ["f_res = 1 / (2 * pi * sqrt(L * C))"],
+                            "known_values": {"R": 10, "L": 0.05, "C": 100e-6, "f": 225},
+                        },
+                        "decision_spec": {
+                            "computed_symbol": "f_res",
+                            "expected_symbol": "f",
+                            "operator": "approximately_equal",
+                            "tolerance_policy": "significant_figures",
+                            "answer_if_true": "Yes",
+                            "answer_if_false": "No",
+                        },
+                        "solution_steps": ["Compute the LC resonance frequency and compare to the given frequency."],
+                    }
+                )
+            }
+        )
+        solution = LLMSolutionProvider(llm).get_solution(parsed["question"], parsed)
+        known_values = solution["sympy_spec"]["known_values"]
+        self.assertIn("f", known_values)
+        self.assertNotIn("f_res", known_values)
+        self.assertNotIn("f0", known_values)
+
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "No")
+        decision = computed["verified_output"]["decision_result"]
+        self.assertAlmostEqual(decision["computed_value"], 71.176254, places=5)
+        self.assertEqual(decision["expected_value"], 225)
+
+    def test_ac_resonance_yes_no_uses_f_symbol_for_literal_frequency(self) -> None:
+        parsed = {
+            "question": "A series RLC circuit has R=75 Ohm, L=0.2 H, C=40 microF. Is 56.3 Hz the resonant frequency?",
+            "domain": "Alternating-Current Circuits",
+            "target": {"symbol": "f_res", "unit": "Hz"},
+            "givens": [
+                {"symbol": "R", "si_value": 75, "si_unit": "Ohm"},
+                {"symbol": "L", "si_value": 0.2, "si_unit": "H"},
+                {"symbol": "C", "si_value": 40e-6, "si_unit": "F"},
+                {"symbol": "f", "si_value": 56.3, "si_unit": "Hz"},
+            ],
+            "relations": ["series RLC circuit", "compare resonant frequency with 56.3 Hz"],
+            "question_kind": "yes_no_computational",
+            "comparison": {
+                "present": True,
+                "computed_quantity_symbol": "f_res",
+                "given_quantity_symbol": "f",
+                "given_si_value": 56.3,
+                "given_si_unit": "Hz",
+            },
+        }
+        llm = RecordingLLM(
+            {
+                "physics.solution": json.dumps(
+                    {
+                        "mode": "computational",
+                        "answer_type": "yes_no",
+                        "formula_ids": ["ac.resonance.frequency"],
+                        "sympy_spec": {
+                            "target_symbol": "f_res",
+                            "target_unit": "Hz",
+                            "equations": ["f_res = 1 / (2 * pi * sqrt(L * C))"],
+                            "known_values": {"R": 75, "L": 0.2, "C": 40e-6, "f": 56.3},
+                        },
+                        "decision_spec": {
+                            "computed_symbol": "f_res",
+                            "expected_symbol": "f",
+                            "operator": "approximately_equal",
+                            "tolerance_policy": "significant_figures",
+                            "answer_if_true": "Yes",
+                            "answer_if_false": "No",
+                        },
+                        "solution_steps": ["Compute the LC resonance frequency and compare to the given literal frequency."],
+                    }
+                )
+            }
+        )
+        solution = LLMSolutionProvider(llm).get_solution(parsed["question"], parsed)
+        known_values = solution["sympy_spec"]["known_values"]
+
+        self.assertEqual(solution["decision_spec"]["expected_symbol"], "f")
+        self.assertIn("f", known_values)
+        self.assertNotIn("56_3", known_values)
+
+    def test_ac_resonance_literal_frequency_comparison_is_normalized_to_f(self) -> None:
+        parsed = {
+            "question": "A series RLC circuit has R=75 Ohm, L=0.2 H, C=40 microF. Is 56.3 Hz the resonant frequency?",
+            "domain": "Alternating-Current Circuits",
+            "target": {"symbol": "f_res", "unit": "Hz"},
+            "givens": [
+                {"symbol": "R", "si_value": 75, "si_unit": "Ohm"},
+                {"symbol": "L", "si_value": 0.2, "si_unit": "H"},
+                {"symbol": "C", "si_value": 40e-6, "si_unit": "F"},
+            ],
+            "relations": ["series RLC circuit", "compare resonant frequency with 56.3 Hz"],
+            "question_kind": "yes_no_computational",
+            "comparison": {
+                "present": True,
+                "computed_quantity_symbol": "f_res",
+                "given_quantity_symbol": "56.3",
+                "given_si_value": 56.3,
+                "given_si_unit": "Hz",
+            },
+        }
+        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        known_values = solution["sympy_spec"]["known_values"]
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+
+        self.assertEqual(solution["decision_spec"]["expected_symbol"], "f")
+        self.assertIn("f", known_values)
+        self.assertNotIn("56_3", known_values)
+        self.assertEqual(computed["result"]["answer"], "Yes")
+
+    def test_formula_lib_accepts_parser_omega_l_symbol_for_reactance(self) -> None:
+        parsed = {
+            "question": "Calculate inductive reactance for L = 0.2 H and omega_L = 100 rad/s.",
+            "domain": "Alternating-Current Circuits",
+            "target": {"symbol": "ZL", "unit": "Ohm"},
+            "givens": [
+                {"symbol": "omega_L", "si_value": 100, "si_unit": "rad/s"},
+                {"symbol": "L", "si_value": 0.2, "si_unit": "H"},
+            ],
+            "question_kind": "computational",
+        }
+        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+
+        self.assertEqual(solution["sympy_spec"]["equations"], ["ZL = omega_L * L"])
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 20)
+
+    def test_formula_only_lc_angular_frequency_uses_direct_mode(self) -> None:
+        parsed = {
+            "question": "What is the resonant angular frequency of an LC circuit?",
+            "domain": "Alternating-Current Circuits",
+            "target": {"symbol": "omega", "unit": "rad/s"},
+            "givens": [],
+            "question_kind": "computational",
+        }
+        solution = LLMSolutionProvider(RecordingLLM({})).get_solution(parsed["question"], parsed)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+
+        self.assertEqual(solution["mode"], "direct")
+        self.assertIn("omega_0 = 1/sqrt(L*C)", computed["result"]["answer"])
 
     def test_faraday_computation_includes_expected_cot_steps(self) -> None:
         output = PhysicsWorkflow().compute_sympy(
@@ -1308,6 +2018,72 @@ class PhysicsWorkflowTests(unittest.TestCase):
         self.assertEqual(computed["result"]["answer"], "Yes")
         self.assertFalse(computed["result"]["append_unit"])
 
+    def test_direct_multiple_choice_returns_concrete_answer_without_options(self) -> None:
+        computed = PhysicsWorkflow().compute_sympy(
+            {
+                "parsed_question": {"question_kind": "multiple_choice"},
+                "solution_output": {
+                    "mode": "direct",
+                    "answer_type": "multiple_choice",
+                    "direct_answer": {
+                        "answer": "Electromagnets",
+                        "selected_option": "A",
+                        "rationale_steps": ["Solenoids are used to create electromagnets."],
+                    },
+                },
+                "errors": [],
+            }
+        )
+        self.assertEqual(computed["result"]["answer"], "Electromagnets")
+
+    def test_direct_multiple_choice_includes_option_text_when_available(self) -> None:
+        computed = PhysicsWorkflow().compute_sympy(
+            {
+                "parsed_question": {
+                    "question_kind": "multiple_choice",
+                    "options": [{"label": "A", "text": "Electromagnets"}],
+                },
+                "solution_output": {
+                    "mode": "direct",
+                    "answer_type": "multiple_choice",
+                    "direct_answer": {
+                        "answer": "Electromagnets",
+                        "selected_option": "A",
+                        "rationale_steps": ["Solenoids are used to create electromagnets."],
+                    },
+                },
+                "errors": [],
+            }
+        )
+        self.assertEqual(computed["result"]["answer"], "A. Electromagnets")
+
+    def test_nonnumeric_physical_constant_known_value_uses_builtin_constant(self) -> None:
+        computed = PhysicsWorkflow().compute_sympy(
+            {
+                "parsed_question": {
+                    "givens": [
+                        {"symbol": "N", "si_value": 1500},
+                        {"symbol": "I", "si_value": 2},
+                        {"symbol": "ell", "si_value": 1},
+                    ],
+                    "target": {"symbol": "B", "unit": "T"},
+                },
+                "solution_output": {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "B",
+                        "target_unit": "T",
+                        "equations": ["B = mu_0 * N * I / ell"],
+                        "known_values": {"mu_0": "4*pi*10**-7", "N": 1500, "I": 2, "ell": 1},
+                    },
+                    "solution_steps": [],
+                },
+                "errors": [],
+            }
+        )
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 1.25663706212e-6 * 1500 * 2)
+
     def test_invalid_solution_specification_raises_workflow_error(self) -> None:
         with self.assertRaisesRegex(WorkflowExecutionError, "No valid physics solution specification"):
             PhysicsWorkflow().compute_sympy({"solution_output": {}, "errors": []})
@@ -1389,6 +2165,41 @@ class PhysicsWorkflowTests(unittest.TestCase):
             kb_path.write_text(json.dumps([{"question": "second", "cot": "b"}]), encoding="utf-8")
             self.assertEqual(provider.retrieve("first")[0]["question"], "first")
 
+    def test_rag_solution_provider_uses_prompt_path_when_no_deterministic_shortcut_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            kb_path = Path(directory) / "kb.json"
+            kb_path.write_text(json.dumps([{"question": "electric field", "cot": "Use Coulomb's law."}]), encoding="utf-8")
+            llm = RecordingLLM(
+                {
+                    "physics.solution": json.dumps(
+                        {
+                            "mode": "computational",
+                            "answer_type": "numeric",
+                            "sympy_spec": {
+                                "target_symbol": "E",
+                                "target_unit": "N/C",
+                                "equations": ["E = Abs(k * q / r**2)"],
+                                "known_values": {"k": 9e9, "q": 2e-6, "r": 0.3},
+                            },
+                            "solution_steps": ["Use Coulomb's law for a point charge."],
+                        }
+                    )
+                }
+            )
+            provider = RAGSolutionProvider(llm, kb_path=kb_path)
+            parsed = {
+                "question": "Find the electric field magnitude.",
+                "domain": "Electric Charges and Fields",
+                "target": {"symbol": "E", "unit": "N/C"},
+                "givens": [{"symbol": "q", "si_value": 2e-6}, {"symbol": "r", "si_value": 0.3}],
+                "question_kind": "computational",
+            }
+            output = provider.get_solution(parsed["question"], parsed)
+
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution"])
+        self.assertEqual(output["sympy_spec"]["target_symbol"], "E")
+        self.assertEqual(provider.last_prompt_diagnostics["selected_rule_pack"], ["prompt"])
+
     def test_rag_examples_are_compact_hints_with_capped_prompt(self) -> None:
         parsed = {
             "question": "Find the magnitude of the electric field at M on the perpendicular bisector.",
@@ -1432,6 +2243,464 @@ class PhysicsWorkflowTests(unittest.TestCase):
         self.assertLessEqual(provider.last_prompt_diagnostics["rag_chars"], 1200)
         self.assertLessEqual(len(prompt), 14000)
         self.assertNotIn("extra context extra context extra context", prompt)
+
+    def test_compute_sympy_prefers_absolute_error_target_when_question_asks_it(self) -> None:
+        workflow = PhysicsWorkflow()
+        output = workflow.compute_sympy(
+            {
+                "question": "When measuring voltage with a voltmeter, what is the absolute error of the power?",
+                "parsed_question": {
+                    "question": "When measuring voltage with a voltmeter, the result is 6.3 +/- 0.1 V. If this is used to calculate power with a current of 0.6 +/- 0.02 A, what is the absolute error of the power?",
+                    "target": {"symbol": "P", "unit": "W"},
+                    "givens": [
+                        {"symbol": "V", "si_value": 6.3, "si_unit": "V", "uncertainty": {"si_value": 0.1}},
+                        {"symbol": "I", "si_value": 0.6, "si_unit": "A", "uncertainty": {"si_value": 0.02}},
+                    ],
+                },
+                "solution_output": {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "P",
+                        "target_unit": "W",
+                        "equations": ["P = V * I", "delta_P = V * delta_I + I * delta_V"],
+                        "known_values": {"V": 6.3, "I": 0.6, "delta_V": 0.1, "delta_I": 0.02},
+                    },
+                    "solution_steps": [],
+                },
+                "errors": [],
+            }
+        )
+        self.assertEqual(output["verified_output"]["final_answer"]["symbol"], "delta_P")
+        self.assertEqual(output["result"]["answer"], "0.186")
+
+    def test_compute_sympy_returns_both_absolute_and_relative_error_when_requested(self) -> None:
+        workflow = PhysicsWorkflow()
+        output = workflow.compute_sympy(
+            {
+                "question": "Calculate both absolute and relative error.",
+                "parsed_question": {
+                    "question": "The true value is 30.0 cm, the measured result is 29.7 cm. Calculate the absolute error and the relative error.",
+                    "target": {"symbol": "relative_error", "unit": ""},
+                    "givens": [
+                        {"symbol": "true_value", "si_value": 30.0, "si_unit": "cm", "uncertainty": None},
+                        {"symbol": "measured_result", "si_value": 29.7, "si_unit": "cm", "uncertainty": None},
+                    ],
+                },
+                "solution_output": {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "relative_error",
+                        "target_unit": "",
+                        "equations": [
+                            "absolute_error = Abs(true_value - measured_result)",
+                            "relative_error = absolute_error / true_value",
+                        ],
+                        "known_values": {"true_value": 30.0, "measured_result": 29.7},
+                    },
+                    "solution_steps": [],
+                },
+                "errors": [],
+            }
+        )
+        self.assertEqual(output["result"]["answer"], "absolute_error = 0.3; relative_error = 0.01")
+
+    def test_deterministic_parallel_resistor_total_current_uses_equivalent_resistance(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        solution = deterministic_solution(
+            {
+                "question": "Resistor D1 is 10 Ohm and D2 is 5 Ohm in parallel with 10 V source. Calculate total current.",
+                "domain": "Electric Circuits",
+                "target": {"symbol": "I_total", "unit": "A"},
+                "givens": [
+                    {"symbol": "R1", "si_value": 10, "si_unit": "Ohm"},
+                    {"symbol": "R2", "si_value": 5, "si_unit": "Ohm"},
+                    {"symbol": "U", "si_value": 10, "si_unit": "V"},
+                ],
+                "relations": [],
+                "question_kind": "computational",
+            }
+        )
+        self.assertIsNotNone(solution)
+        equations = solution["sympy_spec"]["equations"]
+        self.assertIn("R_eq = 1 / (1 / R1 + 1 / R2)", equations)
+        self.assertIn("I_total = U / R_eq", equations)
+
+    def test_compute_sympy_returns_mean_and_mae_when_question_requests_both(self) -> None:
+        workflow = PhysicsWorkflow()
+        output = workflow.compute_sympy(
+            {
+                "question": "Three temperature measurements: 36.6C; 36.8C; 36.7C. Calculate the mean and the mean absolute error.",
+                "parsed_question": {
+                    "question": "Three temperature measurements: 36.6C; 36.8C; 36.7C. Calculate the mean and the mean absolute error.",
+                    "target": {"symbol": "mean", "unit": "degC"},
+                    "givens": [
+                        {"symbol": "x1", "si_value": 36.6, "si_unit": "degC", "uncertainty": None},
+                        {"symbol": "x2", "si_value": 36.8, "si_unit": "degC", "uncertainty": None},
+                        {"symbol": "x3", "si_value": 36.7, "si_unit": "degC", "uncertainty": None},
+                    ],
+                },
+                "solution_output": {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "mean",
+                        "target_unit": "degC",
+                        "equations": [
+                            "mean = (x1 + x2 + x3) / 3",
+                            "mean_absolute_error = (Abs(x1 - mean) + Abs(x2 - mean) + Abs(x3 - mean)) / 3",
+                        ],
+                        "known_values": {"x1": 36.6, "x2": 36.8, "x3": 36.7},
+                    },
+                    "solution_steps": [],
+                },
+                "errors": [],
+            }
+        )
+        self.assertEqual(output["result"]["answer"], "mean = 36.7; mean_absolute_error = 0.0666667")
+
+    def test_compute_sympy_ignores_known_target_value_when_target_is_defined_by_equation(self) -> None:
+        output = PhysicsWorkflow().compute_sympy(
+            {
+                "parsed_question": {
+                    "question": "A capacitor with C = 4 microF is charged to U = 6 V. Calculate the electric field energy.",
+                    "target": {"symbol": "U", "unit": "J"},
+                    "givens": [
+                        {"symbol": "C", "si_value": 4e-6},
+                        {"symbol": "U", "si_value": 6.0},
+                    ],
+                },
+                "solution_output": {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "U",
+                        "target_unit": "J",
+                        "equations": ["U = C * V**2 / 2"],
+                        "known_values": {"C": 4e-6, "V": 6.0, "U": 6.0},
+                    },
+                    "solution_steps": [],
+                },
+                "errors": [],
+            }
+        )
+        self.assertEqual(output["result"]["answer"], "7.2e-05")
+
+    def test_deterministic_midpoint_identical_charges_cancels_to_zero(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Two identical point charges q = 2.0 x 10^-9 C are at A and B, 6.0 cm apart. Find field magnitude at midpoint M.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "E_M", "unit": "N/C"},
+            "givens": [
+                {"symbol": "q", "si_value": 2e-9},
+                {"symbol": "AB", "si_value": 0.06},
+            ],
+            "question_kind": "computational",
+            "geometry": {"present": True, "type": "midpoint_1d"},
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "0")
+
+    def test_deterministic_solves_unknown_charge_from_zero_field_and_sum(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Two point charges q1 and q2 are placed at A and B, with AB = 2 cm. Given q1 + q2 = 7 x 10^-8 C. At point M, 6 cm from q1 and 8 cm from q2, net electric field strength is E = 0. Find q2.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "q2", "unit": "C"},
+            "givens": [{"symbol": "AB", "si_value": 0.02}],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "1.6e-07")
+
+    def test_deterministic_solves_q1_from_zero_field_and_sum(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Two point charges q1 and q2 are placed at A and B, with AB = 2 cm. Given q1 + q2 = 7 x 10^-8 C. At point M, 6 cm from q1 and 8 cm from q2, net electric field strength is E = 0. Find q1.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "q1", "unit": "C"},
+            "givens": [{"symbol": "AB", "si_value": 0.02}],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "-9e-08")
+
+    def test_deterministic_parallel_plate_capacitor_charge(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A parallel plate capacitor has area S = 400 cm^2, plate separation d = 2 mm, dielectric constant epsilon = 1.5, and voltage U = 100 V. Calculate charge.",
+            "domain": "Capacitance",
+            "target": {"symbol": "Q", "unit": "C"},
+            "givens": [
+                {"symbol": "S", "si_value": 0.04},
+                {"symbol": "d", "si_value": 0.002},
+                {"symbol": "epsilon", "si_value": 1.5},
+                {"symbol": "U", "si_value": 100},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "2.65626e-08")
+
+    def test_deterministic_charge_sharing_two_identical_capacitors(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A 2 microF capacitor is charged to 12 V, then disconnected, and its charge is equally shared among two identical capacitors. Calculate the total remaining energy.",
+            "domain": "Capacitance",
+            "target": {"symbol": "E_total", "unit": "J"},
+            "givens": [
+                {"symbol": "C", "si_value": 2e-6},
+                {"symbol": "V", "si_value": 12.0},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "7.2e-05")
+
+    def test_deterministic_inductance_from_magnetic_energy(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "An inductor has magnetic field energy of 0.2 mJ when current is 0.2 A. Calculate inductance.",
+            "domain": "Inductance",
+            "target": {"symbol": "L", "unit": "H"},
+            "givens": [
+                {"symbol": "W_B", "si_value": 0.2e-3},
+                {"symbol": "I", "si_value": 0.2},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "0.01")
+
+    def test_deterministic_max_magnetic_energy_from_l_and_imax(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "An inductor has inductance 0.25 H. When current reaches maximum value 2sqrt2 A, what is maximum magnetic field energy?",
+            "domain": "Inductance",
+            "target": {"symbol": "W_max", "unit": "J"},
+            "givens": [
+                {"symbol": "L", "si_value": 0.25},
+                {"symbol": "I_max", "si_value": 2 * math.sqrt(2)},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "1")
+
+    def test_deterministic_point_charge_in_dielectric_computes_signed_charge(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A point charge q is in a medium with dielectric constant 2.5. At point M, 0.4 m away, electric field has magnitude 9 x 10^5 V/m and points toward q.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "q", "unit": "C"},
+            "givens": [
+                {"symbol": "epsilon_r", "si_value": 2.5},
+                {"symbol": "r", "si_value": 0.4},
+                {"symbol": "E", "si_value": 9e5},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "-4e-05")
+
+    def test_deterministic_two_section_phase_power_solves_r2(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "The circuit AB consists of R1 = 50 Ohm and segment MB with R2 and L, with LComega^2 = 1. uAM and uMB are in quadrature. With U = 100 V, total consumed power is 100 W. Find R2.",
+            "domain": "Alternating-Current Circuits",
+            "target": {"symbol": "R2", "unit": "Ohm"},
+            "givens": [
+                {"symbol": "R1", "si_value": 50},
+                {"symbol": "U", "si_value": 100},
+                {"symbol": "P", "si_value": 100},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "50")
+
+    def test_deterministic_field_from_force_on_charge(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A charge q = 3 microC experiences an electric force of magnitude 0.48 N. Determine the electric field magnitude at its position.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "E", "unit": "N/C"},
+            "givens": [
+                {"symbol": "q", "si_value": 3e-6, "si_unit": "C"},
+                {"symbol": "F", "si_value": 0.48, "si_unit": "N"},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        self.assertIn("electrostatics.field_from_force_on_charge", solution["formula_ids"])
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "160000")
+
+    def test_deterministic_isosceles_ac_equals_bc_field(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Two identical charges +6 microC are at A and B, 10 cm apart. Point C satisfies AC = BC = 8 cm. Find the electric field magnitude at C.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "E_C", "unit": "N/C"},
+            "givens": [
+                {"symbol": "q", "si_value": 6e-6, "si_unit": "C"},
+                {"symbol": "AB", "si_value": 0.1, "si_unit": "m"},
+                {"symbol": "AC", "si_value": 0.08, "si_unit": "m"},
+                {"symbol": "BC", "si_value": 0.08, "si_unit": "m"},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        self.assertIn("electrostatics.isosceles_point_field", solution["formula_ids"])
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertEqual(computed["result"]["answer"], "1.3173e+07")
+
+
+class FormattingRegressionTests(unittest.TestCase):
+    def test_format_number_keeps_tiny_nonzero_values(self) -> None:
+        from agents.formatting import format_number
+
+        self.assertEqual(format_number(9.34128e-10), "9.34128e-10")
+
+
+class SolutionProviderRegressionTests(unittest.TestCase):
+    def test_solution_provider_retargets_undefined_mean_and_mae_target(self) -> None:
+        llm = RecordingLLM(
+            {
+                "physics.solution": json.dumps(
+                    {
+                        "mode": "computational",
+                        "answer_type": "numeric",
+                        "sympy_spec": {
+                            "target_symbol": "mean_and_mae",
+                            "target_unit": "degC",
+                            "equations": [
+                                "mean = (x1 + x2 + x3) / 3",
+                                "mean_absolute_error = (Abs(x1 - mean) + Abs(x2 - mean) + Abs(x3 - mean)) / 3",
+                            ],
+                            "known_values": {"x1": 36.6, "x2": 36.8, "x3": 36.7},
+                        },
+                        "solution_steps": [],
+                    }
+                )
+            }
+        )
+        provider = LLMSolutionProvider(llm)
+        output = provider.get_solution(
+            "Three temperature measurements. Calculate mean and mean absolute error.",
+            {
+                "question": "Three temperature measurements: 36.6C; 36.8C; 36.7C. Calculate the mean and the mean absolute error.",
+                "target": {"symbol": "mean_and_mae", "unit": "degC"},
+                "givens": [
+                    {"symbol": "x1", "si_value": 36.6},
+                    {"symbol": "x2", "si_value": 36.8},
+                    {"symbol": "x3", "si_value": 36.7},
+                ],
+                "question_kind": "computational",
+            },
+        )
+        self.assertEqual(output["sympy_spec"]["target_symbol"], "mean_absolute_error")
+
+    def test_solution_provider_normalizes_expression_without_equals_to_equation(self) -> None:
+        llm = RecordingLLM(
+            {
+                "physics.solution": json.dumps(
+                    {
+                        "mode": "computational",
+                        "answer_type": "numeric",
+                        "sympy_spec": {
+                            "target_symbol": "q1",
+                            "target_unit": "C",
+                            "equations": ["q1 + q2 - 7e-08", "q1 / r1**2 + q2 / r2**2 = 0"],
+                            "known_values": {"r1": 0.06, "r2": 0.08},
+                        },
+                        "solution_steps": [],
+                    }
+                )
+            }
+        )
+        provider = LLMSolutionProvider(llm)
+        output = provider.get_solution(
+            "Find q1.",
+            {
+                "question": "Given q1 + q2 = 7x10^-8 and E=0 at M with distances 6 cm and 8 cm, find q1.",
+                "target": {"symbol": "q1", "unit": "C"},
+                "givens": [{"symbol": "r1", "si_value": 0.06}, {"symbol": "r2", "si_value": 0.08}],
+                "question_kind": "computational",
+            },
+        )
+        self.assertIn("q1 + q2 - 7e-08 = 0", output["sympy_spec"]["equations"])
+
+    def test_solution_provider_accepts_acos_equations(self) -> None:
+        llm = RecordingLLM(
+            {
+                "physics.solution": json.dumps(
+                    {
+                        "mode": "computational",
+                        "answer_type": "numeric",
+                        "sympy_spec": {
+                            "target_symbol": "theta",
+                            "target_unit": "rad",
+                            "equations": [
+                                "cos(theta) = (F1**2 + F2**2 - F_resultant**2) / (2 * F1 * F2)",
+                                "theta = acos((F1**2 + F2**2 - F_resultant**2) / (2 * F1 * F2))",
+                            ],
+                            "known_values": {"F1": 3.0, "F2": 4.0, "F_resultant": 5.0},
+                        },
+                        "solution_steps": [],
+                    }
+                )
+            }
+        )
+        provider = LLMSolutionProvider(llm)
+        output = provider.get_solution(
+            "Find angle theta.",
+            {
+                "question": "Given F1=3 N, F2=4 N and resultant force 5 N, find theta.",
+                "target": {"symbol": "theta", "unit": "rad"},
+                "givens": [
+                    {"symbol": "F1", "si_value": 3.0},
+                    {"symbol": "F2", "si_value": 4.0},
+                    {"symbol": "F_resultant", "si_value": 5.0},
+                ],
+                "question_kind": "computational",
+            },
+        )
+        self.assertIn("acos(", " ".join(output["sympy_spec"]["equations"]))
 
 
 class LogicWorkflowTests(unittest.TestCase):
@@ -1526,6 +2795,7 @@ class ApiContractTests(unittest.TestCase):
         llm = RecordingLLM(
             {
                 "physics.parsing": "Doubling the turns doubles the magnetic field.",
+                "physics.parsing.retry": "still not json",
                 "physics.parsing.repair": json.dumps(
                     {
                         "question": "If you double the number of turns of a solenoid, but keep its length and current the same, how does the magnetic field change?",

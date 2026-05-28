@@ -34,6 +34,9 @@ def parse_float_like(s: Any) -> Optional[float]:
 def format_number(x: float, digits: int = 6) -> str:
     if x is None or (isinstance(x, float) and (math.isnan(x) or math.isinf(x))):
         return "Unknown"
-    if abs(x - round(x)) < 1e-9:
+    if x != 0 and abs(x) < 1e-12:
+        # Keep tiny non-zero magnitudes visible instead of collapsing to 0.
+        return f"{x:.{digits}e}"
+    if abs(x) >= 1e-6 and abs(x - round(x)) < 1e-9:
         return str(int(round(x)))
     return f"{x:.{digits}g}"

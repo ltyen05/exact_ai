@@ -61,7 +61,7 @@ Extraction rules:
 2. Preserve every stated condition, topology, equality, phase relation, resonance condition, or comparison in `relations`.
 3. Choose a target symbol appropriate to the wording: `I_rms` for RMS current, `f_res` for resonant frequency, `E_N` for electric field at N, `F` for force, `P` for power, and `epsilon_r` for dielectric constant.
 4. Use `computational` for requested numeric quantities; `yes_no_computational` when a numeric value must be computed and compared; otherwise use the matching conceptual or multiple-choice kind.
-5. Add `comparison` only for a computational comparison or yes/no numeric question.
+5. For numeric yes/no, `comparison.given_quantity_symbol` must be a symbol, not a number; e.g. use `f` for 56.3 Hz.
 6. Add `options` only for multiple choice.
 7. Add `answer_format` only for an explicitly requested unit, rounding, or answer form.
 8. Use `warnings` only when an ambiguity prevents complete reliable extraction.
@@ -100,6 +100,7 @@ Circuit rules for parsing only:
 - Keep `LC*omega**2 = 1`, resonance wording, and quadrature/phase wording exactly as stated relations. Do not replace them with derived consequences.
 - Preserve RMS or peak wording. For an RMS-current question use target `{"symbol": "I_rms", "unit": "A"}`.
 - For RLC impedance with no topology stated, preserve the ambiguity in relations; downstream may assume series by dataset convention.
+- Formula-only without numeric givens is conceptual.
 - For solenoids, extract length as `ell`, turns as `N`, and current as `I`.
 - For self-inductance, extract induced EMF as `epsilon`, endpoint currents as `I_initial` and `I_final`, and elapsed time as `delta_t`.
 

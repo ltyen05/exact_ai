@@ -14,18 +14,11 @@ from agents.formatting import format_number
 from agents.physics.Explain import ExplainAgent
 from agents.physics.Parsing import ParsingAgent
 from agents.physics.Solution import LLMSolutionProvider, RAGSolutionProvider, SolutionAgent
+from agents.physics.Solution.formula_lib import SYMBOL_ALIAS_GROUPS, build_solution_cot_steps
 from tools.calculator import solve_with_sympy_trace, PHYSICAL_CONSTANTS
 from .orchestrator import WorkflowExecutionError, WorkflowState
 
 logger = logging.getLogger(__name__)
-
-SYMBOL_ALIAS_GROUPS = (
-    ("U", "V", "U_rms", "V_rms"),
-    ("I", "I_rms", "I_effective"),
-    ("f", "f_res", "f0", "frequency"),
-    ("XL", "X_L", "ZL", "Z_L"),
-    ("XC", "X_C", "ZC", "Z_C"),
-)
 
 
 def _expand_quantity_aliases(quantities: dict[str, float]) -> dict[str, float]:
@@ -67,31 +60,6 @@ def _comparison_tolerance(expected_value: float) -> float:
     return max(rounding_tolerance, abs(expected_value) * 1e-3)
 
 
-FARADAY_COT_STEPS = [
-    "Step1: Use Faraday's law of electromagnetic induction to relate the induced electromotive force (EMF) to the rate of change of magnetic flux.",
-    "Step 2:The induced EMF is given by the equation E_ind = -N * (phi_final - phi_initial) / t, where N is the number of turns, phi_final is the final magnetic flux, phi_initial is the initial magnetic flux, and t is the time interval.",
-]
-
-
-def _with_faraday_cot_steps(steps: list[str], equations: list[str]) -> list[str]:
-    """Ensure Faraday induction outputs expose the expected reasoning steps."""
-    equation_text = " ".join(equations)
-    faraday_symbols = ("E_ind", "phi_final", "phi_initial")
-    if not any(symbol in equation_text for symbol in faraday_symbols):
-        return steps
-
-    normalized_steps = " ".join(step.lower() for step in steps)
-    missing = [
-        step
-        for step in FARADAY_COT_STEPS
-        if "faraday" not in normalized_steps
-        or "e_ind" not in normalized_steps
-        or "phi_final" not in normalized_steps
-        or "phi_initial" not in normalized_steps
-    ]
-    return [*missing, *steps]
-
-
 def _requests_magnitude(parsed_question: dict[str, Any]) -> bool:
     answer_format = parsed_question.get("answer_format") or {}
     if isinstance(answer_format, dict):
@@ -126,6 +94,22 @@ def _requests_vector(parsed_question: dict[str, Any]) -> bool:
     target = parsed_question.get("target") or {}
     target_symbol = str(target.get("symbol") or "").lower() if isinstance(target, dict) else str(target).lower()
     return "vector" in question or target_symbol.endswith("_vector")
+
+
+def _select_effective_target(parsed_question: dict[str, Any], equations: list[str], default_target: str) -> str:
+    question = str((parsed_question or {}).get("question") or "").lower()
+    lhs_symbols = {
+        equation.split("=", 1)[0].strip()
+        for equation in equations
+        if isinstance(equation, str) and equation.count("=") == 1
+    }
+    if "absolute error" in question:
+        for candidate in ("delta_P", "absolute_error"):
+            if candidate in lhs_symbols:
+                return candidate
+    if default_target in lhs_symbols:
+        return default_target
+    return default_target
 
 
 def _direction_from_components(components: list[float], vector_spec: dict[str, Any]) -> str:
@@ -228,9 +212,18 @@ class PhysicsWorkflow:
             comparison_value = comparison.get("given_si_value")
             if comparison_value is None:
                 comparison_value = comparison.get("given_value")
+            comparison_symbol = comparison.get("given_quantity_symbol")
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(comparison_symbol or "").strip()):
+                comparison_unit = str(comparison.get("given_si_unit") or comparison.get("unit") or "").lower()
+                if "hz" in comparison_unit:
+                    comparison_symbol = "f"
+                elif "rad" in comparison_unit:
+                    comparison_symbol = "omega"
+                elif comparison_unit in {"v", "volt", "volts"}:
+                    comparison_symbol = "U"
             self._put_quantity(
                 quantities,
-                comparison.get("given_quantity_symbol"),
+                comparison_symbol,
                 comparison_value,
             )
 
@@ -273,6 +266,8 @@ class PhysicsWorkflow:
         for symbol, value in known_values.items():
             numeric = _as_number(value)
             if numeric is None:
+                if symbol in PHYSICAL_CONSTANTS:
+                    continue
                 raise ValueError(f"Known value for {symbol} is not numeric.")
             if symbol in quantities:
                 if not math.isclose(quantities[symbol], numeric, rel_tol=1e-9, abs_tol=1e-12):
@@ -318,6 +313,7 @@ class PhysicsWorkflow:
             "re",
             "conjugate",
             "sqrt",
+            "acos",
             "sin",
             "cos",
             "tan",
@@ -410,11 +406,20 @@ class PhysicsWorkflow:
                 raise WorkflowExecutionError("Direct physics solution has an unsupported answer_type.")
             if direct.get("answer") is None or not isinstance(direct.get("rationale_steps"), list):
                 raise WorkflowExecutionError("Direct physics solution answer/rationale_steps are invalid.")
-            answer = (
-                direct.get("selected_option")
-                if answer_type == "multiple_choice" and direct.get("selected_option")
-                else direct.get("answer", "Unknown")
-            )
+            answer = direct.get("answer", "Unknown")
+            selected_option = str(direct.get("selected_option") or "").strip()
+            parsed_options = parsed_question.get("options") if isinstance(parsed_question, dict) else None
+            if answer_type == "multiple_choice" and selected_option and isinstance(parsed_options, list):
+                option_text = next(
+                    (
+                        str(option.get("text") or "").strip()
+                        for option in parsed_options
+                        if isinstance(option, dict) and str(option.get("label") or "").strip() == selected_option
+                    ),
+                    "",
+                )
+                if option_text:
+                    answer = f"{selected_option}. {option_text}"
             cot = [str(step) for step in direct.get("rationale_steps") or []]
             final_answer = {"symbol": "answer", "value": str(answer), "unit": ""}
             return {
@@ -442,6 +447,7 @@ class PhysicsWorkflow:
         steps = [str(step) for step in solution_output.get("solution_steps") or []]
         try:
             quantities, target, unit, equations = self._validated_context(parsed_question, solution_output)
+            target = _select_effective_target(parsed_question, equations, target)
         except ValueError as exc:
             logger.debug("physics.verification_fail_reason=%s", exc)
             solution_output = self._repair_solution_output(
@@ -453,10 +459,11 @@ class PhysicsWorkflow:
             steps = [str(step) for step in solution_output.get("solution_steps") or []]
             try:
                 quantities, target, unit, equations = self._validated_context(parsed_question, solution_output)
+                target = _select_effective_target(parsed_question, equations, target)
             except ValueError as repair_exc:
                 logger.debug("physics.verification_fail_reason=%s", repair_exc)
                 raise WorkflowExecutionError(f"Physics computation validation failed after repair: {repair_exc}") from repair_exc
-        steps = _with_faraday_cot_steps(steps, equations)
+        steps = build_solution_cot_steps(steps, equations, target)
         logger.debug("physics.normalized_knowns=%s", quantities)
         computation = solve_with_sympy_trace(quantities, equations, target)
         if computation is None:
@@ -470,17 +477,20 @@ class PhysicsWorkflow:
             steps = [str(step) for step in solution_output.get("solution_steps") or []]
             try:
                 quantities, target, unit, equations = self._validated_context(parsed_question, solution_output)
+                target = _select_effective_target(parsed_question, equations, target)
             except ValueError as repair_exc:
                 logger.debug("physics.verification_fail_reason=%s", repair_exc)
                 raise WorkflowExecutionError(f"Physics computation validation failed after repair: {repair_exc}") from repair_exc
-            steps = _with_faraday_cot_steps(steps, equations)
+            steps = build_solution_cot_steps(steps, equations, target)
             computation = solve_with_sympy_trace(quantities, equations, target)
             if computation is None:
                 logger.debug("physics.verification_fail_reason=equations could not resolve the target after repair")
                 raise WorkflowExecutionError("Physics computation failed after repair: equations could not resolve the target.")
 
         logger.debug("physics.sympy_result=%s", {"value": computation.value, "trace": computation.trace})
-        numeric_value = abs(computation.value) if answer_type == "numeric" and _requests_magnitude(parsed_question) else computation.value
+        target_is_charge = bool(re.fullmatch(r"q\d*|charge.*", str(target).lower()))
+        force_magnitude = answer_type == "numeric" and _requests_magnitude(parsed_question) and not target_is_charge
+        numeric_value = abs(computation.value) if force_magnitude else computation.value
         public_answer = format_number(numeric_value)
         final_value: Any = numeric_value
         append_unit = answer_type == "numeric"
@@ -533,6 +543,28 @@ class PhysicsWorkflow:
                 "tolerance": tolerance,
                 "answer": public_answer,
             }
+        elif answer_type == "numeric":
+            question_text = str(parsed_question.get("question") or "").lower()
+            wants_both_errors = "absolute error" in question_text and "relative error" in question_text
+            if wants_both_errors:
+                absolute_value = computation.values.get("absolute_error")
+                if absolute_value is None and target == "absolute_error":
+                    absolute_value = numeric_value
+                relative_value = computation.values.get("relative_error")
+                if absolute_value is not None and relative_value is not None:
+                    public_answer = f"absolute_error = {format_number(absolute_value)}; relative_error = {format_number(relative_value)}"
+                    append_unit = False
+            wants_mean_and_mae = "mean absolute error" in question_text and "mean" in question_text
+            if wants_mean_and_mae:
+                mean_value = computation.values.get("mean")
+                mae_value = computation.values.get("mean_absolute_error") or computation.values.get("mae")
+                if mean_value is None and target == "mean":
+                    mean_value = numeric_value
+                if mae_value is None and target in {"mean_absolute_error", "mae"}:
+                    mae_value = numeric_value
+                if mean_value is not None and mae_value is not None:
+                    public_answer = f"mean = {format_number(mean_value)}; mean_absolute_error = {format_number(mae_value)}"
+                    append_unit = False
 
         final_answer = {"symbol": target, "value": final_value, "unit": unit}
         verification_result = {
@@ -576,14 +608,19 @@ class PhysicsWorkflow:
         result = dict(state.get("result", {}))
         if result.get("answer") == "Unknown":
             return {"result": result}
+        parsed_question = state.get("parsed_question", {})
+        solution_output = state.get("solution_output", {})
+        verified_output = state.get("verified_output", {})
+        cot = self.explain_agent.build_cot(parsed_question, solution_output, verified_output)
         if _llm_available(self.llm):
             try:
                 explanation = self.explain_agent.run(
-                    state.get("parsed_question", {}),
-                    state.get("solution_output", {}),
-                    state.get("verified_output", {}),
+                    parsed_question,
+                    solution_output,
+                    verified_output,
                 )
                 result["explanation"] = str(explanation["explanation"])
+                result["cot"] = [str(step) for step in explanation.get("cot") or cot]
                 return {"result": result}
             except Exception as exc:
                 errors = _with_error(state, f"Physics ExplainAgent failed: {exc}")
@@ -591,7 +628,8 @@ class PhysicsWorkflow:
             errors = state.get("errors", [])
         unit = str(result.get("unit") or "")
         suffix = f" {unit}" if result.get("append_unit") and unit and unit.lower() != "dimensionless" else ""
-        steps = result.get("cot") or []
+        steps = cot or result.get("cot") or []
         reasoning = " ".join(str(step) for step in steps) or "Computed the requested quantity from the selected equations."
+        result["cot"] = [str(step) for step in steps]
         result["explanation"] = f"{reasoning} Therefore, the answer is {result.get('answer')}{suffix}."
         return {"result": result, "errors": errors}

@@ -18,6 +18,7 @@ PHYSICAL_CONSTANTS = {
 SYMPY_VALUES = {
     "Abs": sp.Abs,
     "abs": sp.Abs,
+    "acos": sp.acos,
     "atan": sp.atan,
     "cos": sp.cos,
     "exp": sp.exp,
@@ -94,7 +95,13 @@ def solve_with_sympy_trace(
             for name, value in quantities.items()
             if name in symbols and value is not None
         }
-        if target_symbol in substitutions:
+        target_defined_by_equation = any(
+            isinstance(lhs_expr, sp.Symbol) and lhs_expr == target_symbol
+            for lhs_expr, _ in equation_pairs
+        )
+        if target_defined_by_equation:
+            substitutions.pop(target_symbol, None)
+        elif target_symbol in substitutions:
             value = _numeric_value(substitutions[target_symbol])
             return SympyComputation(value, [], {target: value}) if value is not None else None
 

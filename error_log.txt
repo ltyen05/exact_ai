@@ -1,0 +1,198 @@
+{
+    "question": "Given an RLC series circuit with a resistance R=30\\u03a9. At its resonant frequency f=50Hz, the current flowing through the circuit is I=2A. If the frequency is then changed to f=100Hz, the current becomes I=1.6A. Calculate the inductive reactance (ZL)."
+}
+
+{
+    "answer": "30 Ohm",
+    "explanation": "At resonance XL equals XC and the source voltage is I_res*R. Use the changed-frequency current to find the new impedance and net reactance. Scale XL directly with frequency and XC inversely with frequency. Continue with ZL = frequency_ratio * X_res. Substitute the parsed values R=30.0, f_res=50.0, f=100.0, I_res=2.0 into the equations. The symbolic solver reduces the system through frequency_ratio = 2.0, U = 60.0, Z_new = 37.5. Therefore, ZL = 30.0 Ohm. Therefore, the answer is 30 Ohm.",
+    "cot": [
+        "At resonance XL equals XC and the source voltage is I_res*R.",
+        "Use the changed-frequency current to find the new impedance and net reactance.",
+        "Scale XL directly with frequency and XC inversely with frequency.",
+        "Continue with ZL = frequency_ratio * X_res.",
+        "Substitute the parsed values R=30.0, f_res=50.0, f=100.0, I_res=2.0 into the equations.",
+        "The symbolic solver reduces the system through frequency_ratio = 2.0, U = 60.0, Z_new = 37.5.",
+        "Therefore, ZL = 30.0 Ohm."
+    ],
+    "premises": [
+        "frequency_ratio = f / f_res",
+        "U = I_res * R",
+        "Z_new = U / I",
+        "X_net_new = sqrt(Z_new**2 - R**2)",
+        "X_res = X_net_new / Abs(frequency_ratio - 1 / frequency_ratio)",
+        "ZL = frequency_ratio * X_res"
+    ]
+}
+
+{
+  "inputs": {
+    "question": "A capacitor with a capacitance of 4 \\u03bcF is charged to a voltage of 6 V. Calculate the electric field energy of the capacitor."
+  },
+  "outputs": {
+    "answer": "6 J",
+    "cot": [
+      "Use the verified equation U = C*V**2/2.",
+      "Substitute the parsed values C=4e-06, V=6, U=6.0, U_rms=6.0 into the equations.",
+      "Therefore, U = 6.0 J."
+    ],
+    "explanation": "Use the verified equation U = C*V**2/2. Substitute the parsed values C=4e-06, V=6, U=6.0, U_rms=6.0 into the equations. Therefore, U = 6.0 J. Therefore, the answer is 6 J.",
+    "premises": [
+      "U = C*V**2/2"
+    ]
+  },
+  "metadata": {
+    "LANGSMITH_PROJECT": "ai",
+    "LANGSMITH_TRACING": "true",
+    "ls_method": "traceable",
+    "ls_run_depth": 0,
+    "revision_id": "14aca92-dirty"
+  },
+  "langsmith": {
+    "organization": {
+      "name": "Personal",
+      "id": "3c5c3e58-f26d-4c3f-af15-1b3c4475ac34"
+    },
+    "workspace": {
+      "name": "Workspace 1",
+      "id": "00f90986-5a87-4644-8904-780843a80d7c"
+    },
+    "tracing_project": {
+      "id": "fe267726-91a2-42df-8e3a-259b06cb023e",
+      "name": "ai"
+    }
+  }
+}
+
+
+{
+    "question": "The circuit AB consists of R1 = 50 \\u03a9 and a segment MB (containing R2 and an inductor L), satisfying the condition LC\\u03c9\\u00b2 = 1. The voltage uAM and uMB are in quadrature (90 degrees out of phase). When an RMS voltage U = 100 V is applied across AB, the total power consumed is 100.0 W. Find the value of R2."
+}
+{
+    "question": "The circuit AB consists of R1 = 50 \\u03a9 and a segment MB (containing R2 and an inductor L), satisfying the condition LC\\u03c9\\u00b2 = 1. The voltage uAM and uMB are in quadrature (90 degrees out of phase). When an RMS voltage U = 100 V is applied across AB, the total power consumed is 100.0 W. Find the value of R2."
+}
+==> Vẫn không chạy được 
+
+
+{
+    "question": "The current through the solenoid is 2 A, the number of turns per meter is 1500, and the permeability of free space is \\u03bc\\u2080 = 4\\u03c0\\u00d710\\u207b\\u2077. Calculate the magnetic field inside."
+}
+
+
+{
+    "detail": "Physics ParsingAgent failed: Physics parser response must be a JSON object. Raw response preview: {\n  \"question\": \"The current through the solenoid is 2 A, the number of turns per meter is 1500, and the permeability of free space is \\\\mu_0 = 4\\\\pi\\\\times10^{-7}. Calculate the magnetic field inside"
+}
+
+
+{
+    "question": "Two identical point charges, q = 2.0 \\u00d7 10^-9 C, are placed at points A and B, 6.0 cm apart in air. Calculate the magnitude of the electric field strength at the midpoint M of the segment AB."
+}
+
+
+{
+    "answer": "20000 N/C",
+    "explanation": "The electric field strength at the midpoint M of the segment AB is calculated using the formula E = k * q / r^2, where k is the Coulomb constant, q is the charge, and r is the distance from the charge to the point of interest. Given that the charges are identical (q = 2.0 × 10^-9 C) and placed 6.0 cm apart, the distance from each charge to the midpoint M is half of the total distance, which is 3.0 cm or 0.03 m. Substituting these values into the formula gives E_M = 8.99 × 10^9 N*m^2/C^2 * 2.0 × 10^-9 C / (0.03 m)^2, resulting in E_M = 20000.0 N/C.",
+    "cot": [
+        "Define the electric field magnitude at the midpoint M using the formula E = k * q / r^2.",
+        "Substitute the given values for the Coulomb constant k, charge q, and distance AM into the formula.",
+        "Calculate the numerical value of the electric field magnitude E_M.",
+        "Substitute the parsed values k=k_e, q=2e-09, AM=0.03, AB=0.06 into the equations.",
+        "Therefore, E_M = 20000.0 N/C."
+    ],
+    "premises": [
+        "E_M = k * q / AM**2"
+    ]
+}
+
+
+{
+    "question": "Two point charges q1 and q2 are placed at A and B, with AB = 2 cm. Given that q1 + q2 = 7 x 10^-8 C. At point M, which is 6 cm from q1 and 8 cm from q2, the net electric field strength is E = 0. Find q2."
+}
+
+{
+    "detail": "Physics SolutionAgent failed: Physics solution response must be a JSON object.; solution repair did not return a JSON object.; original response was not valid JSON. Raw response preview: {\n  \"mode\": \"computational\",\n  \"answer_type\": \"numeric\",\n  \"sympy_spec\": {\n    \"target_symbol\": \"E_M\",\n    \"target_unit\": \"N/C\",\n    \"equations\": [\"E_M = Abs(k * q / AM**2)\"],\n    \"known_values\": {\n  "
+}
+
+{
+    "detail": "Physics SolutionAgent failed: Unresolved symbols: q2.; original validation error: Unresolved symbols: q2."
+}
+
+{
+    "question": "A point charge q is placed in a homogeneous, infinite medium with a dielectric constant of 2.5. At point M, 0.4m away from q, the electric field vector has a magnitude of 9 x 10^5 V / m and points towards the charge q. Which of the following statements is correct regarding the sign and magnitude of charge q?"
+}
+
+
+{
+    "detail": "Physics SolutionAgent failed: Physics solution response must be a JSON object.; solution repair did not return a JSON object.; original response was not valid JSON. Raw response preview: {\n  \"mode\": \"direct\",\n  \"answer_type\": \"multiple_choice\",\n  \"direct_answer\": {\n    \"answer\": \"B\",\n    \"selected_option\": \"B\",\n    \"rationale_steps\": [\n      \"Given the electric field magnitude \\( E_M "
+}
+
+
+
+{
+    "question": "Two point charges q1 and q2 are placed at A and B, with AB = 2 cm. Given that q1 + q2 = 7 x 10^-8 C, and at point M, which is 6 cm from q1 and 8 cm from q2, the electric field strength is E = 0. Find q1."
+}
+
+{
+    "detail": "Physics SolutionAgent failed: Formula must be an equation with one '=': q1 + q2 - 7e-08; original validation error: Target symbol q1 must be defined by an equation or known value."
+}
+
+
+{
+    "question": "A capacitor has a voltage function U(t) = 250 \\u00b7 sin(1000t) V and a capacitance C = 8 \\u00b5F. Calculate the maximum electric field energy stored in the capacitor."
+}
+
+
+{
+    "detail": "Physics computation validation failed after repair: Solution introduced untrusted numeric value U_max."
+}
+
+{
+    "question": "An inductor has a magnetic field energy of 0.2 mJ when the current is 0.2 A. Calculate the inductance (H)."
+}
+
+{
+    "detail": "Physics SolutionAgent failed: Unresolved symbols: L.; original response was not valid JSON. Raw response preview: {\n  \"mode\": \"computational\",\n  \"answer_type\": \"numeric\",\n  \"sympy_spec\": {\n    \"target_symbol\": \"L\",\n    \"target_unit\": \"H\",\n    \"equations\": [\"W_B = 0.5 * L * I**2\"],\n    \"known_values\": {\n      \"W_B"
+}
+
+{
+    "question": "An inductor has an inductance of 0.25 H. When the current reaches its maximum value of 2\\u221a2 A, what is the maximum magnetic field energy?"
+}
+
+{
+    "detail": "Physics SolutionAgent failed: Physics solution response must be a JSON object.; solution repair did not return a JSON object.; original response was not valid JSON. Raw response preview: {\n  \"mode\": \"computational\",\n  \"answer_type\": \"numeric\",\n  \"sympy_spec\": {\n    \"target_symbol\": \"W_max\",\n    \"target_unit\": \"J\",\n    \"equations\": [\"W_max = 0.5 * L * I_max**2\"],\n    \"known_values\": {\n"
+}
+
+{
+    "question": "A 2 \\u03bcF capacitor is charged to 12 V, then disconnected, and its charge is equally shared among two identical capacitors. Calculate the total remaining energy after sharing."
+}
+
+{
+    "answer": "8e-06 J",
+    "explanation": "The initial charge on the capacitor is calculated as Q_initial = C_initial * V_initial = 2 μF * 12 V = 24 μC. When the charge is equally shared among two identical capacitors, each capacitor gets Q_shared = Q_initial / 3 = 8 μC. The total capacitance after sharing is C_final = 2 * C_initial = 4 μF. The final voltage across each capacitor is V_final = Q_shared / C_final = 8 μC / 4 μF = 2 V. The total remaining energy is then calculated as E_total = 0.5 * C_final * V_final**2 = 0.5 * 4 μF * (2 V)**2 = 8 μJ.",
+    "cot": [
+        "Calculate initial charge: Q_initial = C_initial * V_initial",
+        "Distribute charge equally among three capacitors: Q_shared = Q_initial / 3",
+        "Total capacitance after sharing: C_final = 2 * C_initial",
+        "Final voltage across each capacitor: V_final = Q_shared / C_final",
+        "Calculate total remaining energy: E_total = 0.5 * C_final * V_final**2",
+        "Continue with E_total = 0.5 * C_final * V_final**2.",
+        "Substitute the parsed values C_initial=2e-06, V_initial=12 into the equations.",
+        "The symbolic solver reduces the system through Q_initial = 2.4e-05, Q_shared = 8e-06, C_final = 4e-06.",
+        "Therefore, E_total = 8e-06 J."
+    ],
+    "premises": [
+        "Q_initial = C_initial * V_initial",
+        "Q_shared = Q_initial / 3",
+        "C_final = 2 * C_initial",
+        "V_final = Q_shared / C_final",
+        "E_total = 0.5 * C_final * V_final**2"
+    ]
+}
+
+
+{
+    "question": "A parallel plate capacitor has an area S = 400 cm\\u00b2, a plate separation d = 2 mm, and a dielectric constant \\u03b5 = 1.5. If a voltage U = 100 V is applied, calculate the charge on each plate."
+}
+
+{
+    "detail": "Physics SolutionAgent failed: openrouter LLM request failed (400): {'error': {'message': 'Provider returned error', 'code': 400, 'metadata': {'raw': '{\"code\":400,\"msg\":\"bad request\",\"request_id\":\"56a3eb52-5f1b-4b2d-a566-a767d49c7263\"}', 'provider_name': 'AtlasCloud', 'is_byok': False}}, 'user_id': 'user_3DsjSyxcVpG9Aq261ckSrASiBg7'}"
+}
