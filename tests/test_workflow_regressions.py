@@ -63,6 +63,30 @@ class RecordingLLM:
         return self.responses[stage]
 
 
+class RaisingLLM(RecordingLLM):
+    def __init__(self) -> None:
+        super().__init__({})
+
+    def chat(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float = 0.0,
+        max_tokens: int = 1024,
+        response_format: dict[str, Any] | None = None,
+        stage: str = "llm.chat",
+    ) -> str:
+        self.calls.append(
+            {
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "response_format": response_format,
+                "stage": stage,
+            }
+        )
+        raise RuntimeError("simulated provider 400")
+
+
 def solution_llm(payload: dict[str, Any]) -> RecordingLLM:
     return RecordingLLM({"physics.solution": json.dumps(payload)})
 
@@ -472,6 +496,26 @@ class PhysicsWorkflowTests(unittest.TestCase):
                 }
             )
 
+    def test_solution_validator_rejects_missing_vector_spec_components(self) -> None:
+        with self.assertRaisesRegex(ValueError, "vector_spec component symbols"):
+            LLMSolutionProvider._validate_solution(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "E_net_magnitude",
+                        "target_unit": "N/C",
+                        "equations": ["E_net_magnitude = Abs(E1x)"],
+                        "known_values": {"E1x": 10},
+                    },
+                    "solution_steps": [],
+                    "vector_spec": {
+                        "component_symbols": ["E_net_x"],
+                        "magnitude_symbol": "E_net_magnitude",
+                    },
+                }
+            )
+
     def test_solution_provider_normalizes_lambda_and_charge_aliases(self) -> None:
         llm = solution_llm(
             {
@@ -661,6 +705,25 @@ class PhysicsWorkflowTests(unittest.TestCase):
         output = provider._request_solution(provider._build_prompt(parsed), parsed)
         self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution", "physics.solution.retry"])
         self.assertEqual(output["formula_ids"], ["ac.resonance.frequency"])
+
+    def test_solution_provider_uses_deterministic_fallback_on_provider_exception(self) -> None:
+        parsed = {
+            "question": "An inductor has inductance 0.25 H. When current reaches maximum value 2sqrt2 A, what is maximum magnetic field energy?",
+            "domain": "Inductance",
+            "target": {"symbol": "W_max", "unit": "J"},
+            "givens": [
+                {"symbol": "L", "si_value": 0.25},
+            ],
+            "question_kind": "computational",
+        }
+        llm = RaisingLLM()
+        provider = LLMSolutionProvider(llm)
+        output = provider.get_solution(parsed["question"], parsed)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": output, "errors": []})
+
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution"])
+        self.assertEqual(output["formula_ids"], ["inductance.magnetic_energy"])
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 1.0)
 
     def test_solution_provider_retries_compact_json_after_truncated_response(self) -> None:
         cases = [
@@ -2585,9 +2648,333 @@ class PhysicsWorkflowTests(unittest.TestCase):
         }
         solution = deterministic_solution(parsed)
         self.assertIsNotNone(solution)
-        self.assertIn("electrostatics.isosceles_point_field", solution["formula_ids"])
+        self.assertIn("electrostatics.triangle_distance_geometry", solution["formula_ids"])
+        self.assertIn("electrostatics.point_charge_field_vector", solution["formula_ids"])
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
-        self.assertEqual(computed["result"]["answer"], "1.3173e+07")
+        self.assertEqual(computed["result"]["answer"], "1.3173e+07 N/C")
+
+    def test_vector_engine_perpendicular_bisector_adds_components(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Two electric charges q1 = +2e-8 C and q2 = +2e-8 C are 8 cm apart. Calculate the electric field at point M on the perpendicular bisector, 6 cm from AB.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "E_net_magnitude", "unit": "N/C"},
+            "givens": [
+                {"symbol": "q1", "si_value": 2e-8},
+                {"symbol": "q2", "si_value": 2e-8},
+                {"symbol": "AB", "si_value": 0.08},
+                {"symbol": "ell", "si_value": 0.06},
+            ],
+            "relations": ["M lies on the perpendicular bisector of AB"],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        self.assertIn("E_net_x = E1x + E2x", solution["sympy_spec"]["equations"])
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        vector = computed["verified_output"]["vector_result"]
+
+        self.assertAlmostEqual(vector["components"][0], 0, places=7)
+        self.assertAlmostEqual(vector["magnitude"], 57600, delta=5)
+        self.assertNotEqual(computed["result"]["answer"], "144000 N/C")
+
+    def test_vector_engine_triangle_distances_for_force(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Two electric charges q1 = +6e-8 C and q2 = +1e-8 C are at A and B, AB = 15 cm. A charge q3 = -1e-8 C is at C with AC = 14 cm and BC = 6 cm. Calculate the net electric force on q3.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "F_net_magnitude", "unit": "N"},
+            "givens": [
+                {"symbol": "q1", "si_value": 6e-8},
+                {"symbol": "q2", "si_value": 1e-8},
+                {"symbol": "q3", "si_value": -1e-8},
+                {"symbol": "AB", "si_value": 0.15},
+                {"symbol": "AC", "si_value": 0.14},
+                {"symbol": "BC", "si_value": 0.06},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        equations = solution["sympy_spec"]["equations"]
+        self.assertIn("Cx = (AC**2 + AB**2 - BC**2) / (2 * AB)", equations)
+        self.assertIn("F_net_x = q3 * E_net_x", equations)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+
+        ax, ay = 0.0, 0.0
+        bx, by = 0.15, 0.0
+        cx = (0.14**2 + 0.15**2 - 0.06**2) / (2 * 0.15)
+        cy = math.sqrt(0.14**2 - cx**2)
+        e1x = 9e9 * 6e-8 * (cx - ax) / 0.14**3
+        e1y = 9e9 * 6e-8 * (cy - ay) / 0.14**3
+        e2x = 9e9 * 1e-8 * (cx - bx) / 0.06**3
+        e2y = 9e9 * 1e-8 * (cy - by) / 0.06**3
+        expected = math.sqrt((-1e-8 * (e1x + e2x)) ** 2 + (-1e-8 * (e1y + e2y)) ** 2)
+
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"]["magnitude"], expected)
+        self.assertNotAlmostEqual(computed["verified_output"]["final_answer"]["value"]["magnitude"], 0.0005255102040816325)
+
+    def test_vector_engine_right_angle_vertex_force(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Three identical charges q = +5e-7 C are placed at the three vertices of an isosceles right triangle with legs of 15 cm. Calculate the net force acting on the charge at the right angle.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "F_net_magnitude", "unit": "N"},
+            "givens": [
+                {"symbol": "q", "si_value": 5e-7},
+                {"symbol": "a", "si_value": 0.15},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+
+        expected = math.sqrt(2) * 9e9 * (5e-7) ** 2 / 0.15**2
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"]["magnitude"], expected)
+        self.assertNotEqual(computed["result"]["answer"], "0.1 N")
+
+    def test_zero_field_same_sign_respects_requested_distance(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        base = {
+            "question": "At A and B, q1 = +4e-6 C and q2 = +1e-6 C are 12 cm apart. Find point M where the electric field is zero.",
+            "domain": "Electric Charges and Fields",
+            "givens": [
+                {"symbol": "q1", "si_value": 4e-6},
+                {"symbol": "q2", "si_value": 1e-6},
+                {"symbol": "AB", "si_value": 0.12},
+            ],
+            "relations": ["electric field is zero"],
+            "question_kind": "computational",
+        }
+        parsed_am = {**base, "target": {"symbol": "AM", "unit": "m"}}
+        parsed_bm = {**base, "target": {"symbol": "BM", "unit": "m"}}
+        solution_am = deterministic_solution(parsed_am)
+        solution_bm = deterministic_solution(parsed_bm)
+        self.assertIsNotNone(solution_am)
+        self.assertIsNotNone(solution_bm)
+        computed_am = PhysicsWorkflow().compute_sympy({"parsed_question": parsed_am, "solution_output": solution_am, "errors": []})
+        computed_bm = PhysicsWorkflow().compute_sympy({"parsed_question": parsed_bm, "solution_output": solution_bm, "errors": []})
+
+        self.assertAlmostEqual(computed_am["verified_output"]["final_answer"]["value"], 0.08)
+        self.assertAlmostEqual(computed_bm["verified_output"]["final_answer"]["value"], 0.04)
+
+    def test_measurement_maximum_possible_current_uses_uncertainty(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "When measuring the current through a resistor, a value of 0.25 A was obtained with an uncertainty of +/-0.01 A. What is the maximum possible current?",
+            "domain": "Measurement and Uncertainty",
+            "target": {"symbol": "I_max", "unit": "A"},
+            "givens": [
+                {"symbol": "I", "si_value": 0.25, "si_unit": "A", "uncertainty": {"si_value": 0.01, "si_unit": "A", "kind": "absolute"}},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 0.26)
+
+    def test_measurement_percentage_relative_uncertainty_uses_delta_alias(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "The length is measured as 60.0 +/- 0.3 cm. Calculate the percentage relative uncertainty.",
+            "domain": "Measurement and Uncertainty",
+            "target": {"symbol": "error_percentage", "unit": "%"},
+            "givens": [
+                {"symbol": "L", "si_value": 0.6, "si_unit": "m", "uncertainty": {"si_value": 0.003, "si_unit": "m", "kind": "absolute"}},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 0.5)
+
+    def test_least_count_percentage_error_uses_half_least_count(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A length is measured as 10.0 cm with least count 0.1 cm. Calculate the percentage relative error.",
+            "domain": "Measurement and Uncertainty",
+            "target": {"symbol": "error_percentage", "unit": "%"},
+            "givens": [
+                {"symbol": "measured_value", "si_value": 0.1, "si_unit": "m"},
+                {"symbol": "least_count", "si_value": 0.001, "si_unit": "m"},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 0.5)
+
+    def test_capacitance_from_energy_voltage_in_requested_microfarads(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A capacitor stores 3.6 mJ of electrical energy when the voltage across it is 120 V. Calculate its capacitance C (microF).",
+            "domain": "Capacitance",
+            "target": {"symbol": "C", "unit": "microF"},
+            "givens": [],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 0.5)
+
+    def test_isolated_capacitor_energy_decreases_when_permittivity_increases(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A parallel-plate capacitor is fully charged and then disconnected from its power source. Subsequently, it is placed in an environment where the permittivity increases by a factor of 3. Calculate the new energy stored if the initial energy was 1 microJ.",
+            "domain": "Capacitance",
+            "target": {"symbol": "U_new", "unit": "J"},
+            "givens": [],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 1e-6 / 3)
+
+    def test_parallel_plate_capacitance_corrects_area_units_from_text(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Calculate the capacitance of a parallel-plate air capacitor with a plate area of 34.0 cm^2 and a plate separation of 0.50 mm.",
+            "domain": "Capacitance",
+            "target": {"symbol": "C", "unit": "F"},
+            "givens": [
+                {"symbol": "A", "si_value": 3400, "si_unit": "m2"},
+                {"symbol": "d", "si_value": 0.0005, "si_unit": "m"},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 8.8541878128e-12 * 0.0034 / 0.0005)
+
+    def test_parallel_plate_breakdown_charge_uses_epsilon0_area(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A parallel-plate capacitor has two circular plates, each with a radius of 45 cm, separated by 2.1 mm. Calculate the maximum charge without dielectric breakdown of air (Emax = 3x10^5 V/m).",
+            "domain": "Capacitance",
+            "target": {"symbol": "Q_max", "unit": "C"},
+            "givens": [
+                {"symbol": "r", "si_value": 0.45, "si_unit": "m"},
+                {"symbol": "d", "si_value": 0.0021, "si_unit": "m"},
+                {"symbol": "E_max", "si_value": 3e5, "si_unit": "V/m"},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        expected = 8.8541878128e-12 * 3e5 * math.pi * 0.45**2
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], expected)
+
+    def test_dielectric_constant_from_parallel_plate_geometry_uses_nf(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A capacitor has a capacitance of 9.2 nF, its plates are square with an area of 10.5 cm^2, and the distance between the two plates is 1.1x10^-5 m. Calculate the dielectric constant.",
+            "domain": "Capacitance",
+            "target": {"symbol": "epsilon_r", "unit": ""},
+            "givens": [
+                {"symbol": "C", "si_value": 9.2e-6, "si_unit": "F"},
+                {"symbol": "A", "si_value": 0.00105, "si_unit": "m2"},
+                {"symbol": "d", "si_value": 1.1e-5, "si_unit": "m"},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        expected = 9.2e-9 * 1.1e-5 / (8.8541878128e-12 * 0.00105)
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], expected)
+
+    def test_parallel_capacitor_voltage_uses_constraint_to_choose_branch(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Two capacitors C1 = 0.4 microF and C2 = 0.6 microF are connected in parallel to a source with voltage U < 60 V. One capacitor has charge Q = 3e-5 C. Calculate U.",
+            "domain": "Capacitance",
+            "target": {"symbol": "U", "unit": "V"},
+            "givens": [
+                {"symbol": "C1", "si_value": 0.4e-6},
+                {"symbol": "C2", "si_value": 0.6e-6},
+                {"symbol": "Q", "si_value": 3e-5},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 50)
+
+    def test_dielectric_point_charge_can_use_text_extracted_epsilon_without_untrusted_known(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A point charge q is in a medium with dielectric constant 2.5. At point M, 0.4 m away, electric field has magnitude 9 x 10^5 V/m and points toward q.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "q", "unit": "C"},
+            "givens": [],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        self.assertIn("epsilon_r_eff = 2.5", solution["sympy_spec"]["equations"])
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], -4e-5)
+
+    def test_magnetic_flux_from_uniform_field_and_area(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Given the cross-sectional area of a solenoid is 2 cm^2, and B = 2x10^-3 T. Calculate the magnetic flux through this cross-section.",
+            "domain": "Sources of Magnetic Fields",
+            "target": {"symbol": "Phi", "unit": "Wb"},
+            "givens": [
+                {"symbol": "A", "si_value": 0.0002, "si_unit": "m2"},
+                {"symbol": "B", "si_value": 2e-3, "si_unit": "T"},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 4e-7)
+
+    def test_resultant_force_angle_in_degrees_is_converted_to_radians(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Given F1 = 9 N, F2 = 12 N and the angle between them is theta = 135 degrees. Find the resultant force.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "F_resultant", "unit": "N"},
+            "givens": [
+                {"symbol": "F1", "si_value": 9},
+                {"symbol": "F2", "si_value": 12},
+                {"symbol": "theta", "si_value": 135},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        expected = math.sqrt(9**2 + 12**2 + 2 * 9 * 12 * math.cos(math.radians(135)))
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], expected)
 
 
 class FormattingRegressionTests(unittest.TestCase):

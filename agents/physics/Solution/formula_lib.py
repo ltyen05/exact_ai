@@ -15,6 +15,8 @@ SYMBOL_REPLACEMENTS = {
     "ω": "omega",
     "Ω": "Ohm",
     "μ": "mu",
+    "µ": "mu",
+    "λ": "lambda_",
     "√": "sqrt",
     "−": "-",
     "–": "-",
@@ -156,7 +158,16 @@ def _numeric_values(semantic_output: dict[str, Any]) -> dict[str, float]:
 
     for item in semantic_output.get("givens") or []:
         if isinstance(item, dict):
-            put_value(item.get("symbol"), item.get("si_value"))
+            symbol = item.get("symbol")
+            put_value(symbol, item.get("si_value"))
+            uncertainty = item.get("uncertainty") or {}
+            if isinstance(uncertainty, dict):
+                uncertainty_value = uncertainty.get("si_value")
+                if isinstance(uncertainty_value, (int, float)):
+                    clean_symbol = _clean_symbol_name(symbol)
+                    put_value(f"delta_{clean_symbol}", uncertainty_value)
+                    put_value("uncertainty", uncertainty_value)
+                    put_value("absolute_uncertainty", uncertainty_value)
     geometry = semantic_output.get("geometry") or {}
     if isinstance(geometry, dict):
         for field in ("segments", "derived_distances"):
@@ -276,6 +287,32 @@ def _extract_q_distances_from_text(question: str) -> tuple[float, float] | None:
     return r1, r2
 
 
+def _measurement_value_and_delta(values: dict[str, float], *preferred_symbols: str) -> tuple[str, float, float] | None:
+    for symbol in preferred_symbols:
+        if values.get(symbol) is not None and values.get(f"delta_{symbol}") is not None:
+            return symbol, float(values[symbol]), float(values[f"delta_{symbol}"])
+    for symbol, value in values.items():
+        if symbol.startswith("delta_") or symbol in {"uncertainty", "absolute_uncertainty"}:
+            continue
+        delta = values.get(f"delta_{symbol}")
+        if delta is not None:
+            return symbol, float(value), float(delta)
+    generic_delta = values.get("absolute_uncertainty") or values.get("uncertainty")
+    if generic_delta is None:
+        return None
+    candidates = [
+        (symbol, value)
+        for symbol, value in values.items()
+        if not symbol.startswith("delta_")
+        and symbol not in {"uncertainty", "absolute_uncertainty"}
+        and isinstance(value, (int, float))
+    ]
+    if len(candidates) == 1:
+        symbol, value = candidates[0]
+        return symbol, float(value), float(generic_delta)
+    return None
+
+
 def _normalized_label(value: Any) -> str:
     return re.sub(r"[_\s\-/]+", "_", _normalize_text(str(value or "")).strip().lower()).strip("_")
 
@@ -315,6 +352,109 @@ def _solution(
     return output
 
 
+def _is_force_target(target: str, text: str) -> bool:
+    return _target_is(target, "F", "F_net", "F_total", "force") or "force" in text
+
+
+def _point_charge_vector_solution(
+    *,
+    formula_ids: list[str],
+    target_symbol: str,
+    target_unit: str,
+    coordinate_equations: list[str],
+    known_values: dict[str, float],
+    source_charges: list[tuple[str, str, str]],
+    point_x: str,
+    point_y: str,
+    target_kind: str,
+    test_charge_symbol: str | None = None,
+    steps: list[str] | None = None,
+    assumptions: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build reusable Coulomb vector equations from coordinates and charges."""
+    equations = list(coordinate_equations)
+    field_x_terms: list[str] = []
+    field_y_terms: list[str] = []
+    for index, (charge_symbol, charge_x, charge_y) in enumerate(source_charges, start=1):
+        equations.extend(
+            [
+                f"dx{index} = {point_x} - {charge_x}",
+                f"dy{index} = {point_y} - {charge_y}",
+                f"r{index} = sqrt(dx{index}**2 + dy{index}**2)",
+                f"E{index}x = k * {charge_symbol} * dx{index} / r{index}**3",
+                f"E{index}y = k * {charge_symbol} * dy{index} / r{index}**3",
+            ]
+        )
+        field_x_terms.append(f"E{index}x")
+        field_y_terms.append(f"E{index}y")
+
+    equations.append(f"E_net_x = {' + '.join(field_x_terms)}")
+    equations.append(f"E_net_y = {' + '.join(field_y_terms)}")
+    equations.append("E_net_magnitude = sqrt(E_net_x**2 + E_net_y**2)")
+
+    component_symbols = ["E_net_x", "E_net_y"]
+    magnitude_symbol = "E_net_magnitude"
+    if target_kind == "force":
+        if not test_charge_symbol:
+            return {}
+        equations.extend(
+            [
+                f"F_net_x = {test_charge_symbol} * E_net_x",
+                f"F_net_y = {test_charge_symbol} * E_net_y",
+                "F_net_magnitude = sqrt(F_net_x**2 + F_net_y**2)",
+            ]
+        )
+        component_symbols = ["F_net_x", "F_net_y"]
+        magnitude_symbol = "F_net_magnitude"
+
+    if target_symbol != magnitude_symbol:
+        equations.append(f"{target_symbol} = {magnitude_symbol}")
+
+    formula_ids = [
+        *formula_ids,
+        "electrostatics.point_charge_field_vector",
+        "electrostatics.net_vector_cartesian",
+    ]
+    if target_kind == "force":
+        formula_ids.append("electrostatics.force_on_test_charge_from_field")
+    extra: dict[str, Any] = {
+        "vector_spec": {
+            "component_symbols": component_symbols,
+            "magnitude_symbol": target_symbol,
+            "direction": "direction determined by signed Cartesian components",
+        }
+    }
+    if assumptions:
+        extra["assumptions"] = assumptions
+    return _solution(
+        list(dict.fromkeys(formula_ids)),
+        target_symbol,
+        target_unit,
+        equations,
+        known_values,
+        steps
+        or [
+            "Assign coordinates to the source charges and the target point.",
+            "Use the signed Coulomb vector field formula for each source charge.",
+            "Add components before computing the final magnitude.",
+        ],
+        **extra,
+    )
+
+
+def _triangle_point_symbols(values: dict[str, float]) -> tuple[str, str, str] | None:
+    for point, from_a, from_b in (
+        ("C", "AC", "BC"),
+        ("M", "AM", "BM"),
+        ("N", "AN", "BN"),
+        ("P", "AP", "BP"),
+        ("Q0", "AQ0", "BQ0"),
+    ):
+        if values.get(from_a) is not None and values.get(from_b) is not None:
+            return point, from_a, from_b
+    return None
+
+
 def _direct(answer: str, steps: list[str]) -> dict[str, Any]:
     return {
         "mode": "direct",
@@ -340,7 +480,7 @@ def _direct_multiple_choice(answer: str, selected_option: str, steps: list[str])
 
 
 def _formula_only_solution(semantic_output: dict[str, Any], text: str, values: dict[str, float]) -> dict[str, Any] | None:
-    if values.get("L") is not None and values.get("C") is not None:
+    if values:
         return None
     if "lc" not in text and "rlc" not in text:
         return None
@@ -372,42 +512,30 @@ def _electric_equilateral_solution(semantic_output: dict[str, Any]) -> dict[str,
     side = values.get("a") or values.get("AB")
     if q1 is None or q2 is None or side is None:
         return None
-    return _solution(
-        ["electrostatics.point_charge_field_vector", "electrostatics.net_field_vector_cartesian"],
-        "E_net_magnitude",
-        "N/C",
-        [
+    target = _target_from_terms(semantic_output, "E_net_magnitude")
+    target = target if _is_identifier(target) and target != "result" else "E_net_magnitude"
+    return _point_charge_vector_solution(
+        formula_ids=["electrostatics.equilateral_geometry"],
+        target_symbol=target,
+        target_unit=_target_unit_from_semantics(semantic_output, "N/C"),
+        coordinate_equations=[
             "Ax = 0",
             "Ay = 0",
             "Bx = a",
             "By = 0",
             "Nx = a / 2",
             "Ny = a * sqrt(3) / 2",
-            "dx1 = Nx - Ax",
-            "dy1 = Ny - Ay",
-            "r1 = sqrt(dx1**2 + dy1**2)",
-            "dx2 = Nx - Bx",
-            "dy2 = Ny - By",
-            "r2 = sqrt(dx2**2 + dy2**2)",
-            "E1x = k * q1 * dx1 / r1**3",
-            "E1y = k * q1 * dy1 / r1**3",
-            "E2x = k * q2 * dx2 / r2**3",
-            "E2y = k * q2 * dy2 / r2**3",
-            "Ex_net = E1x + E2x",
-            "Ey_net = E1y + E2y",
-            "E_net_magnitude = sqrt(Ex_net**2 + Ey_net**2)",
         ],
-        {"q1": q1, "q2": q2, "a": side, "k": 9e9},
-        [
+        known_values={"q1": q1, "q2": q2, "a": side, "k": 9e9},
+        source_charges=[("q1", "Ax", "Ay"), ("q2", "Bx", "By")],
+        point_x="Nx",
+        point_y="Ny",
+        target_kind="field",
+        steps=[
             "Place A at the origin, B on the positive x-axis, and N above AB.",
             "Use the signed vector field formula E = k*q*r_vector/|r_vector|**3 for each charge.",
             "Add x/y components before computing magnitude and direction.",
         ],
-        vector_spec={
-            "component_symbols": ["Ex_net", "Ey_net"],
-            "magnitude_symbol": "E_net_magnitude",
-            "direction": "parallel to AB, from A to B when Ex_net is positive and Ey_net is zero",
-        },
     )
 
 
@@ -418,31 +546,37 @@ def _electric_midpoint_solution(semantic_output: dict[str, Any]) -> dict[str, An
     ab = values.get("AB") or values.get("a")
     if q1 is None or q2 is None or ab is None:
         return None
-    return _solution(
-        ["electrostatics.point_charge_field_vector", "electrostatics.net_field_vector_cartesian"],
-        "E_net_magnitude",
-        "N/C",
-        [
+    text = _semantic_text(semantic_output)
+    target = _target_from_terms(semantic_output, "E_net_magnitude")
+    target_kind = "force" if _is_force_target(target, text) and values.get("q3") is not None else "field"
+    target = target if _is_identifier(target) and target != "result" else ("F_net_magnitude" if target_kind == "force" else "E_net_magnitude")
+    unit = _target_unit_from_semantics(semantic_output, "N" if target_kind == "force" else "N/C")
+    knowns = {"q1": q1, "q2": q2, "AB": ab, "k": 9e9}
+    if target_kind == "force" and values.get("q3") is not None:
+        knowns["q3"] = values["q3"]
+    return _point_charge_vector_solution(
+        formula_ids=["electrostatics.midpoint_geometry"],
+        target_symbol=target,
+        target_unit=unit,
+        coordinate_equations=[
             "Ax = 0",
+            "Ay = 0",
             "Bx = AB",
+            "By = 0",
             "Mx = AB / 2",
-            "dx1 = Mx - Ax",
-            "dx2 = Mx - Bx",
-            "E1x = k * q1 * dx1 / Abs(dx1)**3",
-            "E2x = k * q2 * dx2 / Abs(dx2)**3",
-            "E_net_x = E1x + E2x",
-            "E_net_magnitude = Abs(E_net_x)",
+            "My = 0",
         ],
-        {"q1": q1, "q2": q2, "AB": ab, "k": 9e9},
-        [
-            "Use a one-dimensional signed vector formula from each charge to the midpoint.",
-            "For opposite charges at the midpoint the two field vectors point the same way and add.",
+        known_values=knowns,
+        source_charges=[("q1", "Ax", "Ay"), ("q2", "Bx", "By")],
+        point_x="Mx",
+        point_y="My",
+        target_kind=target_kind,
+        test_charge_symbol="q3" if target_kind == "force" else None,
+        steps=[
+            "Use a signed coordinate model with A and B on the x-axis.",
+            "Compute the net electric field by adding components before any magnitude.",
+            "For force on the midpoint charge, multiply the net field by the signed test charge.",
         ],
-        vector_spec={
-            "component_symbols": ["E_net_x"],
-            "magnitude_symbol": "E_net_magnitude",
-            "direction": "along AB according to the sign of E_net_x",
-        },
     )
 
 
@@ -519,15 +653,22 @@ def _zero_field_solution(semantic_output: dict[str, Any]) -> dict[str, Any] | No
     if q1 is None or q2 is None or ab is None or q1 == 0 or q2 == 0:
         return None
     if q1 * q2 > 0:
+        requested_target = _target_from_terms(semantic_output, "")
+        target = requested_target if requested_target in {"AM", "AN", "AP", "BM", "BN", "BP", "x_from_A"} else "x_from_A"
+        equations = ["x_from_A = AB * sqrt(Abs(q1)) / (sqrt(Abs(q1)) + sqrt(Abs(q2)))"]
+        if target in {"BM", "BN", "BP"}:
+            equations.append(f"{target} = AB - x_from_A")
+        elif target in {"AM", "AN", "AP"}:
+            equations.append(f"{target} = x_from_A")
         return _solution(
             ["electrostatics.zero_field_point_two_charges_1d"],
-            "BM",
+            target,
             "m",
-            ["BM = AB * sqrt(Abs(q2)) / (sqrt(Abs(q1)) + sqrt(Abs(q2)))"],
+            equations,
             {"q1": q1, "q2": q2, "AB": ab},
             [
                 "Set k*Abs(q1)/AM**2 = k*Abs(q2)/BM**2 for same-sign charges between A and B.",
-                "Use AM + BM = AB, giving a square-root distance ratio.",
+                "Solve for the zero-field position x_from_A, then convert it to the requested distance.",
             ],
         )
     abs_q1 = abs(q1)
@@ -599,7 +740,7 @@ def _dielectric_point_charge_solution(semantic_output: dict[str, Any], text: str
             epsilon_r = float(dielectric_match.group(1))
     if e_value is None:
         field_match = re.search(
-            r"magnitude of\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:\s*(?:x|\*)\s*10\s*(?:\^|\*\*)?\s*[+-]?\d+)?)\s*v\s*/\s*m",
+            r"(?:magnitude of|magnitude)\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:\s*(?:x|\*)\s*10\s*(?:\^|\*\*)?\s*[+-]?\d+)?)\s*v\s*/\s*m",
             _normalize_text(question),
             flags=re.IGNORECASE,
         )
@@ -644,16 +785,195 @@ def _dielectric_point_charge_solution(semantic_output: dict[str, Any], text: str
                 ],
             )
 
+    equations = []
+    knowns: dict[str, float] = {"k": 9e9}
+    if values.get("epsilon_r") is not None or values.get("epsilon") is not None or values.get("er") is not None:
+        epsilon_symbol = "epsilon_r" if values.get("epsilon_r") is not None else "epsilon" if values.get("epsilon") is not None else "er"
+        knowns[epsilon_symbol] = float(epsilon_r)
+    else:
+        epsilon_symbol = "epsilon_r_eff"
+        equations.append(f"epsilon_r_eff = {float(epsilon_r)}")
+    if _lookup_value(values, "E", "E_M", "E_field") is not None:
+        field_symbol = "E" if values.get("E") is not None else "E_M" if values.get("E_M") is not None else "E_field"
+        knowns[field_symbol] = float(e_value)
+    else:
+        field_symbol = "E_eff"
+        equations.append(f"E_eff = {float(e_value)}")
+    if _lookup_value(values, "r", "AM", "OM", "d") is not None:
+        radius_symbol = "r" if values.get("r") is not None else "AM" if values.get("AM") is not None else "OM" if values.get("OM") is not None else "d"
+        knowns[radius_symbol] = float(r_value)
+    else:
+        radius_symbol = "r_eff"
+        equations.append(f"r_eff = {float(r_value)}")
+    equations.append(f"q = -{epsilon_symbol} * {field_symbol} * {radius_symbol}**2 / k")
     return _solution(
         ["electrostatics.point_charge_from_field_in_dielectric"],
         "q",
         "C",
-        ["q = -epsilon_r * E * r**2 / k"],
-        {"epsilon_r": float(epsilon_r), "E": float(e_value), "r": float(r_value), "k": 9e9},
+        equations,
+        knowns,
         [
             "Use E = k*|q|/(epsilon_r*r**2) in a dielectric medium.",
             "Because the field points toward the charge, q is negative.",
         ],
+    )
+
+
+def _two_source_charges(values: dict[str, float]) -> tuple[dict[str, float], list[tuple[str, str, str]]] | None:
+    q1 = values.get("q1")
+    q2 = values.get("q2")
+    if (q1 is None or q2 is None) and values.get("q") is not None:
+        return {"q": float(values["q"])}, [("q", "Ax", "Ay"), ("q", "Bx", "By")]
+    if q1 is None or q2 is None:
+        return None
+    return {"q1": float(q1), "q2": float(q2)}, [("q1", "Ax", "Ay"), ("q2", "Bx", "By")]
+
+
+def _test_charge_symbol(values: dict[str, float]) -> tuple[str, float] | None:
+    for symbol in ("q3", "q0", "q_test"):
+        if values.get(symbol) is not None:
+            return symbol, float(values[symbol])
+    return None
+
+
+def _perpendicular_bisector_vector_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
+    charges = _two_source_charges(values)
+    base_symbol = "AB" if values.get("AB") is not None else "d_AB" if values.get("d_AB") is not None else ""
+    height_symbol = "ell" if values.get("ell") is not None else "h" if values.get("h") is not None else "d"
+    if charges is None or not base_symbol or values.get(height_symbol) is None:
+        return None
+    if "perpendicular bisector" not in text and "trung truc" not in text and "trung trực" not in text:
+        return None
+    target = _target_from_terms(semantic_output, "E_net_magnitude")
+    test_charge = _test_charge_symbol(values)
+    target_kind = "force" if _is_force_target(target, text) and test_charge is not None else "field"
+    target = target if _is_identifier(target) and target != "result" else ("F_net_magnitude" if target_kind == "force" else "E_net_magnitude")
+    knowns = {**charges[0], base_symbol: float(values[base_symbol]), height_symbol: float(values[height_symbol]), "k": 9e9}
+    if target_kind == "force" and test_charge is not None:
+        knowns[test_charge[0]] = test_charge[1]
+    return _point_charge_vector_solution(
+        formula_ids=["electrostatics.perpendicular_bisector_geometry"],
+        target_symbol=target,
+        target_unit=_target_unit_from_semantics(semantic_output, "N" if target_kind == "force" else "N/C"),
+        coordinate_equations=[
+            f"Ax = -{base_symbol} / 2",
+            "Ay = 0",
+            f"Bx = {base_symbol} / 2",
+            "By = 0",
+            "Mx = 0",
+            f"My = {height_symbol}",
+        ],
+        known_values=knowns,
+        source_charges=charges[1],
+        point_x="Mx",
+        point_y="My",
+        target_kind=target_kind,
+        test_charge_symbol=test_charge[0] if target_kind == "force" and test_charge is not None else None,
+        steps=[
+            "Normalize the perpendicular-bisector geometry to Cartesian coordinates.",
+            "Compute signed Coulomb field components from both source charges.",
+            "Add components before computing the field or force magnitude.",
+        ],
+    )
+
+
+def _triangle_ab_point_vector_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
+    charges = _two_source_charges(values)
+    point_symbols = _triangle_point_symbols(values)
+    ab = values.get("AB") or values.get("a")
+    if charges is None or point_symbols is None or ab is None or ab <= 0:
+        return None
+    point_name, from_a, from_b = point_symbols
+    target = _target_from_terms(semantic_output, "E_net_magnitude")
+    test_charge = _test_charge_symbol(values)
+    target_kind = "force" if _is_force_target(target, text) and test_charge is not None else "field"
+    target = target if _is_identifier(target) and target != "result" else ("F_net_magnitude" if target_kind == "force" else "E_net_magnitude")
+    knowns = {**charges[0], "AB": float(ab), from_a: float(values[from_a]), from_b: float(values[from_b]), "k": 9e9}
+    if target_kind == "force" and test_charge is not None:
+        knowns[test_charge[0]] = test_charge[1]
+    px = f"{point_name}x"
+    py = f"{point_name}y"
+    return _point_charge_vector_solution(
+        formula_ids=["electrostatics.triangle_distance_geometry"],
+        target_symbol=target,
+        target_unit=_target_unit_from_semantics(semantic_output, "N" if target_kind == "force" else "N/C"),
+        coordinate_equations=[
+            "Ax = 0",
+            "Ay = 0",
+            "Bx = AB",
+            "By = 0",
+            f"{px} = ({from_a}**2 + AB**2 - {from_b}**2) / (2 * AB)",
+            f"{py} = sqrt({from_a}**2 - {px}**2)",
+        ],
+        known_values=knowns,
+        source_charges=charges[1],
+        point_x=px,
+        point_y=py,
+        target_kind=target_kind,
+        test_charge_symbol=test_charge[0] if target_kind == "force" and test_charge is not None else None,
+        steps=[
+            "Normalize the triangle from side lengths by placing A and B on the x-axis.",
+            "Use the law of cosines to compute the target point coordinates.",
+            "Apply the reusable Coulomb vector component equations.",
+        ],
+    )
+
+
+def _right_angle_vertex_force_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
+    if "right angle" not in text and "right-angle" not in text and "vuong" not in text and "vuông" not in text:
+        return None
+    if "force" not in text:
+        return None
+    q_value = values.get("q") or values.get("q1")
+    leg = values.get("a") or values.get("AB") or values.get("BC") or values.get("AC")
+    if q_value is None or leg is None or leg <= 0:
+        return None
+    target = _target_from_terms(semantic_output, "F_net_magnitude")
+    target = target if _is_identifier(target) and target != "result" else "F_net_magnitude"
+    return _point_charge_vector_solution(
+        formula_ids=["electrostatics.right_angle_vertex_geometry"],
+        target_symbol=target,
+        target_unit=_target_unit_from_semantics(semantic_output, "N"),
+        coordinate_equations=[
+            "Px = 0",
+            "Py = 0",
+            "Ax = a",
+            "Ay = 0",
+            "Bx = 0",
+            "By = a",
+        ],
+        known_values={"q": float(q_value), "a": float(leg), "k": 9e9},
+        source_charges=[("q", "Ax", "Ay"), ("q", "Bx", "By")],
+        point_x="Px",
+        point_y="Py",
+        target_kind="force",
+        test_charge_symbol="q",
+        steps=[
+            "Normalize the right-angle vertex as the target point at the origin.",
+            "Place the other two equal charges on perpendicular axes at the leg length.",
+            "Add force components generated through the shared field-vector engine.",
+        ],
+    )
+
+
+def _resultant_two_vectors_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
+    f1 = values.get("F1")
+    f2 = values.get("F2")
+    theta = values.get("theta")
+    target = _target_from_terms(semantic_output, "F_resultant")
+    if f1 is None or f2 is None or theta is None:
+        return None
+    if not (_target_is(target, "F", "F_net", "F_total", "F_resultant", "R") or "resultant" in text):
+        return None
+    solved_target = target if _is_identifier(target) and target != "result" else "F_resultant"
+    angle_equation = "theta_rad = theta * pi / 180" if abs(theta) > 2 * math.pi or "degree" in text or "°" in text else "theta_rad = theta"
+    return _solution(
+        ["vectors.resultant_two_vectors_law_of_cosines"],
+        solved_target,
+        _target_unit_from_semantics(semantic_output, "N"),
+        [angle_equation, f"{solved_target} = sqrt(F1**2 + F2**2 + 2 * F1 * F2 * cos(theta_rad))"],
+        {"F1": float(f1), "F2": float(f2), "theta": float(theta)},
+        ["Use the law of cosines with the angle converted to radians before applying SymPy trigonometry."],
     )
 
 
@@ -663,9 +983,18 @@ def _electric_solution(semantic_output: dict[str, Any], text: str) -> dict[str, 
     geometry_type = str(geometry.get("type") or "").lower() if isinstance(geometry, dict) else ""
     if "electric" not in domain and "charge" not in domain:
         return None
+    values = _numeric_values(semantic_output)
+    right_angle = _right_angle_vertex_force_solution(semantic_output, values, text)
+    if right_angle is not None:
+        return right_angle
+    perpendicular = _perpendicular_bisector_vector_solution(semantic_output, values, text)
+    if perpendicular is not None:
+        return perpendicular
+    triangle = _triangle_ab_point_vector_solution(semantic_output, values, text)
+    if triangle is not None:
+        return triangle
     # Handle AC = BC isosceles geometry before any generic triangle heuristics.
     if "ac = bc" in text or "ac=bc" in text:
-        values = _numeric_values(semantic_output)
         target = _target_from_terms(semantic_output, "E")
         q_value = values.get("q") or (values.get("q1") if values.get("q1") == values.get("q2") else None)
         ab = values.get("AB") or values.get("a")
@@ -705,7 +1034,6 @@ def _electric_solution(semantic_output: dict[str, Any], text: str) -> dict[str, 
         return unknown_charge_solution
     if "field is zero" in text or "electric field is zero" in text or "zero-field" in text:
         return _zero_field_solution(semantic_output)
-    values = _numeric_values(semantic_output)
     target = _target_from_terms(semantic_output, "E")
 
     # Field magnitude from force on a charge: E = F/|q|
@@ -1134,6 +1462,96 @@ def _ac_solution(semantic_output: dict[str, Any], values: dict[str, float], text
     return None
 
 
+def _extract_unit_value(text: str, pattern: str, scales: dict[str, float]) -> float | None:
+    match = re.search(pattern, text, flags=re.IGNORECASE)
+    if not match:
+        return None
+    value = _parse_number_token(match.group("value"))
+    if value is None:
+        return None
+    unit = _normalize_text(match.group("unit")).lower()
+    scale = scales.get(unit)
+    if scale is None:
+        return None
+    return value * scale
+
+
+CAPACITANCE_UNIT_SCALES = {
+    "f": 1.0,
+    "mf": 1e-3,
+    "microf": 1e-6,
+    "muf": 1e-6,
+    "uf": 1e-6,
+    "nf": 1e-9,
+    "pf": 1e-12,
+}
+ENERGY_UNIT_SCALES = {"j": 1.0, "mj": 1e-3, "microj": 1e-6, "muj": 1e-6, "uj": 1e-6}
+AREA_UNIT_SCALES = {"m2": 1.0, "m^2": 1.0, "m²": 1.0, "cm2": 1e-4, "cm^2": 1e-4, "cm²": 1e-4, "mm2": 1e-6, "mm^2": 1e-6, "mm²": 1e-6}
+LENGTH_UNIT_SCALES = {"m": 1.0, "cm": 1e-2, "mm": 1e-3}
+
+
+def _extract_capacitance_from_text(question_norm: str) -> float | None:
+    unit_pattern = r"(?P<unit>microf|muf|uf|nf|pf|mf|f)\b"
+    patterns = (
+        rf"\bcapacitance(?:\s+of)?\s*(?:c\s*=\s*)?(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*{unit_pattern}",
+        rf"\bc\s*=\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*{unit_pattern}",
+    )
+    for pattern in patterns:
+        value = _extract_unit_value(question_norm, pattern, CAPACITANCE_UNIT_SCALES)
+        if value is not None:
+            return value
+    return None
+
+
+def _extract_energy_from_text(question_norm: str) -> float | None:
+    unit_pattern = r"(?P<unit>microj|muj|uj|mj|j)\b"
+    patterns = (
+        rf"\b(?:energy|initial energy|stores)\D*?(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*{unit_pattern}",
+        rf"\bw\s*=\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*{unit_pattern}",
+    )
+    for pattern in patterns:
+        value = _extract_unit_value(question_norm, pattern, ENERGY_UNIT_SCALES)
+        if value is not None:
+            return value
+    return None
+
+
+def _extract_area_from_text(question_norm: str) -> float | None:
+    unit_pattern = r"(?P<unit>cm2|cm\^2|cm²|mm2|mm\^2|mm²|m2|m\^2|m²)\b"
+    patterns = (
+        rf"\b(?:area|plate area|cross-sectional area)(?:\s+of)?\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*{unit_pattern}",
+        rf"\b(?:a|s)\s*=\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*{unit_pattern}",
+    )
+    for pattern in patterns:
+        value = _extract_unit_value(question_norm, pattern, AREA_UNIT_SCALES)
+        if value is not None:
+            return value
+    return None
+
+
+def _extract_length_from_text(question_norm: str, *names: str) -> float | None:
+    unit_pattern = r"(?P<unit>mm|cm|m)\b"
+    name_pattern = "|".join(re.escape(name) for name in names)
+    patterns = (
+        rf"\b(?:{name_pattern})(?:\s+of)?\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*{unit_pattern}",
+        rf"\b(?:{name_pattern})\s*=\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*{unit_pattern}",
+    )
+    for pattern in patterns:
+        value = _extract_unit_value(question_norm, pattern, LENGTH_UNIT_SCALES)
+        if value is not None:
+            return value
+    return None
+
+
+def _extract_voltage_from_text(question_norm: str) -> float | None:
+    match = re.search(
+        r"\b(?:voltage|potential difference|u|v)\b.*?(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*v\b",
+        question_norm,
+        flags=re.IGNORECASE,
+    )
+    return _parse_number_token(match.group("value")) if match else None
+
+
 def _capacitance_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
     domain = str(semantic_output.get("domain") or "").lower()
     if "capacitance" not in domain and "capacitor" not in text and "electric potential" not in domain:
@@ -1141,11 +1559,171 @@ def _capacitance_solution(semantic_output: dict[str, Any], values: dict[str, flo
     target = _target_from_terms(semantic_output, "result")
     unit = _target_unit_from_semantics(semantic_output)
     c_value = values.get("C")
-    q_value = values.get("Q")
+    q_value = _lookup_value(values, "Q", "Q1", "Q2")
     u_value = _lookup_value(values, "U")
     question = str(semantic_output.get("question") or "")
     question_norm = _normalize_text(question).lower()
     voltage_symbol = "U" if "U" in values or "U_rms" in values else "V"
+    text_capacitance = _extract_capacitance_from_text(question_norm)
+    if text_capacitance is not None:
+        c_value = text_capacitance
+    text_voltage = _extract_voltage_from_text(question_norm)
+    if text_voltage is not None:
+        u_value = text_voltage
+        voltage_symbol = "U"
+    text_energy = _extract_energy_from_text(question_norm)
+    area_value = _extract_area_from_text(question_norm) or values.get("A") or values.get("S")
+    separation_value = _extract_length_from_text(question_norm, "plate separation", "separation", "distance", "d") or values.get("d")
+
+    factor_match = re.search(r"(?:factor of|by a factor of|increases by)\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))", question_norm)
+    if (
+        ("disconnected" in question_norm or "isolated" in question_norm)
+        and ("permittivity" in question_norm or "dielectric" in question_norm)
+        and text_energy is not None
+        and factor_match
+    ):
+        factor = float(factor_match.group("value"))
+        if factor != 0:
+            solved_target = target if _is_identifier(target) and target != "result" else "U_new"
+            return _solution(
+                ["capacitance.isolated_capacitor_energy_dielectric_factor"],
+                solved_target,
+                unit or "J",
+                [f"U_initial = {text_energy}", f"factor = {factor}", f"{solved_target} = U_initial / factor"],
+                {},
+                [
+                    "For a disconnected capacitor, charge remains constant.",
+                    "Since energy at fixed charge is inversely proportional to capacitance, increasing permittivity by a factor reduces energy by that factor.",
+                ],
+            )
+
+    if ("breakdown" in question_norm or "emax" in question_norm or "maximum charge" in question_norm) and (_target_is(target, "Q", "Q_max", "q") or "charge" in question_norm):
+        e_max = _lookup_value(values, "Emax", "E_max", "E")
+        if e_max is None:
+            e_match = re.search(
+                r"(?:emax|e_max|electric field).*?(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:\s*(?:x|\*)\s*10\s*(?:\^|\*\*)?\s*[+-]?\d+)?)\s*v\s*/\s*m",
+                question_norm,
+            )
+            if e_match:
+                e_max = _parse_number_token(e_match.group("value"))
+        radius = values.get("r") or _extract_length_from_text(question_norm, "radius", "r")
+        solved_target = target if _is_identifier(target) and target != "result" else "Q_max"
+        if e_max is not None and radius is not None:
+            return _solution(
+                ["capacitance.parallel_plate_breakdown_charge"],
+                solved_target,
+                unit or "C",
+                ["A = pi * r**2", f"{solved_target} = epsilon_0 * E_max * A"],
+                {"r": float(radius), "E_max": float(e_max)},
+                [
+                    "At air breakdown, maximum surface charge density is sigma_max = epsilon_0*E_max.",
+                    "The maximum charge is Q_max = sigma_max*A; plate separation does not multiply this expression.",
+                ],
+            )
+        if e_max is not None and area_value is not None:
+            return _solution(
+                ["capacitance.parallel_plate_breakdown_charge"],
+                solved_target,
+                unit or "C",
+                [f"{solved_target} = epsilon_0 * E_max * A"],
+                {"A": float(area_value), "E_max": float(e_max)},
+                ["Use Q_max = epsilon_0*E_max*A at air breakdown."],
+            )
+
+    if _target_is(target, "C") and text_energy is not None and u_value is not None and u_value != 0:
+        requested_micro = "microf" in unit.lower() or "muf" in unit.lower() or "μf" in unit.lower() or "µf" in unit.lower()
+        factor = 1e6 if requested_micro else 1.0
+        return _solution(
+            ["capacitance.from_stored_energy_voltage"],
+            "C",
+            unit or "F",
+            [f"W_eff = {text_energy}", f"U_eff = {u_value}", f"C = 2 * W_eff / U_eff**2{f' * {factor}' if factor != 1.0 else ''}"],
+            {},
+            ["Use W = C*U**2/2 and solve for capacitance."],
+        )
+
+    if _target_is(target, "C") and area_value is not None and separation_value is not None:
+        epsilon_r = _lookup_value(values, "epsilon_r", "epsilon", "eps_r") or 1.0
+        target_unit = unit or "F"
+        equations = []
+        knowns: dict[str, float] = {}
+        if values.get("A") is not None and math.isclose(float(values["A"]), float(area_value), rel_tol=1e-9, abs_tol=1e-12):
+            area_symbol = "A"
+            knowns["A"] = float(area_value)
+        else:
+            area_symbol = "A_eff"
+            equations.append(f"A_eff = {area_value}")
+        if values.get("d") is not None and math.isclose(float(values["d"]), float(separation_value), rel_tol=1e-9, abs_tol=1e-12):
+            distance_symbol = "d"
+            knowns["d"] = float(separation_value)
+        else:
+            distance_symbol = "d_eff"
+            equations.append(f"d_eff = {separation_value}")
+        if _lookup_value(values, "epsilon_r", "epsilon", "eps_r") is not None:
+            epsilon_symbol = "epsilon_r" if values.get("epsilon_r") is not None else "epsilon" if values.get("epsilon") is not None else "eps_r"
+            knowns[epsilon_symbol] = float(epsilon_r)
+        else:
+            epsilon_symbol = "epsilon_r_eff"
+            equations.append("epsilon_r_eff = 1")
+        equations.append(f"C = epsilon_0 * {epsilon_symbol} * {area_symbol} / {distance_symbol}")
+        return _solution(
+            ["capacitance.parallel_plate_capacitance"],
+            "C",
+            target_unit,
+            equations,
+            knowns,
+            ["Use the parallel-plate capacitance relation C = epsilon_0*epsilon_r*A/d."],
+        )
+
+    if _target_is(target, "epsilon_r", "epsilon") and c_value is not None and area_value is not None and separation_value is not None:
+        solved_target = target if _target_is(target, "epsilon_r", "epsilon") else "epsilon_r"
+        equations = []
+        knowns = {}
+        if values.get("C") is not None and math.isclose(float(values["C"]), float(c_value), rel_tol=1e-9, abs_tol=1e-18):
+            capacitance_symbol = "C"
+            knowns["C"] = float(c_value)
+        else:
+            capacitance_symbol = "C_eff"
+            equations.append(f"C_eff = {c_value}")
+        if values.get("A") is not None and math.isclose(float(values["A"]), float(area_value), rel_tol=1e-9, abs_tol=1e-12):
+            area_symbol = "A"
+            knowns["A"] = float(area_value)
+        else:
+            area_symbol = "A_eff"
+            equations.append(f"A_eff = {area_value}")
+        if values.get("d") is not None and math.isclose(float(values["d"]), float(separation_value), rel_tol=1e-9, abs_tol=1e-12):
+            distance_symbol = "d"
+            knowns["d"] = float(separation_value)
+        else:
+            distance_symbol = "d_eff"
+            equations.append(f"d_eff = {separation_value}")
+        equations.append(f"{solved_target} = {capacitance_symbol} * {distance_symbol} / (epsilon_0 * {area_symbol})")
+        return _solution(
+            ["capacitance.dielectric_constant_from_geometry"],
+            solved_target,
+            unit or "",
+            equations,
+            knowns,
+            ["Rearrange C = epsilon_0*epsilon_r*A/d to solve for the dielectric constant."],
+        )
+
+    if "parallel" in question_norm and q_value is not None and ("less than" in question_norm or "<" in question_norm):
+        capacitances = [(symbol, value) for symbol, value in values.items() if re.fullmatch(r"C\d+", symbol)]
+        limit_match = re.search(r"(?:u\s*<|less than)\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*v", question_norm)
+        if capacitances and limit_match:
+            limit = float(limit_match.group("value"))
+            candidates = [(symbol, q_value / capacitance) for symbol, capacitance in capacitances if capacitance != 0]
+            valid = [(symbol, voltage) for symbol, voltage in candidates if voltage < limit]
+            selected = valid[0] if valid else min(candidates, key=lambda item: abs(item[1] - limit))
+            solved_target = target if _target_is(target, "U", "V") else "U"
+            return _solution(
+                ["capacitance.parallel_capacitor_unknown_charged_branch_voltage"],
+                solved_target,
+                unit or "V",
+                [f"{solved_target} = Q / {selected[0]}"],
+                {"Q": q_value, selected[0]: dict(capacitances)[selected[0]]},
+                ["In parallel, both capacitors share the same voltage; select the branch consistent with the stated voltage constraint."],
+            )
 
     if "equally shared among two identical capacitors" in question_norm and c_value is not None and u_value is not None:
         solved_target = target if _is_identifier(target) and target != "result" else "E_total"
@@ -1263,6 +1841,46 @@ def _capacitance_solution(semantic_output: dict[str, Any], values: dict[str, flo
 def _measurement_statistics_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
     target = _target_from_terms(semantic_output, "result")
     unit = _target_unit_from_semantics(semantic_output)
+    measurement = _measurement_value_and_delta(values, target, "I", "L", "V", "x", "measured_value", "measurement")
+    if "maximum possible" in text and measurement is not None:
+        symbol, measured_value, delta_value = measurement
+        solved_target = target if _is_identifier(target) and target != "result" else f"{symbol}_max"
+        return _solution(
+            ["measurement.maximum_possible_value"],
+            solved_target,
+            unit or "",
+            [f"{solved_target} = {symbol} + delta_{symbol}"],
+            {symbol: measured_value, f"delta_{symbol}": delta_value},
+            ["The maximum possible value is the measured value plus its absolute uncertainty."],
+        )
+
+    if ("percentage relative uncertainty" in text or "percentage relative error" in text or "relative error" in text) and measurement is not None:
+        symbol, measured_value, delta_value = measurement
+        if measured_value != 0:
+            solved_target = target if _is_identifier(target) and target != "result" else "error_percentage"
+            return _solution(
+                ["measurement.percentage_relative_uncertainty"],
+                solved_target,
+                unit or "%",
+                [f"{solved_target} = Abs(delta_{symbol} / {symbol}) * 100"],
+                {symbol: measured_value, f"delta_{symbol}": delta_value},
+                ["Percentage relative uncertainty equals absolute uncertainty divided by the measured value, times 100."],
+            )
+
+    if ("least count" in text or "least_count" in values) and ("percentage" in text or "%" in unit):
+        least_count = _lookup_value(values, "least_count", "LC")
+        measured_value = _lookup_value(values, "measured_value", "measurement", "L")
+        if least_count is not None and measured_value is not None and measured_value != 0:
+            solved_target = target if _is_identifier(target) and target != "result" else "error_percentage"
+            return _solution(
+                ["measurement.percentage_error_from_least_count"],
+                solved_target,
+                unit or "%",
+                [f"{solved_target} = Abs((least_count / 2) / measured_value) * 100"],
+                {"least_count": float(least_count), "measured_value": float(measured_value)},
+                ["For an analog scale, absolute uncertainty is half the least count; percentage error is delta/value*100."],
+            )
+
     if "absolute error of the power" in text:
         v_value = _lookup_value(values, "V", "U")
         i_value = _lookup_value(values, "I")
@@ -1362,6 +1980,20 @@ def _basic_circuit_solution(semantic_output: dict[str, Any], values: dict[str, f
 
 
 def _magnetism_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
+    if "magnetic flux" in text or "flux through" in text:
+        b_value = _lookup_value(values, "B")
+        area_value = _lookup_value(values, "A", "S") or _extract_area_from_text(_normalize_text(str(semantic_output.get("question") or "")).lower())
+        if b_value is not None and area_value is not None:
+            target = _target_from_terms(semantic_output, "Phi")
+            target = target if _is_identifier(target) and target != "result" else "Phi"
+            return _solution(
+                ["magnetism.magnetic_flux_uniform_field"],
+                target,
+                _target_unit_from_semantics(semantic_output, "Wb"),
+                [f"{target} = B * A"],
+                {"B": float(b_value), "A": float(area_value)},
+                ["For a uniform magnetic field perpendicular to the cross-section, magnetic flux is Phi = B*A."],
+            )
     if "solenoid" in text and "magnetic field" in text and all(symbol in values for symbol in ("N", "I", "ell")):
         return _solution(["magnetism.solenoid_magnetic_field"], "B", "T", ["B = mu_0 * N * I / ell"], {symbol: values[symbol] for symbol in ("N", "I", "ell")}, ["Use the long-solenoid magnetic-field formula with mu_0 as a physical constant."])
     if "solenoid" in text and "magnetic field" in text:
@@ -1415,7 +2047,7 @@ def _inductance_solution(semantic_output: dict[str, Any], values: dict[str, floa
         question = _normalize_text(str(semantic_output.get("question") or "")).lower()
         if i_value is None:
             current_match = re.search(
-                r"(?:current(?:\s+is|\s+reaches|\s+reaches its maximum value of|=)?\s*)([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:\s*sqrt\s*\(?\s*[+-]?(?:\d+(?:\.\d*)?|\.\d+)\s*\)?)?)\s*a\b",
+                r"(?:current(?:\s+is|\s+reaches|\s+reaches\s+(?:its\s+)?maximum\s+value(?:\s+of)?|=)?\s*)([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:\s*sqrt\s*\(?\s*[+-]?(?:\d+(?:\.\d*)?|\.\d+)\s*\)?)?)\s*a\b",
                 question,
             )
             if current_match:
@@ -1439,12 +2071,18 @@ def _inductance_solution(semantic_output: dict[str, Any], values: dict[str, floa
             )
         if (_target_is(target, "W", "W_B", "W_max", "E") or "maximum magnetic field energy" in text) and l_value is not None and i_value is not None:
             solved_target = target if _target_is(target, "W", "W_B", "W_max", "E") else "W_max"
+            if values.get("I") is not None or values.get("I_max") is not None:
+                equations = [f"{solved_target} = L * I_max**2 / 2"]
+                knowns = {"L": float(l_value), "I_max": float(i_value)}
+            else:
+                equations = [f"I_max = {float(i_value)}", f"{solved_target} = L * I_max**2 / 2"]
+                knowns = {"L": float(l_value)}
             return _solution(
                 ["inductance.magnetic_energy"],
                 solved_target,
                 unit or "J",
-                [f"{solved_target} = L * I_max**2 / 2"],
-                {"L": float(l_value), "I_max": float(i_value)},
+                equations,
+                knowns,
                 ["Use W = (1/2)*L*I^2 with the peak current value."],
             )
     return None
@@ -1495,6 +2133,7 @@ def deterministic_solution(semantic_output: dict[str, Any]) -> dict[str, Any] | 
     values = _numeric_values(semantic_output)
     text = _semantic_text(semantic_output)
     for builder in (
+        lambda: _resultant_two_vectors_solution(semantic_output, values, text),
         lambda: _electric_solution(semantic_output, text),
         lambda: _ac_solution(semantic_output, values, text),
         lambda: _capacitance_solution(semantic_output, values, text),

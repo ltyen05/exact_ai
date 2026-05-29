@@ -20,6 +20,8 @@ SYMBOL_REPLACEMENTS = {
     "ω": "omega",
     "Ω": "Ohm",
     "μ": "mu",
+    "µ": "mu",
+    "λ": "lambda_",
     "−": "-",
     "–": "-",
 }
@@ -48,6 +50,7 @@ UNIT_TO_SI: dict[str, tuple[float, str]] = {
     "μf": (1e-6, "F"),
     "µf": (1e-6, "F"),
     "uf": (1e-6, "F"),
+    "pf": (1e-12, "F"),
     "nf": (1e-9, "F"),
     "mf": (1e-3, "F"),
     "f": (1.0, "F"),
@@ -70,6 +73,7 @@ UNIT_TO_SI: dict[str, tuple[float, str]] = {
     "μj": (1e-6, "J"),
     "µj": (1e-6, "J"),
     "microj": (1e-6, "J"),
+    "ml": (1e-6, "m3"),
 }
 UNIT_PATTERN = "|".join(
     re.escape(unit)

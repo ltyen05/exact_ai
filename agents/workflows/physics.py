@@ -48,6 +48,24 @@ def _with_error(state: WorkflowState, error: str) -> list[str]:
 def _as_number(value: Any) -> float | None:
     if value is None or isinstance(value, bool):
         return None
+    if isinstance(value, str):
+        text = value.strip().lower()
+        text = text.replace("×", "x").replace("√", "sqrt")
+        text = re.sub(r"(\d)\s*sqrt", r"\1*sqrt", text)
+        sci = re.fullmatch(
+            r"([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?:x|\*)\s*10\s*(?:\^|\*\*)?\s*([+-]?\d+)",
+            text,
+        )
+        if sci:
+            return float(sci.group(1)) * (10.0 ** int(sci.group(2)))
+        sqrt_match = re.fullmatch(
+            r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)?)\s*\*?\s*sqrt\s*\(?\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*\)?",
+            text,
+        )
+        if sqrt_match:
+            coefficient = sqrt_match.group(1)
+            factor = float(coefficient) if coefficient not in {"", "+", "-"} else (-1.0 if coefficient == "-" else 1.0)
+            return factor * math.sqrt(float(sqrt_match.group(2)))
     try:
         return float(value)
     except (TypeError, ValueError):
@@ -162,6 +180,9 @@ class PhysicsWorkflow:
     @staticmethod
     def _put_quantity(quantities: dict[str, float], symbol: Any, value: Any) -> None:
         name = str(symbol or "").strip()
+        name = name.replace("λ", "lambda_")
+        if name == "lambda":
+            name = "lambda_"
         numeric = _as_number(value)
         if not name or numeric is None:
             return
@@ -197,7 +218,10 @@ class PhysicsWorkflow:
                 uncertainty_value = uncertainty.get("si_value")
                 if uncertainty_value is None:
                     uncertainty_value = uncertainty.get("value")
-                self._put_quantity(quantities, f"delta_{given.get('symbol')}", uncertainty_value)
+                symbol = str(given.get("symbol") or "").strip()
+                self._put_quantity(quantities, f"delta_{symbol}", uncertainty_value)
+                self._put_quantity(quantities, "uncertainty", uncertainty_value)
+                self._put_quantity(quantities, "absolute_uncertainty", uncertainty_value)
 
         geometry = parsed_question.get("geometry") or {}
         if isinstance(geometry, dict):
@@ -300,6 +324,23 @@ class PhysicsWorkflow:
         logger.debug("physics.undefined_symbols_before_sympy=%s", undefined)
         if undefined:
             raise ValueError(f"Undefined symbols before SymPy: {', '.join(undefined)}.")
+        vector_spec = solution_output.get("vector_spec") if isinstance(solution_output.get("vector_spec"), dict) else {}
+        component_symbols = [str(symbol) for symbol in vector_spec.get("component_symbols") or []]
+        if component_symbols:
+            lhs_symbols = {
+                equation.split("=", 1)[0].strip()
+                for equation in equations
+                if equation.count("=") == 1
+                and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", equation.split("=", 1)[0].strip())
+            }
+            missing_components = sorted(
+                symbol for symbol in component_symbols if symbol not in lhs_symbols and symbol not in quantities
+            )
+            if missing_components:
+                raise ValueError(
+                    "vector_spec component symbols must be defined by equations or known values: "
+                    f"{', '.join(missing_components)}."
+                )
         return quantities, target, unit, equations
 
     @staticmethod

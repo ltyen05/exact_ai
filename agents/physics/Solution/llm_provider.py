@@ -161,7 +161,16 @@ class LLMSolutionProvider(SolutionProvider):
 
         for item in semantic_output.get("givens") or []:
             if isinstance(item, dict):
-                put_value(item.get("symbol"), item.get("si_value"))
+                symbol = item.get("symbol")
+                put_value(symbol, item.get("si_value"))
+                uncertainty = item.get("uncertainty") or {}
+                if isinstance(uncertainty, dict):
+                    uncertainty_value = uncertainty.get("si_value")
+                    if isinstance(uncertainty_value, (int, float)):
+                        clean_symbol = _clean_symbol_name(symbol)
+                        put_value(f"delta_{clean_symbol}", uncertainty_value)
+                        put_value("uncertainty", uncertainty_value)
+                        put_value("absolute_uncertainty", uncertainty_value)
         geometry = semantic_output.get("geometry") or {}
         if isinstance(geometry, dict):
             for field in ("segments", "derived_distances"):
@@ -828,6 +837,38 @@ class LLMSolutionProvider(SolutionProvider):
             if target_symbol not in used:
                 raise ValueError(f"Target symbol {target_symbol} must be defined by an equation or known value.")
 
+    @staticmethod
+    def _validate_vector_spec_components(
+        solution: dict[str, Any],
+        equations: list[str],
+        known_values: dict[str, Any],
+    ) -> None:
+        vector_spec = solution.get("vector_spec")
+        if not isinstance(vector_spec, dict):
+            return
+        component_symbols = vector_spec.get("component_symbols") or []
+        if not isinstance(component_symbols, list):
+            raise ValueError("vector_spec.component_symbols must be an array.")
+        lhs_symbols = {
+            _canonical_symbol_name(equation.split("=", 1)[0].strip())
+            for equation in equations
+            if isinstance(equation, str)
+            and equation.count("=") == 1
+            and _is_identifier(equation.split("=", 1)[0].strip())
+        }
+        known_symbols = {_canonical_symbol_name(symbol) for symbol in known_values}
+        missing = sorted(
+            _canonical_symbol_name(symbol)
+            for symbol in component_symbols
+            if _canonical_symbol_name(symbol) not in lhs_symbols
+            and _canonical_symbol_name(symbol) not in known_symbols
+        )
+        if missing:
+            raise ValueError(
+                "vector_spec component symbols must be defined by equations or known values: "
+                f"{', '.join(missing)}."
+            )
+
     @classmethod
     def _validate_solution(cls, solution: dict[str, Any]) -> dict[str, Any]:
         solution = cls._normalize_solution_contract(solution)
@@ -861,6 +902,7 @@ class LLMSolutionProvider(SolutionProvider):
         if not isinstance(known_values, dict):
             raise ValueError("sympy_spec.known_values must be an object.")
         cls._validate_dependency_closure(equations, known_values, spec["target_symbol"])
+        cls._validate_vector_spec_components(solution, equations, known_values)
         if not isinstance(solution.get("solution_steps", []), list):
             raise ValueError("solution_steps must be an array.")
         if answer_type == "yes_no":
