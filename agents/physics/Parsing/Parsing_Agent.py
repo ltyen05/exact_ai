@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from agents.formatting import extract_json
+from agents.formatting import as_number, extract_json
 from agents.llm import LLMClientBase
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -19,6 +19,7 @@ SYMBOL_REPLACEMENTS = {
     "θ": "theta",
     "ω": "omega",
     "Ω": "Ohm",
+    "ε": "epsilon_",
     "μ": "mu",
     "µ": "mu",
     "λ": "lambda_",
@@ -43,7 +44,9 @@ UNIT_TO_SI: dict[str, tuple[float, str]] = {
     "μc": (1e-6, "C"),
     "µc": (1e-6, "C"),
     "uc": (1e-6, "C"),
+    "pc": (1e-12, "C"),
     "nc": (1e-9, "C"),
+    "mc": (1e-3, "C"),
     "c": (1.0, "C"),
     "microf": (1e-6, "F"),
     "muf": (1e-6, "F"),
@@ -64,20 +67,68 @@ UNIT_TO_SI: dict[str, tuple[float, str]] = {
     "ua": (1e-6, "A"),
     "a": (1.0, "A"),
     "v": (1.0, "V"),
+    "mv": (1e-3, "V"),
+    "kv": (1e3, "V"),
+    "microh": (1e-6, "H"),
+    "muh": (1e-6, "H"),
+    "μh": (1e-6, "H"),
+    "µh": (1e-6, "H"),
+    "uh": (1e-6, "H"),
+    "mh": (1e-3, "H"),
     "h": (1.0, "H"),
     "hz": (1.0, "Hz"),
+    "khz": (1e3, "Hz"),
+    "Mhz": (1e6, "Hz"),
+    "rad/s": (1.0, "rad/s"),
     "ohm": (1.0, "Ohm"),
     "ω": (1.0, "Ohm"),
+    "mohm": (1e-3, "Ohm"),
+    "Mohm": (1e6, "Ohm"),
     "j": (1.0, "J"),
     "mj": (1e-3, "J"),
     "μj": (1e-6, "J"),
     "µj": (1e-6, "J"),
     "microj": (1e-6, "J"),
+    "uj": (1e-6, "J"),
+    "wb": (1.0, "Wb"),
+    "mwb": (1e-3, "Wb"),
+    "microwb": (1e-6, "Wb"),
+    "muwb": (1e-6, "Wb"),
+    "μwb": (1e-6, "Wb"),
+    "µwb": (1e-6, "Wb"),
+    "uwb": (1e-6, "Wb"),
+    "nwb": (1e-9, "Wb"),
+    "t": (1.0, "T"),
+    "n": (1.0, "N"),
+    "n/c": (1.0, "N/C"),
+    "v/m": (1.0, "V/m"),
+    "w": (1.0, "W"),
+    "s": (1.0, "s"),
+    "ms": (1e-3, "s"),
+    "micros": (1e-6, "s"),
+    "mus": (1e-6, "s"),
+    "μs": (1e-6, "s"),
+    "µs": (1e-6, "s"),
+    "us": (1e-6, "s"),
     "ml": (1e-6, "m3"),
 }
 UNIT_PATTERN = "|".join(
     re.escape(unit)
     for unit in sorted(UNIT_TO_SI, key=len, reverse=True)
+)
+QUANTITY_ALIAS_GROUPS = (
+    ("U", "V", "U_rms", "V_rms"),
+    ("I", "I_rms", "I_effective"),
+    ("f", "frequency"),
+    ("XL", "X_L", "ZL", "Z_L"),
+    ("XC", "X_C", "ZC", "Z_C"),
+    ("lambda_", "lambda", "flux_linkage"),
+    ("ell", "l", "length"),
+    ("Q_max", "Qmax", "qmax", "q_max", "maximum_charge"),
+    ("side", "side_length", "a", "AB", "triangle_side"),
+    ("W_C", "electric_energy", "E_elec", "capacitor_energy"),
+    ("W_L", "magnetic_energy", "E_magn", "inductor_energy"),
+    ("epsilon_r", "er", "eps_r", "relative_permittivity"),
 )
 
 
@@ -86,6 +137,126 @@ def _normalize_text(value: str) -> str:
     for source, replacement in SYMBOL_REPLACEMENTS.items():
         normalized = normalized.replace(source, replacement)
     return normalized
+
+
+def _canonical_unit_key(unit: str) -> str:
+    """Normalize unit spelling while preserving uppercase mega prefix."""
+    raw = str(unit or "").strip()
+    normalized = raw.replace("Ω", "Ohm").replace("μ", "u").replace("µ", "u")
+    normalized = normalized.replace("^2", "2").replace("²", "2")
+    normalized = re.sub(r"\s+", "", normalized)
+    if len(normalized) > 1 and normalized[0] == "M" and normalized[1].isalpha():
+        return "M" + normalized[1:].lower()
+    return normalized.lower()
+
+
+def canonical_quantity_symbol(symbol: Any) -> str:
+    """Map parser/LLM symbol aliases to the internal physics symbol name."""
+    name = _normalize_text(str(symbol or "")).strip()
+    if name in {"lambda", "flux_linkage"}:
+        return "lambda_"
+    if name in {"qmax", "q_max", "Qmax", "maximum_charge"}:
+        return "Q_max"
+    if name in {"electric_energy", "E_elec", "capacitor_energy"}:
+        return "W_C"
+    if name in {"magnetic_energy", "E_magn", "inductor_energy"}:
+        return "W_L"
+    if name in {"er", "eps_r", "relative_permittivity"}:
+        return "epsilon_r"
+    return name
+
+
+def expand_quantity_aliases(quantities: dict[str, float]) -> dict[str, float]:
+    expanded = dict(quantities)
+    for group in QUANTITY_ALIAS_GROUPS:
+        if any(re.fullmatch(rf"{re.escape(symbol)}_\d+", key) for symbol in group for key in expanded):
+            continue
+        present = [(symbol, expanded[symbol]) for symbol in group if symbol in expanded]
+        if not present:
+            continue
+        first_value = present[0][1]
+        if any(not math.isclose(first_value, value, rel_tol=1e-9, abs_tol=1e-12) for _, value in present[1:]):
+            continue
+        for alias in group:
+            expanded.setdefault(alias, first_value)
+    return expanded
+
+
+def put_quantity(quantities: dict[str, float], symbol: Any, value: Any) -> None:
+    name = canonical_quantity_symbol(symbol)
+    numeric = as_number(value)
+    if not name or numeric is None:
+        return
+    previous = quantities.get(name)
+    if previous is not None and not math.isclose(previous, numeric, rel_tol=1e-9, abs_tol=1e-12):
+        index = 2
+        while f"{name}_{index}" in quantities:
+            index += 1
+        quantities[f"{name}_{index}"] = numeric
+        return
+    quantities[name] = numeric
+
+
+def build_calculation_input(parsed_question: dict[str, Any]) -> dict[str, Any]:
+    """Build trusted numeric context from parsed quantities, geometry, and comparison."""
+    quantities: dict[str, float] = {}
+    raw_quantities = parsed_question.get("quantities") or {}
+    if isinstance(raw_quantities, dict):
+        for symbol, value in raw_quantities.items():
+            put_quantity(quantities, symbol, value)
+    elif isinstance(raw_quantities, list):
+        for quantity in raw_quantities:
+            if isinstance(quantity, dict):
+                value = quantity.get("si_value")
+                put_quantity(quantities, quantity.get("symbol"), quantity.get("value") if value is None else value)
+
+    for given in parsed_question.get("givens") or []:
+        if not isinstance(given, dict):
+            continue
+        value = given.get("si_value")
+        put_quantity(quantities, given.get("symbol"), given.get("value") if value is None else value)
+        uncertainty = given.get("uncertainty") or {}
+        if isinstance(uncertainty, dict):
+            uncertainty_value = uncertainty.get("si_value")
+            if uncertainty_value is None:
+                uncertainty_value = uncertainty.get("value")
+            symbol = str(given.get("symbol") or "").strip()
+            put_quantity(quantities, f"delta_{symbol}", uncertainty_value)
+            put_quantity(quantities, "uncertainty", uncertainty_value)
+            put_quantity(quantities, "absolute_uncertainty", uncertainty_value)
+
+    geometry = parsed_question.get("geometry") or {}
+    if isinstance(geometry, dict):
+        for field in ("segments", "derived_distances"):
+            for item in geometry.get(field) or []:
+                if isinstance(item, dict):
+                    value = item.get("si_value")
+                    put_quantity(quantities, item.get("symbol"), item.get("value") if value is None else value)
+
+    comparison = parsed_question.get("comparison") or {}
+    if isinstance(comparison, dict):
+        comparison_value = comparison.get("given_si_value")
+        if comparison_value is None:
+            comparison_value = comparison.get("given_value")
+        comparison_symbol = comparison.get("given_quantity_symbol")
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(comparison_symbol or "").strip()):
+            comparison_unit = str(comparison.get("given_si_unit") or comparison.get("unit") or "").lower()
+            if "hz" in comparison_unit:
+                comparison_symbol = "f"
+            elif "rad" in comparison_unit:
+                comparison_symbol = "omega"
+            elif comparison_unit in {"v", "volt", "volts"}:
+                comparison_symbol = "U"
+        put_quantity(quantities, comparison_symbol, comparison_value)
+
+    raw_target = parsed_question.get("target") or parsed_question.get("objective") or ""
+    if isinstance(raw_target, dict):
+        target = str(raw_target.get("symbol") or "")
+        unit = str(raw_target.get("unit") or "")
+    else:
+        target = str(raw_target)
+        unit = str(parsed_question.get("unit") or parsed_question.get("objective_unit") or "")
+    return {"quantities": expand_quantity_aliases(quantities), "target": target, "unit": unit}
 
 
 def _normalize_value(value: Any) -> Any:
@@ -215,7 +386,7 @@ class ParsingAgent:
             flags=re.IGNORECASE,
         )
         for match in pattern.finditer(question):
-            unit_key = match.group("unit").lower()
+            unit_key = _canonical_unit_key(match.group("unit"))
             conversion = UNIT_TO_SI.get(unit_key)
             if conversion is None:
                 continue

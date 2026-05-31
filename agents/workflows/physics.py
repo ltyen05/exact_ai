@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 import logging
 import re
 from pathlib import Path
@@ -10,31 +9,23 @@ from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
-from agents.formatting import format_number
+from agents.formatting import convert_si_to_requested, format_number
 from agents.physics.Explain import ExplainAgent
 from agents.physics.Parsing import ParsingAgent
 from agents.physics.Solution import LLMSolutionProvider, RAGSolutionProvider, SolutionAgent
-from agents.physics.Solution.formula_lib import SYMBOL_ALIAS_GROUPS, build_solution_cot_steps
-from tools.calculator import solve_with_sympy_trace, PHYSICAL_CONSTANTS
+from agents.physics.Solution.formula_lib import build_solution_cot_steps
+from agents.physics.validation import (
+    comparison_tolerance,
+    direction_from_components,
+    requests_magnitude,
+    select_effective_target,
+    unit_scale_consistency_error,
+    validated_context,
+)
+from tools.calculator import solve_with_sympy_trace
 from .orchestrator import WorkflowExecutionError, WorkflowState
 
 logger = logging.getLogger(__name__)
-
-
-def _expand_quantity_aliases(quantities: dict[str, float]) -> dict[str, float]:
-    expanded = dict(quantities)
-    for group in SYMBOL_ALIAS_GROUPS:
-        if any(re.fullmatch(rf"{re.escape(symbol)}_\d+", key) for symbol in group for key in expanded):
-            continue
-        present = [(symbol, expanded[symbol]) for symbol in group if symbol in expanded]
-        if not present:
-            continue
-        first_value = present[0][1]
-        if any(not math.isclose(first_value, value, rel_tol=1e-9, abs_tol=1e-12) for _, value in present[1:]):
-            continue
-        for alias in group:
-            expanded.setdefault(alias, first_value)
-    return expanded
 
 
 def _llm_available(llm: Any) -> bool:
@@ -43,107 +34,6 @@ def _llm_available(llm: Any) -> bool:
 
 def _with_error(state: WorkflowState, error: str) -> list[str]:
     return [*state.get("errors", []), error]
-
-
-def _as_number(value: Any) -> float | None:
-    if value is None or isinstance(value, bool):
-        return None
-    if isinstance(value, str):
-        text = value.strip().lower()
-        text = text.replace("×", "x").replace("√", "sqrt")
-        text = re.sub(r"(\d)\s*sqrt", r"\1*sqrt", text)
-        sci = re.fullmatch(
-            r"([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?:x|\*)\s*10\s*(?:\^|\*\*)?\s*([+-]?\d+)",
-            text,
-        )
-        if sci:
-            return float(sci.group(1)) * (10.0 ** int(sci.group(2)))
-        sqrt_match = re.fullmatch(
-            r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)?)\s*\*?\s*sqrt\s*\(?\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*\)?",
-            text,
-        )
-        if sqrt_match:
-            coefficient = sqrt_match.group(1)
-            factor = float(coefficient) if coefficient not in {"", "+", "-"} else (-1.0 if coefficient == "-" else 1.0)
-            return factor * math.sqrt(float(sqrt_match.group(2)))
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def _comparison_tolerance(expected_value: float) -> float:
-    """Treat integer-valued measurements as rounded to their displayed unit."""
-    rounding_tolerance = 0.5 if float(expected_value).is_integer() else 1e-2
-    return max(rounding_tolerance, abs(expected_value) * 1e-3)
-
-
-def _requests_magnitude(parsed_question: dict[str, Any]) -> bool:
-    answer_format = parsed_question.get("answer_format") or {}
-    if isinstance(answer_format, dict):
-        requested_form = str(answer_format.get("requested_form") or "").lower()
-        if requested_form == "signed":
-            return False
-        if requested_form == "magnitude":
-            return True
-
-    question = str(parsed_question.get("question") or "").lower()
-    if any(term in question for term in ("direction", "sign", "signed", "polarity", "lenz")):
-        return False
-    return any(
-        term in question
-        for term in (
-            "magnitude",
-            "strength",
-            "intensity",
-            "how large",
-            "absolute value",
-            "electromotive force",
-            "emf",
-        )
-    )
-
-
-def _requests_vector(parsed_question: dict[str, Any]) -> bool:
-    answer_format = parsed_question.get("answer_format") or {}
-    if isinstance(answer_format, dict) and str(answer_format.get("requested_form") or "").lower() == "vector":
-        return True
-    question = str(parsed_question.get("question") or "").lower()
-    target = parsed_question.get("target") or {}
-    target_symbol = str(target.get("symbol") or "").lower() if isinstance(target, dict) else str(target).lower()
-    return "vector" in question or target_symbol.endswith("_vector")
-
-
-def _select_effective_target(parsed_question: dict[str, Any], equations: list[str], default_target: str) -> str:
-    question = str((parsed_question or {}).get("question") or "").lower()
-    lhs_symbols = {
-        equation.split("=", 1)[0].strip()
-        for equation in equations
-        if isinstance(equation, str) and equation.count("=") == 1
-    }
-    if "absolute error" in question:
-        for candidate in ("delta_P", "absolute_error"):
-            if candidate in lhs_symbols:
-                return candidate
-    if default_target in lhs_symbols:
-        return default_target
-    return default_target
-
-
-def _direction_from_components(components: list[float], vector_spec: dict[str, Any]) -> str:
-    if len(components) == 1:
-        if abs(components[0]) <= 1e-9:
-            return "zero field"
-        return "along AB" if components[0] > 0 else "opposite AB"
-    x_value = components[0]
-    y_value = components[1]
-    if abs(y_value) <= max(1e-9, abs(x_value) * 1e-9):
-        if x_value > 0:
-            return "parallel to AB, from A to B"
-        if x_value < 0:
-            return "parallel to AB, from B to A"
-        return "zero field"
-    return str(vector_spec.get("direction") or "direction determined by vector components")
 
 
 class PhysicsWorkflow:
@@ -176,208 +66,6 @@ class PhysicsWorkflow:
         graph.add_edge("compute_sympy", "explain_answer")
         graph.add_edge("explain_answer", END)
         return graph.compile()
-
-    @staticmethod
-    def _put_quantity(quantities: dict[str, float], symbol: Any, value: Any) -> None:
-        name = str(symbol or "").strip()
-        name = name.replace("λ", "lambda_")
-        if name == "lambda":
-            name = "lambda_"
-        numeric = _as_number(value)
-        if not name or numeric is None:
-            return
-        previous = quantities.get(name)
-        if previous is not None and not math.isclose(previous, numeric, rel_tol=1e-9, abs_tol=1e-12):
-            index = 2
-            while f"{name}_{index}" in quantities:
-                index += 1
-            quantities[f"{name}_{index}"] = numeric
-            return
-        quantities[name] = numeric
-
-    def _calculation_input(self, parsed_question: dict[str, Any]) -> dict[str, Any]:
-        """Build trustworthy numeric context from parsed quantities and geometry."""
-        quantities: dict[str, float] = {}
-        raw_quantities = parsed_question.get("quantities") or {}
-        if isinstance(raw_quantities, dict):
-            for symbol, value in raw_quantities.items():
-                self._put_quantity(quantities, symbol, value)
-        elif isinstance(raw_quantities, list):
-            for quantity in raw_quantities:
-                if isinstance(quantity, dict):
-                    value = quantity.get("si_value")
-                    self._put_quantity(quantities, quantity.get("symbol"), quantity.get("value") if value is None else value)
-
-        for given in parsed_question.get("givens") or []:
-            if not isinstance(given, dict):
-                continue
-            value = given.get("si_value")
-            self._put_quantity(quantities, given.get("symbol"), given.get("value") if value is None else value)
-            uncertainty = given.get("uncertainty") or {}
-            if isinstance(uncertainty, dict):
-                uncertainty_value = uncertainty.get("si_value")
-                if uncertainty_value is None:
-                    uncertainty_value = uncertainty.get("value")
-                symbol = str(given.get("symbol") or "").strip()
-                self._put_quantity(quantities, f"delta_{symbol}", uncertainty_value)
-                self._put_quantity(quantities, "uncertainty", uncertainty_value)
-                self._put_quantity(quantities, "absolute_uncertainty", uncertainty_value)
-
-        geometry = parsed_question.get("geometry") or {}
-        if isinstance(geometry, dict):
-            for field in ("segments", "derived_distances"):
-                for item in geometry.get(field) or []:
-                    if isinstance(item, dict):
-                        value = item.get("si_value")
-                        self._put_quantity(quantities, item.get("symbol"), item.get("value") if value is None else value)
-
-        comparison = parsed_question.get("comparison") or {}
-        if isinstance(comparison, dict):
-            comparison_value = comparison.get("given_si_value")
-            if comparison_value is None:
-                comparison_value = comparison.get("given_value")
-            comparison_symbol = comparison.get("given_quantity_symbol")
-            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(comparison_symbol or "").strip()):
-                comparison_unit = str(comparison.get("given_si_unit") or comparison.get("unit") or "").lower()
-                if "hz" in comparison_unit:
-                    comparison_symbol = "f"
-                elif "rad" in comparison_unit:
-                    comparison_symbol = "omega"
-                elif comparison_unit in {"v", "volt", "volts"}:
-                    comparison_symbol = "U"
-            self._put_quantity(
-                quantities,
-                comparison_symbol,
-                comparison_value,
-            )
-
-        raw_target = parsed_question.get("target") or parsed_question.get("objective") or ""
-        if isinstance(raw_target, dict):
-            target = str(raw_target.get("symbol") or "")
-            unit = str(raw_target.get("unit") or "")
-        else:
-            target = str(raw_target)
-            unit = str(parsed_question.get("unit") or parsed_question.get("objective_unit") or "")
-        quantities = _expand_quantity_aliases(quantities)
-        return {"quantities": quantities, "target": target, "unit": unit}
-
-    def _validated_context(
-        self,
-        parsed_question: dict[str, Any],
-        solution_output: dict[str, Any],
-    ) -> tuple[dict[str, float], str, str, list[str]]:
-        calculation = self._calculation_input(parsed_question)
-        spec = solution_output.get("sympy_spec") or {}
-        equations = [str(item) for item in spec.get("equations") or []]
-        target = str(spec.get("target_symbol") or calculation["target"])
-        unit = str(spec.get("target_unit") or calculation["unit"])
-        quantities = dict(calculation["quantities"])
-        if not target or not equations:
-            raise ValueError("Computational solution is missing target symbol or equations.")
-
-        known_values = spec.get("known_values") or {}
-        if not isinstance(known_values, dict):
-            raise ValueError("Computational solution known_values must be an object.")
-        equation_text = " ".join(equations)
-        for symbol, value in PHYSICAL_CONSTANTS.items():
-            if re.search(rf"\b{re.escape(symbol)}\b", equation_text):
-                if symbol in quantities and not math.isclose(quantities[symbol], value, rel_tol=1e-9, abs_tol=1e-12):
-                    raise ValueError(f"Parsed value for fixed physical constant {symbol} is invalid.")
-                quantities[symbol] = value
-
-        trusted_quantities = dict(quantities)
-        derived_candidates: dict[str, float] = {}
-        for symbol, value in known_values.items():
-            numeric = _as_number(value)
-            if numeric is None:
-                if symbol in PHYSICAL_CONSTANTS:
-                    continue
-                raise ValueError(f"Known value for {symbol} is not numeric.")
-            if symbol in quantities:
-                if not math.isclose(quantities[symbol], numeric, rel_tol=1e-9, abs_tol=1e-12):
-                    # Trust the parser's SI-converted value over the LLM's raw value.
-                    # Common case: LLM returns value in original unit (e.g. 23.8 cm²)
-                    # while parser already converted to SI (e.g. 0.00238 m²).
-                    logger.warning(
-                        "physics.known_value_conflict symbol=%s parser=%s solution=%s — using parser value",
-                        symbol, quantities[symbol], numeric,
-                    )
-            elif symbol in PHYSICAL_CONSTANTS:
-                if not math.isclose(PHYSICAL_CONSTANTS[symbol], numeric, rel_tol=1e-9, abs_tol=1e-12):
-                    raise ValueError(f"Solution value for physical constant {symbol} is invalid.")
-                quantities[symbol] = PHYSICAL_CONSTANTS[symbol]
-                trusted_quantities[symbol] = PHYSICAL_CONSTANTS[symbol]
-            else:
-                derived_candidates[str(symbol)] = numeric
-
-        for symbol, numeric in derived_candidates.items():
-            defining_equation = any(equation.split("=", 1)[0].strip() == symbol for equation in equations if "=" in equation)
-            if not defining_equation:
-                raise ValueError(f"Solution introduced untrusted numeric value {symbol}.")
-            derived = solve_with_sympy_trace(trusted_quantities, equations, symbol)
-            if derived is None or not math.isclose(derived.value, numeric, rel_tol=1e-7, abs_tol=1e-9):
-                raise ValueError(f"Derived value for {symbol} could not be verified from parsed givens.")
-            quantities[symbol] = numeric
-            trusted_quantities[symbol] = numeric
-
-        undefined = self._undefined_symbols(equations, quantities)
-        logger.debug("physics.undefined_symbols_before_sympy=%s", undefined)
-        if undefined:
-            raise ValueError(f"Undefined symbols before SymPy: {', '.join(undefined)}.")
-        vector_spec = solution_output.get("vector_spec") if isinstance(solution_output.get("vector_spec"), dict) else {}
-        component_symbols = [str(symbol) for symbol in vector_spec.get("component_symbols") or []]
-        if component_symbols:
-            lhs_symbols = {
-                equation.split("=", 1)[0].strip()
-                for equation in equations
-                if equation.count("=") == 1
-                and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", equation.split("=", 1)[0].strip())
-            }
-            missing_components = sorted(
-                symbol for symbol in component_symbols if symbol not in lhs_symbols and symbol not in quantities
-            )
-            if missing_components:
-                raise ValueError(
-                    "vector_spec component symbols must be defined by equations or known values: "
-                    f"{', '.join(missing_components)}."
-                )
-        return quantities, target, unit, equations
-
-    @staticmethod
-    def _undefined_symbols(equations: list[str], quantities: dict[str, float]) -> list[str]:
-        allowed = {
-            "Abs",
-            "abs",
-            "Im",
-            "im",
-            "Re",
-            "re",
-            "conjugate",
-            "sqrt",
-            "acos",
-            "sin",
-            "cos",
-            "tan",
-            "atan",
-            "exp",
-            "log",
-            "pi",
-            *PHYSICAL_CONSTANTS,
-        }
-        known = {str(symbol) for symbol in quantities}
-        defined: set[str] = set()
-        unresolved: set[str] = set()
-        for equation in equations:
-            if equation.count("=") != 1:
-                unresolved.add(equation)
-                continue
-            lhs, rhs = equation.split("=", 1)
-            rhs_symbols = set(re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", rhs))
-            unresolved.update(rhs_symbols - known - defined - allowed)
-            lhs_symbol = lhs.strip()
-            if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", lhs_symbol):
-                defined.add(lhs_symbol)
-        return sorted(unresolved)
 
     def parse_question(self, state: WorkflowState) -> dict[str, Any]:
         """Parse one public physics question into compact structured input."""
@@ -487,8 +175,8 @@ class PhysicsWorkflow:
 
         steps = [str(step) for step in solution_output.get("solution_steps") or []]
         try:
-            quantities, target, unit, equations = self._validated_context(parsed_question, solution_output)
-            target = _select_effective_target(parsed_question, equations, target)
+            quantities, target, unit, equations = validated_context(parsed_question, solution_output)
+            target = select_effective_target(parsed_question, equations, target)
         except ValueError as exc:
             logger.debug("physics.verification_fail_reason=%s", exc)
             solution_output = self._repair_solution_output(
@@ -499,8 +187,8 @@ class PhysicsWorkflow:
             answer_type = self._assert_computational_solution(solution_output)
             steps = [str(step) for step in solution_output.get("solution_steps") or []]
             try:
-                quantities, target, unit, equations = self._validated_context(parsed_question, solution_output)
-                target = _select_effective_target(parsed_question, equations, target)
+                quantities, target, unit, equations = validated_context(parsed_question, solution_output)
+                target = select_effective_target(parsed_question, equations, target)
             except ValueError as repair_exc:
                 logger.debug("physics.verification_fail_reason=%s", repair_exc)
                 raise WorkflowExecutionError(f"Physics computation validation failed after repair: {repair_exc}") from repair_exc
@@ -517,8 +205,8 @@ class PhysicsWorkflow:
             answer_type = self._assert_computational_solution(solution_output)
             steps = [str(step) for step in solution_output.get("solution_steps") or []]
             try:
-                quantities, target, unit, equations = self._validated_context(parsed_question, solution_output)
-                target = _select_effective_target(parsed_question, equations, target)
+                quantities, target, unit, equations = validated_context(parsed_question, solution_output)
+                target = select_effective_target(parsed_question, equations, target)
             except ValueError as repair_exc:
                 logger.debug("physics.verification_fail_reason=%s", repair_exc)
                 raise WorkflowExecutionError(f"Physics computation validation failed after repair: {repair_exc}") from repair_exc
@@ -530,8 +218,12 @@ class PhysicsWorkflow:
 
         logger.debug("physics.sympy_result=%s", {"value": computation.value, "trace": computation.trace})
         target_is_charge = bool(re.fullmatch(r"q\d*|charge.*", str(target).lower()))
-        force_magnitude = answer_type == "numeric" and _requests_magnitude(parsed_question) and not target_is_charge
-        numeric_value = abs(computation.value) if force_magnitude else computation.value
+        force_magnitude = answer_type == "numeric" and requests_magnitude(parsed_question) and not target_is_charge
+        si_numeric_value = abs(computation.value) if force_magnitude else computation.value
+        numeric_value = convert_si_to_requested(si_numeric_value, unit) if answer_type == "numeric" else si_numeric_value
+        scale_error = unit_scale_consistency_error(si_numeric_value, numeric_value, unit) if answer_type == "numeric" else None
+        if scale_error:
+            raise WorkflowExecutionError(scale_error)
         public_answer = format_number(numeric_value)
         final_value: Any = numeric_value
         append_unit = answer_type == "numeric"
@@ -548,8 +240,8 @@ class PhysicsWorkflow:
                     component_value = component_computation.value if component_computation is not None else None
                 if component_value is None:
                     raise WorkflowExecutionError(f"Physics vector verification failed: {component_symbol} was not computed.")
-                component_values.append(component_value)
-            direction = _direction_from_components(component_values, vector_spec)
+                component_values.append(convert_si_to_requested(component_value, unit))
+            direction = direction_from_components(component_values, vector_spec)
             vector_result = {
                 "component_symbols": component_symbols,
                 "components": component_values,
@@ -571,7 +263,7 @@ class PhysicsWorkflow:
             expected_value = quantities.get(expected_symbol)
             if expected_value is None:
                 raise WorkflowExecutionError("Physics comparison failed: expected value was not parsed.")
-            tolerance = _comparison_tolerance(expected_value)
+            tolerance = comparison_tolerance(expected_value)
             difference = abs(computation.value - expected_value)
             matches = difference <= tolerance
             public_answer = str(decision.get("answer_if_true", "Yes") if matches else decision.get("answer_if_false", "No"))
@@ -586,15 +278,28 @@ class PhysicsWorkflow:
             }
         elif answer_type == "numeric":
             question_text = str(parsed_question.get("question") or "").lower()
+            relationship = str(solution_output.get("relationship") or "").strip()
+            if relationship:
+                public_answer = f"{format_number(numeric_value)} {unit}, {relationship}".strip()
+                append_unit = False
             wants_both_errors = "absolute error" in question_text and "relative error" in question_text
             if wants_both_errors:
                 absolute_value = computation.values.get("absolute_error")
                 if absolute_value is None and target == "absolute_error":
-                    absolute_value = numeric_value
+                    absolute_value = si_numeric_value
+                percentage_value = computation.values.get("percentage_relative_error")
                 relative_value = computation.values.get("relative_error")
-                if absolute_value is not None and relative_value is not None:
+                wants_percentage_error = "%" in str(unit) or "percentage relative error" in question_text
+                if wants_percentage_error and percentage_value is None and relative_value is not None:
+                    percentage_value = relative_value * 100
+                if wants_percentage_error and absolute_value is not None and percentage_value is not None:
+                    public_answer = f"absolute_error = {format_number(absolute_value)} g; percentage_relative_error = {format_number(percentage_value)} %"
+                    append_unit = False
+                    unit = ""
+                elif absolute_value is not None and relative_value is not None:
                     public_answer = f"absolute_error = {format_number(absolute_value)}; relative_error = {format_number(relative_value)}"
                     append_unit = False
+                    unit = ""
             wants_mean_and_mae = "mean absolute error" in question_text and "mean" in question_text
             if wants_mean_and_mae:
                 mean_value = computation.values.get("mean")
@@ -606,6 +311,19 @@ class PhysicsWorkflow:
                 if mean_value is not None and mae_value is not None:
                     public_answer = f"mean = {format_number(mean_value)}; mean_absolute_error = {format_number(mae_value)}"
                     append_unit = False
+            wants_lc_energy_split = (
+                "electric energy equals the magnetic energy" in question_text
+                or "electric energy equals magnetic energy" in question_text
+            )
+            if wants_lc_energy_split:
+                electric_value = computation.values.get("W_C")
+                magnetic_value = computation.values.get("W_L")
+                if electric_value is not None and magnetic_value is not None:
+                    electric_public = convert_si_to_requested(electric_value, unit)
+                    magnetic_public = convert_si_to_requested(magnetic_value, unit)
+                    public_answer = f"electric_energy = {format_number(electric_public)} {unit}; magnetic_energy = {format_number(magnetic_public)} {unit}".strip()
+                    append_unit = False
+                    final_value = {"electric_energy": electric_public, "magnetic_energy": magnetic_public}
 
         final_answer = {"symbol": target, "value": final_value, "unit": unit}
         verification_result = {

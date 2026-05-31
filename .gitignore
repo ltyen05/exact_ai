@@ -32,3 +32,5 @@ details.json
 .pytest_cache/
 
 error_log.txt
+tests/*
+data/*

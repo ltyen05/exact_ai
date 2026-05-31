@@ -12,6 +12,7 @@ import sympy as sp
 
 from agents.formatting import extract_json
 from agents.llm import LLMClientBase
+from agents.physics.Parsing.Parsing_Agent import canonical_quantity_symbol
 
 from .formula_lib import (
     COMPUTATIONAL_MODE_ALIASES,
@@ -60,9 +61,7 @@ def _clean_symbol_name(symbol: Any) -> str:
 
 
 def _canonical_symbol_name(symbol: Any) -> str:
-    name = _clean_symbol_name(symbol)
-    if name == "lambda":
-        return "lambda_"
+    name = canonical_quantity_symbol(_clean_symbol_name(symbol))
     if re.fullmatch(r"q_?\d+", name):
         return "q" + re.sub(r"\D", "", name)
     if re.fullmatch(r"charge_q_?\d+", name):
@@ -811,7 +810,7 @@ class LLMSolutionProvider(SolutionProvider):
         target_symbol: str,
     ) -> None:
         known_symbols = {_canonical_symbol_name(symbol) for symbol in known_values}
-        allowed = set(cls.SYMPY_LOCALS) | PHYSICAL_CONSTANT_NAMES
+        allowed = set(cls.SYMPY_LOCALS) | PHYSICAL_CONSTANT_NAMES | {_canonical_symbol_name(target_symbol)}
         defined: set[str] = set()
         used: set[str] = set()
         implicit_symbols: set[str] = set()

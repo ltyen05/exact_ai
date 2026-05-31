@@ -75,10 +75,10 @@ Extraction rules:
 
 Units:
 - Convert cm to m by 1e-2, mm to m by 1e-3, km to m by 1e3.
-- Convert microC or mu C to C by 1e-6; nC to C by 1e-9.
-- Convert microF/muF to F by 1e-6; nF by 1e-9; pF by 1e-12; mF by 1e-3.
-- Convert kOhm to Ohm by 1e3; mA to A by 1e-3; microA to A by 1e-6.
+- Prefixes: p=1e-12, n=1e-9, micro/u=1e-6, m=1e-3, k=1e3, M=1e6.
+- Apply prefixes to C, F, H, Wb, A, V, J, Hz, and Ohm where stated.
 - Convert cm^2 to m^2 by 1e-4 and mm^2 to m^2 by 1e-6.
+- Preserve Wb, T, J, N, W, Hz, rad/s, N/C, V/m with scale 1.
 - Convert mL to m^3 by 1e-6.
 - In units use plain ASCII strings such as `Ohm`, `microF`, `N/C`, `m^2`.
 

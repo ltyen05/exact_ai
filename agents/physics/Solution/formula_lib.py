@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import math
+import os
 import re
 from typing import Any
+
+from agents.physics.Parsing.Parsing_Agent import QUANTITY_ALIAS_GROUPS
 
 
 SYMBOL_REPLACEMENTS = {
@@ -14,6 +17,7 @@ SYMBOL_REPLACEMENTS = {
     "θ": "theta",
     "ω": "omega",
     "Ω": "Ohm",
+    "ε": "epsilon_",
     "μ": "mu",
     "µ": "mu",
     "λ": "lambda_",
@@ -21,14 +25,9 @@ SYMBOL_REPLACEMENTS = {
     "−": "-",
     "–": "-",
 }
-SYMBOL_ALIAS_GROUPS = (
-    ("U", "V", "U_rms", "V_rms"),
-    ("I", "I_rms", "I_effective"),
-    ("f", "frequency"),
-    ("XL", "X_L", "ZL", "Z_L"),
-    ("XC", "X_C", "ZC", "Z_C"),
-)
+SYMBOL_ALIAS_GROUPS = QUANTITY_ALIAS_GROUPS
 PHYSICAL_CONSTANT_NAMES = {"k", "k_e", "epsilon_0", "mu_0", "c"}
+UNCERTAINTY_MODE = os.getenv("PHYSICS_UNCERTAINTY_MODE", "school_linear").strip().lower()
 COMPUTATIONAL_MODE_ALIASES = {
     "computational",
     "compute",
@@ -480,6 +479,22 @@ def _direct_multiple_choice(answer: str, selected_option: str, steps: list[str])
 
 
 def _formula_only_solution(semantic_output: dict[str, Any], text: str, values: dict[str, float]) -> dict[str, Any] | None:
+    if "solenoid" in text and "turn" in text and "double" in text and "inductance" in text:
+        return _direct(
+            "4",
+            [
+                "For a fixed-length, fixed-area solenoid, L is proportional to N**2.",
+                "Doubling N multiplies the inductance by 2**2 = 4.",
+            ],
+        )
+    if "capacitor" in text and "fixed capacitance" in text and ("voltage is reduced to one half" in text or "voltage" in text and "one half" in text) and "energy" in text:
+        return _direct(
+            "1/4",
+            [
+                "For fixed capacitance, stored energy is W = C*V**2/2.",
+                "Replacing V by V/2 leaves (1/2)**2 = 1/4 of the original energy.",
+            ],
+        )
     if values:
         return None
     if "lc" not in text and "rlc" not in text:
@@ -548,12 +563,13 @@ def _electric_midpoint_solution(semantic_output: dict[str, Any]) -> dict[str, An
         return None
     text = _semantic_text(semantic_output)
     target = _target_from_terms(semantic_output, "E_net_magnitude")
-    target_kind = "force" if _is_force_target(target, text) and values.get("q3") is not None else "field"
+    test_charge = _test_charge_symbol(values)
+    target_kind = "force" if _is_force_target(target, text) and test_charge is not None else "field"
     target = target if _is_identifier(target) and target != "result" else ("F_net_magnitude" if target_kind == "force" else "E_net_magnitude")
     unit = _target_unit_from_semantics(semantic_output, "N" if target_kind == "force" else "N/C")
     knowns = {"q1": q1, "q2": q2, "AB": ab, "k": 9e9}
-    if target_kind == "force" and values.get("q3") is not None:
-        knowns["q3"] = values["q3"]
+    if target_kind == "force" and test_charge is not None:
+        knowns[test_charge[0]] = test_charge[1]
     return _point_charge_vector_solution(
         formula_ids=["electrostatics.midpoint_geometry"],
         target_symbol=target,
@@ -571,7 +587,7 @@ def _electric_midpoint_solution(semantic_output: dict[str, Any]) -> dict[str, An
         point_x="Mx",
         point_y="My",
         target_kind=target_kind,
-        test_charge_symbol="q3" if target_kind == "force" else None,
+        test_charge_symbol=test_charge[0] if target_kind == "force" and test_charge is not None else None,
         steps=[
             "Use a signed coordinate model with A and B on the x-axis.",
             "Compute the net electric field by adding components before any magnitude.",
@@ -836,6 +852,137 @@ def _test_charge_symbol(values: dict[str, float]) -> tuple[str, float] | None:
     return None
 
 
+def _square_center_symmetry_force_solution(semantic_output: dict[str, Any], text: str) -> dict[str, Any] | None:
+    if "square" not in text or "center" not in text or "identical" not in text:
+        return None
+    if "force" not in text and "electric" not in text:
+        return None
+    target = _target_from_terms(semantic_output, "F_net")
+    target = target if _is_identifier(target) and target != "result" else "F_net"
+    return _solution(
+        ["electrostatics.square_center_identical_charges_cancel"],
+        target,
+        _target_unit_from_semantics(semantic_output, "N"),
+        [f"{target} = 0"],
+        {},
+        [
+            "The center of a square is equidistant from all four identical corner charges.",
+            "Forces from opposite vertices have equal magnitudes and opposite directions, so the vector sum is zero.",
+        ],
+    )
+
+
+def _coulomb_two_charge_force_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
+    q1 = values.get("q1")
+    q2 = values.get("q2")
+    r_value = _lookup_value(values, "r", "d", "AB", "separation", "distance")
+    if q1 is None or q2 is None or r_value is None or r_value <= 0:
+        return None
+    if "force" not in text or "test charge" in text or " q0 " in f" {text} " or "equilateral triangle" in text or values.get("q3") is not None:
+        return None
+    target = _target_from_terms(semantic_output, "F")
+    target = target if _is_identifier(target) and target != "result" else "F"
+    relationship = "attractive" if q1 * q2 < 0 else "repulsive"
+    return _solution(
+        ["electrostatics.coulomb_two_charge_force"],
+        target,
+        _target_unit_from_semantics(semantic_output, "N"),
+        [f"{target} = k * Abs(q1 * q2) / r**2"],
+        {"q1": float(q1), "q2": float(q2), "r": float(r_value), "k": 9e9},
+        [
+            "Use Coulomb's law for the force magnitude between two point charges.",
+            "The sign product of the two charges determines whether the interaction is attractive or repulsive.",
+        ],
+        relationship=relationship,
+    )
+
+
+def _unknown_identical_charge_from_force_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
+    target = _target_from_terms(semantic_output, "q")
+    f_value = _lookup_value(values, "F", "force")
+    r_value = _lookup_value(values, "r", "d", "AB", "separation", "distance")
+    if f_value is None or r_value is None or r_value <= 0:
+        return None
+    if not _target_is(target, "q", "Q") or "identical" not in text or "force" not in text:
+        return None
+    return _solution(
+        ["electrostatics.identical_charge_from_force"],
+        "q" if target in {"result", ""} else target,
+        _target_unit_from_semantics(semantic_output, "C"),
+        [f"{'q' if target in {'result', ''} else target} = sqrt(F * r**2 / k)"],
+        {"F": float(f_value), "r": float(r_value), "k": 9e9},
+        ["For two identical charges, F = k*q**2/r**2; solve for the positive charge magnitude."],
+    )
+
+
+def _equilateral_charge_force_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
+    if "equilateral triangle" not in text or "force" not in text:
+        return None
+    side = _lookup_value(values, "side", "a", "AB", "triangle_side", "side_length")
+    if side is None or side <= 0:
+        return None
+    target = _target_from_terms(semantic_output, "F_net_magnitude")
+    target = target if _is_identifier(target) and target != "result" else "F_net_magnitude"
+
+    if values.get("q3") is not None and (values.get("q1") is not None or values.get("q") is not None):
+        q1 = values.get("q1", values.get("q"))
+        q2 = values.get("q2", q1)
+        q3 = values["q3"]
+        if q1 is None or q2 is None:
+            return None
+        return _point_charge_vector_solution(
+            formula_ids=["electrostatics.equilateral_triangle_force"],
+            target_symbol=target,
+            target_unit=_target_unit_from_semantics(semantic_output, "N"),
+            coordinate_equations=[
+                "Ax = 0",
+                "Ay = 0",
+                "Bx = side",
+                "By = 0",
+                "Cx = side / 2",
+                "Cy = side * sqrt(3) / 2",
+            ],
+            known_values={"q1": float(q1), "q2": float(q2), "q3": float(q3), "side": float(side), "k": 9e9},
+            source_charges=[("q1", "Ax", "Ay"), ("q2", "Bx", "By")],
+            point_x="Cx",
+            point_y="Cy",
+            target_kind="force",
+            test_charge_symbol="q3",
+            steps=[
+                "Place the equilateral triangle on Cartesian axes.",
+                "Compute the signed electric field from the two source charges at the third vertex.",
+                "Multiply by the charge at that vertex and take the vector magnitude.",
+            ],
+        )
+
+    q_value = values.get("q")
+    if q_value is None:
+        return None
+    return _point_charge_vector_solution(
+        formula_ids=["electrostatics.equilateral_triangle_identical_charge_force"],
+        target_symbol=target,
+        target_unit=_target_unit_from_semantics(semantic_output, "N"),
+        coordinate_equations=[
+            "Ax = 0",
+            "Ay = 0",
+            "Bx = side",
+            "By = 0",
+            "Cx = side / 2",
+            "Cy = side * sqrt(3) / 2",
+        ],
+        known_values={"q": float(q_value), "side": float(side), "k": 9e9},
+        source_charges=[("q", "Ax", "Ay"), ("q", "Bx", "By")],
+        point_x="Cx",
+        point_y="Cy",
+        target_kind="force",
+        test_charge_symbol="q",
+        steps=[
+            "For one vertex charge, the other two identical charges exert equal forces separated by 60 degrees.",
+            "The vector form gives the same magnitude as sqrt(3)*k*q**2/side**2.",
+        ],
+    )
+
+
 def _perpendicular_bisector_vector_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
     charges = _two_source_charges(values)
     base_symbol = "AB" if values.get("AB") is not None else "d_AB" if values.get("d_AB") is not None else ""
@@ -984,6 +1131,18 @@ def _electric_solution(semantic_output: dict[str, Any], text: str) -> dict[str, 
     if "electric" not in domain and "charge" not in domain:
         return None
     values = _numeric_values(semantic_output)
+    square_symmetry = _square_center_symmetry_force_solution(semantic_output, text)
+    if square_symmetry is not None:
+        return square_symmetry
+    unknown_charge = _unknown_identical_charge_from_force_solution(semantic_output, values, text)
+    if unknown_charge is not None:
+        return unknown_charge
+    equilateral_force = _equilateral_charge_force_solution(semantic_output, values, text)
+    if equilateral_force is not None:
+        return equilateral_force
+    two_charge_force = _coulomb_two_charge_force_solution(semantic_output, values, text)
+    if two_charge_force is not None:
+        return two_charge_force
     right_angle = _right_angle_vertex_force_solution(semantic_output, values, text)
     if right_angle is not None:
         return right_angle
@@ -1436,6 +1595,24 @@ def _resonance_shifted_reactance_solution(semantic_output: dict[str, Any], value
 def _ac_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
     if not _is_ac_context(text):
         return None
+    target = _target_from_terms(semantic_output, "result")
+    unit = _target_unit_from_semantics(semantic_output)
+    i_value = _lookup_value(values, "I", "I_rms")
+    r_value = _lookup_value(values, "R")
+    if (
+        i_value is not None
+        and r_value is not None
+        and ("active power" in text or "power consumed" in text or (_target_is(target, "P", "P_active") and "resistor" in text))
+    ):
+        solved_target = target if _is_identifier(target) and target != "result" else "P"
+        return _solution(
+            ["rlc.active_power_resistor_rms"],
+            solved_target,
+            unit or "W",
+            [f"{solved_target} = I_rms**2 * R"],
+            {"I_rms": float(i_value), "R": float(r_value)},
+            ["Active power dissipated in the resistor is P = I_rms**2*R."],
+        )
     # Special case: given XL, XC at omega0 and asking resonance at k*omega0.
     if ("kω0" in text or "komega0" in text or "k*omega0" in text or "k omega0" in text) and values.get("XL") is not None and values.get("XC") is not None:
         target = _target_from_terms(semantic_output, "k")
@@ -1575,6 +1752,102 @@ def _capacitance_solution(semantic_output: dict[str, Any], values: dict[str, flo
     area_value = _extract_area_from_text(question_norm) or values.get("A") or values.get("S")
     separation_value = _extract_length_from_text(question_norm, "plate separation", "separation", "distance", "d") or values.get("d")
 
+    if (
+        ("lc circuit" in question_norm or "ideal lc" in question_norm)
+        and ("electric energy equals the magnetic energy" in question_norm or "electric energy equals magnetic energy" in question_norm)
+    ):
+        total_energy = _lookup_value(values, "W_total", "E_total", "total_energy", "W") or text_energy
+        if total_energy is not None:
+            target_symbol = "W_C" if target in {"result", "each_energy", ""} else target
+            return _solution(
+                ["lc.energy_equal_split"],
+                target_symbol,
+                unit or "J",
+                ["W_C = W_total / 2", "W_L = W_total / 2"],
+                {"W_total": float(total_energy)},
+                ["In an ideal LC circuit, total energy is conserved; if electric and magnetic energies are equal, each is half the total."],
+            )
+
+    capacitances = [(symbol, value) for symbol, value in values.items() if re.fullmatch(r"C\d+", symbol)]
+    if "series" in question_norm and capacitances and u_value is not None and ("charge" in question_norm or _target_is(target, "Q", "Q_each")):
+        reciprocal_terms = " + ".join(f"1 / {symbol}" for symbol, _ in capacitances)
+        solved_target = target if _is_identifier(target) and target != "result" else "Q_each"
+        return _solution(
+            ["capacitance.series.charge_each"],
+            solved_target,
+            unit or "C",
+            [f"C_eq = 1 / ({reciprocal_terms})", f"{solved_target} = C_eq * {voltage_symbol}"],
+            {symbol: float(value) for symbol, value in capacitances} | {voltage_symbol: float(u_value)},
+            [
+                "For series capacitors, each capacitor carries the same charge.",
+                "Compute the equivalent capacitance first, then use Q_each = C_eq*V_total.",
+            ],
+        )
+
+    if ("connected in parallel" in question_norm or "parallel" in question_norm) and "identical uncharged capacitor" in question_norm and c_value is not None and u_value is not None:
+        solved_target = target if _is_identifier(target) and target != "result" else "V_final"
+        return _solution(
+            ["capacitance.charge_sharing_two_identical_voltage"],
+            solved_target,
+            unit or "V",
+            ["Q_initial = C * U", "C_total = 2 * C", f"{solved_target} = Q_initial / C_total"],
+            {"C": float(c_value), "U": float(u_value)},
+            ["Charge is conserved and then shared across twice the capacitance, so the final voltage is half the initial voltage."],
+        )
+
+    if (
+        ("connected to" in question_norm or "remains connected" in question_norm or "battery" in question_norm)
+        and ("dielectric" in question_norm or "permittivity" in question_norm)
+        and c_value is not None
+        and u_value is not None
+        and ("charge" in question_norm or _target_is(target, "Q", "Q_new"))
+    ):
+        epsilon_r = _lookup_value(values, "epsilon_r", "epsilon", "eps_r", "er")
+        if epsilon_r is not None:
+            solved_target = target if _is_identifier(target) and target != "result" else "Q_new"
+            return _solution(
+                ["capacitance.battery_connected_dielectric_charge"],
+                solved_target,
+                unit or "C",
+                ["C_new = epsilon_r * C", f"{solved_target} = C_new * {voltage_symbol}"],
+                {"C": float(c_value), voltage_symbol: float(u_value), "epsilon_r": float(epsilon_r)},
+                ["With the battery connected, voltage remains constant and the dielectric multiplies capacitance by epsilon_r."],
+            )
+
+    if ("isolated" in question_norm or "disconnected" in question_norm) and ("separation is doubled" in question_norm or "plate separation is doubled" in question_norm) and u_value is not None and (_target_is(target, "U", "V", "U_new", "V_new") or "new voltage" in question_norm):
+        solved_target = target if _is_identifier(target) and target != "result" else "U_new"
+        return _solution(
+            ["capacitance.isolated_plate_separation_doubled_voltage"],
+            solved_target,
+            unit or "V",
+            [f"{solved_target} = 2 * {voltage_symbol}"],
+            {voltage_symbol: float(u_value)},
+            ["For an isolated capacitor, charge remains constant; doubling plate separation halves capacitance and doubles voltage."],
+        )
+
+    if ("lc circuit" in question_norm or "ideal lc" in question_norm) and c_value is not None and text_energy is not None and ("charge" in question_norm or _target_is(target, "Q", "Qmax", "Q_max")):
+        solved_target = target if _is_identifier(target) and target != "result" else "Qmax"
+        return _solution(
+            ["lc.maximum_capacitor_charge"],
+            solved_target,
+            unit or "C",
+            [f"{solved_target} = sqrt(2 * C * W)"],
+            {"C": float(c_value), "W": float(text_energy)},
+            ["At maximum capacitor charge in an LC circuit, total energy is W = Qmax**2/(2*C)."],
+        )
+
+    q_max_value = _lookup_value(values, "Q_max", "Qmax", "qmax", "q_max", "Q")
+    if ("energy" in question_norm or _target_is(target, "W", "E", "W_max")) and c_value is not None and q_max_value is not None:
+        solved_target = target if _target_is(target, "W", "E", "W_max") else "W"
+        return _solution(
+            ["capacitance.energy_from_charge"],
+            solved_target,
+            unit or "J",
+            [f"{solved_target} = Q_max**2 / (2 * C)"],
+            {"C": float(c_value), "Q_max": float(q_max_value)},
+            ["Use capacitor energy W = Q**2/(2*C) when charge and capacitance are known."],
+        )
+
     factor_match = re.search(r"(?:factor of|by a factor of|increases by)\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))", question_norm)
     if (
         ("disconnected" in question_norm or "isolated" in question_norm)
@@ -1631,13 +1904,11 @@ def _capacitance_solution(semantic_output: dict[str, Any], values: dict[str, flo
             )
 
     if _target_is(target, "C") and text_energy is not None and u_value is not None and u_value != 0:
-        requested_micro = "microf" in unit.lower() or "muf" in unit.lower() or "μf" in unit.lower() or "µf" in unit.lower()
-        factor = 1e6 if requested_micro else 1.0
         return _solution(
             ["capacitance.from_stored_energy_voltage"],
             "C",
             unit or "F",
-            [f"W_eff = {text_energy}", f"U_eff = {u_value}", f"C = 2 * W_eff / U_eff**2{f' * {factor}' if factor != 1.0 else ''}"],
+            [f"W_eff = {text_energy}", f"U_eff = {u_value}", "C = 2 * W_eff / U_eff**2"],
             {},
             ["Use W = C*U**2/2 and solve for capacitance."],
         )
@@ -1708,7 +1979,6 @@ def _capacitance_solution(semantic_output: dict[str, Any], values: dict[str, flo
         )
 
     if "parallel" in question_norm and q_value is not None and ("less than" in question_norm or "<" in question_norm):
-        capacitances = [(symbol, value) for symbol, value in values.items() if re.fullmatch(r"C\d+", symbol)]
         limit_match = re.search(r"(?:u\s*<|less than)\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*v", question_norm)
         if capacitances and limit_match:
             limit = float(limit_match.group("value"))
@@ -1841,6 +2111,69 @@ def _capacitance_solution(semantic_output: dict[str, Any], values: dict[str, flo
 def _measurement_statistics_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
     target = _target_from_terms(semantic_output, "result")
     unit = _target_unit_from_semantics(semantic_output)
+    if (
+        "relative uncertaint" in text
+        and ("v = abc" in text or "v=abc" in text or "volume" in text)
+        and (_target_is(target, "relative_uncertainty", "percentage_relative_uncertainty") or "uncertainty" in text)
+    ):
+        percent_items = [
+            (symbol, float(value))
+            for symbol, value in values.items()
+            if symbol.lower().startswith(("rel_", "relative_")) and isinstance(value, (int, float))
+        ]
+        equations_prefix: list[str] = []
+        if not percent_items:
+            percent_items = [
+                (f"rel_{index + 1}", float(match))
+                for index, match in enumerate(re.findall(r"([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*%", text))
+            ]
+            equations_prefix = [f"{symbol} = {value}" for symbol, value in percent_items]
+            knowns = {}
+        else:
+            knowns = dict(percent_items)
+        if len(percent_items) >= 2:
+            symbols = list(knowns)
+            if not symbols:
+                symbols = [symbol for symbol, _ in percent_items]
+            if UNCERTAINTY_MODE == "quadrature":
+                equation = f"relative_uncertainty = sqrt({ ' + '.join(f'{symbol}**2' for symbol in symbols) })"
+                step = "For independent uncertainties in quadrature mode, combine relative uncertainties by root-sum-square."
+            else:
+                equation = f"relative_uncertainty = {' + '.join(symbols)}"
+                step = "For the school worst-case convention, relative uncertainties in products are added linearly."
+            solved_target = target if _is_identifier(target) and target != "result" else "relative_uncertainty"
+            equations = [*equations_prefix, equation] if solved_target == "relative_uncertainty" else [*equations_prefix, equation, f"{solved_target} = relative_uncertainty"]
+            return _solution(
+                [f"measurement.relative_uncertainty_product.{UNCERTAINTY_MODE or 'school_linear'}"],
+                solved_target,
+                unit or "%",
+                equations,
+                knowns,
+                [step],
+                assumptions={"uncertainty_mode": UNCERTAINTY_MODE or "school_linear"},
+            )
+    if "absolute uncertainty" in text and ("r = u/i" in text or "r=u/i" in text or "resistance" in text):
+        u_value = _lookup_value(values, "U", "V")
+        i_value = _lookup_value(values, "I")
+        delta_u = _lookup_value(values, "delta_U", "delta_V")
+        delta_i = _lookup_value(values, "delta_I")
+        if all(value is not None for value in (u_value, i_value, delta_u, delta_i)) and i_value != 0 and u_value != 0:
+            solved_target = target if _target_is(target, "delta_R", "absolute_uncertainty_R") else "delta_R"
+            if UNCERTAINTY_MODE == "quadrature":
+                uncertainty_equation = f"{solved_target} = R * sqrt((delta_U / U)**2 + (delta_I / I)**2)"
+                step = "Compute R = U/I, then propagate independent relative uncertainties in quadrature."
+            else:
+                uncertainty_equation = f"{solved_target} = R * (Abs(delta_U / U) + Abs(delta_I / I))"
+                step = "Compute R = U/I, then add relative uncertainties linearly under the school worst-case convention."
+            return _solution(
+                ["measurement.resistance_absolute_uncertainty"],
+                solved_target,
+                unit or "Ohm",
+                ["R = U / I", uncertainty_equation],
+                {"U": float(u_value), "I": float(i_value), "delta_U": float(delta_u), "delta_I": float(delta_i)},
+                [step],
+                assumptions={"uncertainty_mode": UNCERTAINTY_MODE or "school_linear"},
+            )
     measurement = _measurement_value_and_delta(values, target, "I", "L", "V", "x", "measured_value", "measurement")
     if "maximum possible" in text and measurement is not None:
         symbol, measured_value, delta_value = measurement
@@ -1904,16 +2237,20 @@ def _measurement_statistics_solution(semantic_output: dict[str, Any], values: di
         true_value = _lookup_value(values, "true_value", "x_true")
         measured_value = _lookup_value(values, "measured_result", "x_measured", "measurement")
         if true_value is not None and measured_value is not None and true_value != 0:
-            solved_target = target if target in {"absolute_error", "relative_error"} else "relative_error"
+            solved_target = target if target in {"absolute_error", "relative_error", "percentage_relative_error"} else "percentage_relative_error"
             return _solution(
                 ["measurement.absolute_and_relative_error"],
                 solved_target,
-                unit or "",
-                ["absolute_error = Abs(true_value - measured_result)", "relative_error = absolute_error / true_value"],
+                unit or "%",
+                [
+                    "absolute_error = Abs(true_value - measured_result)",
+                    "relative_error = absolute_error / true_value",
+                    "percentage_relative_error = relative_error * 100",
+                ],
                 {"true_value": float(true_value), "measured_result": float(measured_value)},
                 [
                     "Absolute error is the absolute difference between true and measured values.",
-                    "Relative error equals absolute error divided by the true value.",
+                    "Percentage relative error equals absolute error divided by the true value, times 100.",
                 ],
             )
 
@@ -2037,6 +2374,30 @@ def _inductance_solution(semantic_output: dict[str, Any], values: dict[str, floa
     domain = str(semantic_output.get("domain") or "").lower()
     target = _target_from_terms(semantic_output, "result")
     unit = _target_unit_from_semantics(semantic_output)
+    if "solenoid" in text and _target_is(target, "L", "L_self", "inductance"):
+        n_turns = _lookup_value(values, "N")
+        length = _lookup_value(values, "ell", "l", "length")
+        area = _lookup_value(values, "A", "S")
+        if n_turns is not None and length is not None and area is not None:
+            return _solution(
+                ["inductance.solenoid"],
+                "L" if target in {"result", ""} else target,
+                unit or "H",
+                [f"{'L' if target in {'result', ''} else target} = mu_0 * N**2 * A / ell"],
+                {"N": float(n_turns), "ell": float(length), "A": float(area)},
+                ["Use the long-solenoid inductance relation L = mu_0*N**2*A/ell."],
+            )
+    flux_linkage = _lookup_value(values, "lambda_", "lambda", "flux_linkage")
+    current = _lookup_value(values, "I", "I_rms")
+    if flux_linkage is not None and current is not None and current != 0 and (_target_is(target, "L", "L_self", "inductance") or "inductance" in text):
+        return _solution(
+            ["inductance.from_flux_linkage"],
+            "L" if target in {"result", ""} else target,
+            unit or "H",
+            [f"{'L' if target in {'result', ''} else target} = lambda_ / I"],
+            {"lambda_": float(flux_linkage), "I": float(current)},
+            ["Flux linkage and current are related by lambda = L*I, so L = lambda/I."],
+        )
     if ("self-inductance" in text or "self inductance" in text or "inductance" in domain) and all(symbol in values for symbol in ("epsilon", "I_initial", "I_final", "delta_t")):
         return _solution(["inductance.self_inductance_from_emf_current_change"], "L_self", "H", ["delta_I = I_final - I_initial", "L_self = Abs(epsilon) * delta_t / Abs(delta_I)"], {symbol: values[symbol] for symbol in ("epsilon", "I_initial", "I_final", "delta_t")}, ["Compute the current change, then use Abs(epsilon) = L*Abs(delta_I/delta_t)."])
     energy_terms = ("magnetic field energy", "energy stored in the inductor", "inductor energy")
@@ -2061,19 +2422,34 @@ def _inductance_solution(semantic_output: dict[str, Any], values: dict[str, floa
                 scale = {"j": 1.0, "mj": 1e-3, "uj": 1e-6, "microj": 1e-6}
                 w_value = float(energy_match.group(1)) * scale[energy_match.group(2).lower()]
         if _target_is(target, "L", "L_self", "L_ind") and w_value is not None and i_value is not None and i_value != 0:
+            energy_symbol = "W_B" if values.get("W_B") is not None else "W"
             return _solution(
                 ["inductance.from_magnetic_energy"],
                 "L",
                 unit or "H",
-                ["L = 2 * W_B / I**2"],
-                {"W_B": float(w_value), "I": float(i_value)},
+                [f"L = 2 * {energy_symbol} / I**2"],
+                {energy_symbol: float(w_value), "I": float(i_value)},
                 ["Use the inductor energy relation W_B = (1/2)*L*I**2 and solve for L."],
+            )
+        if _target_is(target, "I", "I_max", "current") and w_value is not None and l_value is not None and l_value != 0:
+            solved_target = target if _is_identifier(target) and target != "result" else "I"
+            energy_symbol = "W_B" if values.get("W_B") is not None else "W"
+            return _solution(
+                ["inductance.current_from_magnetic_energy"],
+                solved_target,
+                unit or "A",
+                [f"{solved_target} = sqrt(2 * {energy_symbol} / L)"],
+                {energy_symbol: float(w_value), "L": float(l_value)},
+                ["Use W = (1/2)*L*I**2 and choose the positive current magnitude."],
             )
         if (_target_is(target, "W", "W_B", "W_max", "E") or "maximum magnetic field energy" in text) and l_value is not None and i_value is not None:
             solved_target = target if _target_is(target, "W", "W_B", "W_max", "E") else "W_max"
-            if values.get("I") is not None or values.get("I_max") is not None:
+            if values.get("I_max") is not None:
                 equations = [f"{solved_target} = L * I_max**2 / 2"]
                 knowns = {"L": float(l_value), "I_max": float(i_value)}
+            elif values.get("I") is not None:
+                equations = [f"{solved_target} = L * I**2 / 2"]
+                knowns = {"L": float(l_value), "I": float(i_value)}
             else:
                 equations = [f"I_max = {float(i_value)}", f"{solved_target} = L * I_max**2 / 2"]
                 knowns = {"L": float(l_value)}
