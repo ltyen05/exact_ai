@@ -2,32 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
 from agents.classify import TfidfLogisticClassifier
 
+from .state import WorkflowExecutionError, WorkflowState
 from .tracing import trace_step
-
-
-class WorkflowState(TypedDict, total=False):
-    """Represent the data shared by the routed LangGraph nodes."""
-
-    question: str
-    premises: list[str]
-    route: str
-    parsed_question: dict[str, Any]
-    solution_output: dict[str, Any]
-    verified_output: dict[str, Any]
-    logic_spec: dict[str, Any]
-    result: dict[str, Any]
-    errors: list[str]
-    output: dict[str, Any]
-
-
-class WorkflowExecutionError(RuntimeError):
-    """Raised when a valid request cannot complete the selected workflow."""
 
 
 class ClassifyNode:

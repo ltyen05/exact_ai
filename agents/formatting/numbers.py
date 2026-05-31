@@ -124,6 +124,7 @@ SI_TO_REQUESTED_UNIT_FACTORS = {
     "nwb": 1e9,
     "t": 1.0,
     "n": 1.0,
+    "mn": 1e3,
     "n/c": 1.0,
     "v/m": 1.0,
     "hz": 1.0,

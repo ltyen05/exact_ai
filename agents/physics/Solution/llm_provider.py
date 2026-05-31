@@ -12,7 +12,8 @@ import sympy as sp
 
 from agents.formatting import extract_json
 from agents.llm import LLMClientBase
-from agents.physics.Parsing.Parsing_Agent import canonical_quantity_symbol
+from agents.physics.domain.symbols import canonical_quantity_symbol
+from agents.physics.validation import solve_spec_structural_error
 
 from .formula_lib import (
     COMPUTATIONAL_MODE_ALIASES,
@@ -115,6 +116,7 @@ class LLMSolutionProvider(SolutionProvider):
         "conjugate": sp.conjugate,
         "atan": sp.atan,
         "cos": sp.cos,
+        "diff": sp.diff,
         "exp": sp.exp,
         "log": sp.log,
         "pi": sp.pi,
@@ -619,6 +621,34 @@ class LLMSolutionProvider(SolutionProvider):
         return self._validate_solution(self._semantic_normalize_solution(deterministic_fallback, semantic_output))
 
     @staticmethod
+    def _should_use_deterministic_direct(deterministic_solution: dict[str, Any] | None) -> bool:
+        if not isinstance(deterministic_solution, dict):
+            return False
+        formula_ids = [str(item) for item in deterministic_solution.get("formula_ids") or []]
+        direct_prefixes = (
+            "electrostatics.collinear_test_charge_geometry",
+            "electrostatics.equilateral_triangle_force",
+            "electrostatics.right_angle_vertex_geometry",
+            "electrostatics.perpendicular_bisector_geometry",
+            "electrostatics.triangle_distance_geometry",
+            "electrostatics.midpoint_geometry",
+            "electrostatics.midpoint_identical_charges_cancel",
+            "electrostatics.square_center_identical_charges_cancel",
+            "electrostatics.identical_charge_from_force",
+            "capacitance.battery_connected_dielectric_charge",
+            "capacitance.isolated_dielectric_voltage",
+            "lc.energy_equal_split",
+            "measurement.power_percentage_relative_error",
+            "measurement.relative_error_from_least_count",
+            "rlc.series.power_factor_from_net_reactance",
+            "inductance.current_from_magnetic_energy",
+            "vectors.resultant_two_vectors_inverse_angle",
+            "vectors.resultant_collinear_",
+            "vectors.resultant_perpendicular",
+        )
+        return any(any(formula_id.startswith(prefix) for prefix in direct_prefixes) for formula_id in formula_ids)
+
+    @staticmethod
     def _build_correction_prompt(
         semantic_output: dict[str, Any],
         invalid_output: Any,
@@ -640,7 +670,7 @@ class LLMSolutionProvider(SolutionProvider):
             "sympy_spec.known_values, and solution_steps. For direct questions include "
             "direct_answer.answer and direct_answer.rationale_steps. Use ASCII SymPy equations, "
             "explicit '*', and plain identifier symbols only. Allowed functions/constants in equations: "
-            "Abs, abs, sqrt, sin, cos, tan, atan, exp, log, pi, Im, Re, conjugate, k, k_e, "
+            "Abs, abs, sqrt, sin, cos, tan, atan, diff, exp, log, pi, Im, Re, conjugate, k, k_e, "
             "epsilon_0, mu_0, c. Every RHS symbol must be a parsed known value, an allowed "
             "physical constant/function, or defined by another equation. C, L, f, R, and helper "
             "symbols are valid only when parsed as givens or defined by equations. The target_symbol "
@@ -900,6 +930,9 @@ class LLMSolutionProvider(SolutionProvider):
         known_values = spec.get("known_values", {})
         if not isinstance(known_values, dict):
             raise ValueError("sympy_spec.known_values must be an object.")
+        structural_error = solve_spec_structural_error(equations, {_canonical_symbol_name(symbol) for symbol in known_values})
+        if structural_error:
+            raise ValueError(structural_error)
         cls._validate_dependency_closure(equations, known_values, spec["target_symbol"])
         cls._validate_vector_spec_components(solution, equations, known_values)
         if not isinstance(solution.get("solution_steps", []), list):
@@ -916,6 +949,8 @@ class LLMSolutionProvider(SolutionProvider):
         """Request and validate one structured solution for the parsed question."""
         del question
         deterministic = self._deterministic_solution(semantic_output)
+        if self._should_use_deterministic_direct(deterministic):
+            return self._validated_deterministic_fallback(semantic_output, deterministic) or deterministic
         prompt = self._build_prompt(semantic_output, deterministic_solution=deterministic)
         llm_solution = self._request_solution(prompt, semantic_output, deterministic_fallback=deterministic)
         return self._merge_deterministic_metadata(llm_solution, deterministic)

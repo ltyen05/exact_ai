@@ -8,7 +8,7 @@ import re
 from typing import Any
 
 from agents.formatting import as_number, convert_si_to_requested, normalize_unit
-from agents.physics.Parsing.Parsing_Agent import build_calculation_input
+from agents.physics.domain.context import build_calculation_input
 from tools.calculator import PHYSICAL_CONSTANTS, solve_with_sympy_trace
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,7 @@ ALLOWED_SYMPY_NAMES = {
     "acos",
     "sin",
     "cos",
+    "diff",
     "tan",
     "atan",
     "exp",
@@ -144,12 +145,16 @@ def dimension_label_for_unit(unit: str) -> str:
     key = normalize_unit(unit)
     if key in {"w"}:
         return "power"
-    if key in {"j", "mj"}:
+    if key in {"j", "mj", "uj", "microj", "nj"}:
         return "energy"
-    if key in {"c", "uc", "microc", "nc", "mc"}:
+    if key in {"c", "uc", "microc", "nc", "mc", "pc"}:
         return "charge"
     if key in {"v"}:
         return "voltage"
+    if key in {"n/c", "v/m"}:
+        return "electric_field"
+    if key in {"h", "mh", "uh", "microh"}:
+        return "inductance"
     return ""
 
 
@@ -198,6 +203,71 @@ def unit_scale_consistency_error(computed_si_value: float, final_numeric: float,
             "Final answer unit scale is inconsistent with computed SI value: "
             f"expected {expected} {requested_unit}, got {final_numeric} {requested_unit}."
         )
+    return None
+
+
+BAD_DEGREE_TRIG_RE = re.compile(
+    r"\b(?:sin|cos|tan)\s*\(\s*(?:30|45|60|90|120|135|180)(?:\.0+)?\s*\)",
+    flags=re.IGNORECASE,
+)
+BAD_COORDINATE_COMPONENT_RE = re.compile(
+    r"\bF[A-Za-z0-9_]*\s*\*\s*C[xy]\b|\bC[xy]\s*\*\s*F[A-Za-z0-9_]*\b"
+)
+
+
+def solve_spec_structural_error(equations: list[str], known_symbols: set[str]) -> str | None:
+    equation_symbols = set(known_symbols)
+    for equation in equations:
+        equation_symbols.update(re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", equation))
+    for equation in equations:
+        compact = re.sub(r"\s+", "", equation)
+        if BAD_DEGREE_TRIG_RE.search(compact):
+            return "Equation applies sin/cos/tan to a degree literal; convert degrees to radians first."
+        if BAD_COORDINATE_COMPONENT_RE.search(compact):
+            return "Equation multiplies force by raw Cx/Cy coordinates instead of normalized unit-vector components."
+        if (
+            re.search(r"\bk(?:_e)?\b", equation)
+            and {"L", "delta_t"} <= equation_symbols
+            and equation_symbols & {"delta_I", "I_initial", "I_final"}
+        ):
+            return "Self-induction formulas must not use Coulomb constant k."
+
+        if equation.count("=") != 1:
+            continue
+        lhs, rhs = [part.strip() for part in equation.split("=", 1)]
+        test_charge_symbols = {"q0", "q3", "q_test"} & known_symbols
+        if (
+            test_charge_symbols
+            and re.fullmatch(r"F[A-Za-z0-9_]*", lhs)
+            and re.search(r"\bk\b|\bk_e\b", rhs)
+            and re.search(r"\bq[12]\b", rhs)
+            and not any(re.search(rf"\b{re.escape(symbol)}\b", rhs) for symbol in test_charge_symbols)
+        ):
+            return "Coulomb force on a test charge must include the signed product qi*q0."
+    return None
+
+
+def target_consistency_error(parsed_target: str, computed_target: str, unit: str) -> str | None:
+    parsed = str(parsed_target or "").strip()
+    computed = str(computed_target or "").strip()
+    if not parsed or not computed or parsed in {"result", "answer", "each_energy"}:
+        return None
+    if parsed == computed:
+        return None
+    target_dim = dimension_label_for_unit(unit)
+    equivalent_groups = {
+        "charge": {"q", "Q", "Q_source", "q_source", "charge"},
+        "electric_field": {"E", "E_net", "E_total", "E_field", "E_M", "E_net_magnitude"},
+        "inductance": {"L", "L_self", "L_ind", "inductance"},
+        "energy": {"W", "E", "W_B", "W_C", "W_L", "W_max", "E_total", "W_total"},
+        "voltage": {"U", "V", "U_new", "V_new", "epsilon", "emf", "E_ind"},
+        "power": {"P", "P_active", "power"},
+    }
+    group = equivalent_groups.get(target_dim)
+    if not group:
+        return None
+    if parsed in group and computed not in group:
+        return f"Target mismatch: parsed target is {parsed}, but solution computes {computed}."
     return None
 
 
@@ -278,10 +348,16 @@ def validated_context(
     unit_error = unit_symbol_error(equations)
     if unit_error:
         raise ValueError(unit_error)
+    structural_error = solve_spec_structural_error(equations, set(quantities))
+    if structural_error:
+        raise ValueError(structural_error)
     unresolved = undefined_symbols(equations, quantities, target)
     logger.debug("physics.undefined_symbols_before_sympy=%s", unresolved)
     if unresolved:
         raise ValueError(f"Undefined symbols before SymPy: {', '.join(unresolved)}.")
+    consistency_error = target_consistency_error(str(calculation["target"]), target, unit)
+    if consistency_error:
+        raise ValueError(consistency_error)
     dimension_error = expression_has_bad_dimension(target, unit, equations)
     if dimension_error:
         raise ValueError(dimension_error)

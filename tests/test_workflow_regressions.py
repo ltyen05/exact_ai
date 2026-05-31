@@ -19,10 +19,14 @@ from agents.physics.Explain import ExplainAgent
 from agents.physics.Parsing import ParsingAgent
 from agents.physics.Solution.llm_provider import LLMSolutionProvider
 from agents.physics.Solution.rag_provider import RAGSolutionProvider
+from agents.physics.domain.context import build_calculation_input
+from agents.physics.domain.units import UNIT_TO_SI
 from agents.workflows.orchestrator import ExactGraph, FormatterNode, WorkflowExecutionError
 from agents.workflows.physics import PhysicsWorkflow
 from agents.workflows.tracing import _clean, _process_llm_inputs, _process_step_outputs
 from tools.calculator import solve_with_sympy_trace
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class StaticClassifier:
@@ -107,6 +111,20 @@ class CalculatorTests(unittest.TestCase):
         self.assertAlmostEqual(multi.value, 80 / 65)
         self.assertIn("R_total = 65.0", multi.trace)
 
+    def test_diff_equations_can_reference_prior_symbolic_expression(self) -> None:
+        result = solve_with_sympy_trace(
+            {"a": 2.0},
+            [
+                "E_total = h / (a**2 + h**2)**(3/2)",
+                "dE_dh = diff(E_total, h)",
+                "dE_dh = 0",
+            ],
+            "h",
+        )
+
+        self.assertIsNotNone(result)
+        self.assertAlmostEqual(result.value, math.sqrt(2.0))
+
 
 class ParsingTests(unittest.TestCase):
     def test_prompt_is_compact_and_drops_empty_optional_sections(self) -> None:
@@ -138,6 +156,30 @@ class ParsingTests(unittest.TestCase):
         self.assertNotIn("geometry", output)
         self.assertNotIn("comparison", output)
         self.assertNotIn("options", output)
+
+    def test_prompts_match_current_physics_contract(self) -> None:
+        parser_prompt = (PROJECT_ROOT / "prompts" / "semantic_parser_type2.md").read_text(encoding="utf-8")
+        solution_prompt = (PROJECT_ROOT / "prompts" / "solution_type2.md").read_text(encoding="utf-8")
+
+        self.assertIn("mN", parser_prompt)
+        self.assertIn("I_max", parser_prompt)
+        self.assertIn("Q_source", parser_prompt)
+        self.assertIn("diff", solution_prompt)
+        self.assertIn("Preserve target consistency", solution_prompt)
+        self.assertIn("Never use Coulomb constant `k`", solution_prompt)
+        self.assertNotIn('"units": {}', solution_prompt)
+
+    def test_physics_solver_imports_state_not_orchestrator(self) -> None:
+        solver_files = [
+            PROJECT_ROOT / "agents" / "physics" / "solver" / "answer_builder.py",
+            PROJECT_ROOT / "agents" / "physics" / "solver" / "direct_answer.py",
+            PROJECT_ROOT / "agents" / "physics" / "solver" / "repair.py",
+        ]
+        for path in solver_files:
+            with self.subTest(path=path.name):
+                source = path.read_text(encoding="utf-8")
+                self.assertIn("agents.workflows.state", source)
+                self.assertNotIn("agents.workflows.orchestrator import WorkflowExecutionError", source)
 
     def test_parser_preserves_relevant_geometry_and_comparison(self) -> None:
         geometry = {"present": True, "type": "collinear", "line_order": ["A", "N"]}
@@ -219,6 +261,90 @@ class ParsingTests(unittest.TestCase):
                 self.assertAlmostEqual(output["givens"][0]["si_value"], expected_capacitance)
                 self.assertEqual(output["givens"][0]["si_unit"], "F")
                 self.assertEqual(output["givens"][1]["si_value"], expected_voltage)
+
+    def test_parser_normalizes_maximum_current_alias(self) -> None:
+        llm = RecordingLLM(
+            {
+                "physics.parsing": json.dumps(
+                    {
+                        "question": "An inductor has L = 0.25 H and maximum current 2sqrt2 A.",
+                        "domain": "Inductance",
+                        "target": {"symbol": "W_max", "unit": "J"},
+                        "givens": [
+                            {"symbol": "L", "si_value": 0.25, "si_unit": "H", "uncertainty": None},
+                            {"symbol": "maximum_current", "si_value": str(2 * math.sqrt(2)), "si_unit": "A", "uncertainty": None},
+                        ],
+                        "relations": [],
+                        "question_kind": "computational",
+                    }
+                )
+            }
+        )
+        output = ParsingAgent(llm_provider=llm).run("An inductor has L = 0.25 H and maximum current 2sqrt2 A.")
+        calculation = build_calculation_input(output)
+
+        self.assertAlmostEqual(calculation["quantities"]["I_max"], 2 * math.sqrt(2))
+
+    def test_domain_build_calculation_input_without_parser_agent(self) -> None:
+        parsed = {
+            "quantities": {"lambda": 0.012},
+            "givens": [
+                {"symbol": "U", "si_value": 12.0, "uncertainty": {"si_value": 0.2}},
+                {"symbol": "I", "value": 0.5},
+            ],
+            "geometry": {
+                "segments": [{"symbol": "AB", "si_value": 0.08}],
+                "derived_distances": [{"symbol": "AM", "si_value": 0.04}],
+            },
+            "comparison": {
+                "given_quantity_symbol": "56.3",
+                "given_si_value": 56.3,
+                "given_si_unit": "Hz",
+            },
+            "target": {"symbol": "R", "unit": "Ohm"},
+        }
+
+        calculation = build_calculation_input(parsed)
+
+        self.assertEqual(calculation["target"], "R")
+        self.assertEqual(calculation["unit"], "Ohm")
+        quantities = calculation["quantities"]
+        self.assertEqual(quantities["lambda_"], 0.012)
+        self.assertEqual(quantities["flux_linkage"], 0.012)
+        self.assertEqual(quantities["U"], 12.0)
+        self.assertEqual(quantities["V"], 12.0)
+        self.assertEqual(quantities["I"], 0.5)
+        self.assertEqual(quantities["delta_U"], 0.2)
+        self.assertEqual(quantities["AB"], 0.08)
+        self.assertEqual(quantities["AM"], 0.04)
+        self.assertEqual(quantities["f"], 56.3)
+        self.assertEqual(quantities["frequency"], 56.3)
+
+    def test_domain_unit_conversion_table_keeps_required_prefixed_units(self) -> None:
+        cases = [
+            ("microf", 1e-6, "F"),
+            ("mh", 1e-3, "H"),
+            ("cm²", 1e-4, "m2"),
+            ("kohm", 1e3, "Ohm"),
+        ]
+
+        for unit, expected_scale, expected_si_unit in cases:
+            with self.subTest(unit=unit):
+                scale, si_unit = UNIT_TO_SI[unit]
+                self.assertEqual(si_unit, expected_si_unit)
+                self.assertTrue(math.isclose(scale, expected_scale, rel_tol=0, abs_tol=1e-18))
+
+    def test_validation_imports_domain_context_not_parser(self) -> None:
+        source = (PROJECT_ROOT / "agents" / "physics" / "validation.py").read_text(encoding="utf-8")
+
+        self.assertIn("from agents.physics.domain.context import build_calculation_input", source)
+        self.assertNotIn("from agents.physics.Parsing.Parsing_Agent import build_calculation_input", source)
+
+    def test_formula_lib_imports_quantity_alias_groups_from_domain_not_parser(self) -> None:
+        source = (PROJECT_ROOT / "agents" / "physics" / "formulas" / "legacy.py").read_text(encoding="utf-8")
+
+        self.assertIn("from agents.physics.domain.symbols import QUANTITY_ALIAS_GROUPS", source)
+        self.assertNotIn("from agents.physics.Parsing.Parsing_Agent import QUANTITY_ALIAS_GROUPS", source)
 
     def test_parser_normalizes_resonance_yes_no_question(self) -> None:
         question = "An AC circuit consists of R=10 Ω, L=0.05 H, C=100 μF. When the frequency is 225 Hz, does resonance occur?"
@@ -513,6 +639,54 @@ class PhysicsWorkflowTests(unittest.TestCase):
                         "component_symbols": ["E_net_x"],
                         "magnitude_symbol": "E_net_magnitude",
                     },
+                }
+            )
+
+    def test_solution_validator_rejects_degree_literals_in_trig(self) -> None:
+        with self.assertRaisesRegex(ValueError, "degree literal"):
+            LLMSolutionProvider._validate_solution(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "F_resultant",
+                        "target_unit": "N",
+                        "equations": ["F_resultant = sqrt(F1**2 + F2**2 + 2 * F1 * F2 * cos(60))"],
+                        "known_values": {"F1": 5, "F2": 5},
+                    },
+                    "solution_steps": [],
+                }
+            )
+
+    def test_solution_validator_rejects_raw_coordinate_force_components(self) -> None:
+        with self.assertRaisesRegex(ValueError, "raw Cx/Cy"):
+            LLMSolutionProvider._validate_solution(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "F_net",
+                        "target_unit": "N",
+                        "equations": ["Fx = F * Cx", "Fy = F * Cy", "F_net = sqrt(Fx**2 + Fy**2)"],
+                        "known_values": {"F": 10, "Cx": 3, "Cy": 4},
+                    },
+                    "solution_steps": [],
+                }
+            )
+
+    def test_solution_validator_rejects_coulomb_force_missing_test_charge(self) -> None:
+        with self.assertRaisesRegex(ValueError, "qi\\*q0"):
+            LLMSolutionProvider._validate_solution(
+                {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "F_net",
+                        "target_unit": "N",
+                        "equations": ["F1 = k * Abs(q1) / r1**2", "F_net = F1"],
+                        "known_values": {"k": 9e9, "q1": 4e-6, "q0": -2e-6, "r1": 0.04},
+                    },
+                    "solution_steps": [],
                 }
             )
 
@@ -2219,6 +2393,54 @@ class PhysicsWorkflowTests(unittest.TestCase):
         self.assertEqual(output["result"]["answer"], "2")
         self.assertIn("Undefined symbols before SymPy", repair_agent.validation_error)
 
+    def test_sympy_target_resolution_failure_repairs_and_recomputes(self) -> None:
+        class RepairingSolutionAgent:
+            def repair(
+                self,
+                question: str,
+                semantic_output: dict[str, Any],
+                invalid_solution: dict[str, Any],
+                validation_error: str,
+            ) -> dict[str, Any]:
+                del question, semantic_output, invalid_solution
+                self.validation_error = validation_error
+                return {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "x",
+                        "target_unit": "m",
+                        "equations": ["x = 3"],
+                        "known_values": {},
+                    },
+                    "solution_steps": ["Repair unresolved target."],
+                }
+
+        repair_agent = RepairingSolutionAgent()
+        workflow = PhysicsWorkflow()
+        workflow.llm = object()
+        workflow.solution_agent = repair_agent
+        output = workflow.compute_sympy(
+            {
+                "question": "Find x.",
+                "parsed_question": {"target": {"symbol": "x", "unit": "m"}},
+                "solution_output": {
+                    "mode": "computational",
+                    "answer_type": "numeric",
+                    "sympy_spec": {
+                        "target_symbol": "x",
+                        "target_unit": "m",
+                        "equations": ["y = 1"],
+                        "known_values": {},
+                    },
+                    "solution_steps": [],
+                },
+                "errors": [],
+            }
+        )
+        self.assertEqual(output["result"]["answer"], "3")
+        self.assertIn("equations could not resolve the target", repair_agent.validation_error)
+
     def test_rag_documents_are_cached(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             kb_path = Path(directory) / "kb.json"
@@ -2556,6 +2778,62 @@ class PhysicsWorkflowTests(unittest.TestCase):
         computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
         self.assertEqual(computed["result"]["answer"], "0.01")
 
+    def test_deterministic_inductor_energy_after_current_halved_keeps_requested_mj(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "An inductor has a magnetic field energy of 2.0 mJ. If the current is halved, what is the remaining energy?",
+            "domain": "Inductance",
+            "target": {"symbol": "W_new", "unit": "mJ"},
+            "givens": [{"symbol": "W", "si_value": 2e-3, "si_unit": "J"}],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 0.5)
+
+    def test_deterministic_source_charge_from_force_on_test_charge(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A charge q = 10^-7 C is placed in the electric field of a point charge Q, experiencing a force F = 3 mN. The two charges are separated by a distance of 30 cm in vacuum. Calculate Q.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "Q", "unit": "C"},
+            "givens": [
+                {"symbol": "q", "si_value": 1e-7, "si_unit": "C"},
+                {"symbol": "F", "si_value": 3e-3, "si_unit": "N"},
+                {"symbol": "r", "si_value": 0.3, "si_unit": "m"},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        self.assertIn("electrostatics.source_charge_from_force_on_test_charge", solution["formula_ids"])
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 3e-7)
+
+    def test_deterministic_self_induced_emf_does_not_use_coulomb_constant(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "A solenoid has L = 0.2 H. The current decreases uniformly from 2 A to 0 in 0.02 s. Calculate the induced electromotive force.",
+            "domain": "Inductance",
+            "target": {"symbol": "epsilon", "unit": "V"},
+            "givens": [
+                {"symbol": "L", "si_value": 0.2, "si_unit": "H"},
+                {"symbol": "I_initial", "si_value": 2.0, "si_unit": "A"},
+                {"symbol": "I_final", "si_value": 0.0, "si_unit": "A"},
+                {"symbol": "delta_t", "si_value": 0.02, "si_unit": "s"},
+            ],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        self.assertNotIn("k", " ".join(solution["sympy_spec"]["equations"]))
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 20.0)
+
     def test_deterministic_max_magnetic_energy_from_l_and_imax(self) -> None:
         from agents.physics.Solution.formula_lib import deterministic_solution
 
@@ -2762,6 +3040,89 @@ class PhysicsWorkflowTests(unittest.TestCase):
 
         self.assertAlmostEqual(computed_am["verified_output"]["final_answer"]["value"], 0.08)
         self.assertAlmostEqual(computed_bm["verified_output"]["final_answer"]["value"], 0.04)
+
+    def test_zero_field_same_sign_negative_charges_uses_magnitudes(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        base = {
+            "question": "At A and B, q1 = -4e-6 C and q2 = -1e-6 C are 12 cm apart. Find point M where the electric field is zero.",
+            "domain": "Electric Charges and Fields",
+            "givens": [
+                {"symbol": "q1", "si_value": -4e-6},
+                {"symbol": "q2", "si_value": -1e-6},
+                {"symbol": "AB", "si_value": 0.12},
+            ],
+            "relations": ["electric field is zero"],
+            "question_kind": "computational",
+        }
+        for target, expected in (("AM", 0.08), ("BM", 0.04)):
+            with self.subTest(target=target):
+                parsed = {**base, "target": {"symbol": target, "unit": "m"}}
+                solution = deterministic_solution(parsed)
+                self.assertIsNotNone(solution)
+                computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+                self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], expected)
+
+    def test_conceptual_lc_electric_energy_maximum_uses_direct_answer(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "In an LC circuit, when does electric field energy reach maximum?",
+            "domain": "Alternating-Current Circuits",
+            "target": {"symbol": "answer", "unit": ""},
+            "givens": [],
+            "question_kind": "conceptual",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertIn("capacitor charge is maximum", computed["result"]["answer"])
+        self.assertIn("current is zero", computed["result"]["answer"])
+
+    def test_perpendicular_bisector_max_field_height_template(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Two equal charges are 10 cm apart. On the perpendicular bisector, find h where the electric field is maximum.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "h", "unit": "m"},
+            "givens": [{"symbol": "AB", "si_value": 0.10, "si_unit": "m"}],
+            "relations": ["perpendicular bisector"],
+            "question_kind": "computational",
+        }
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution)
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], 0.10 / (2 * math.sqrt(2)))
+
+    def test_self_induction_validator_rejects_coulomb_constant_contamination(self) -> None:
+        with self.assertRaises(WorkflowExecutionError):
+            PhysicsWorkflow().compute_sympy(
+                {
+                    "parsed_question": {
+                        "question": "Calculate the induced electromotive force of a self-inductor.",
+                        "target": {"symbol": "epsilon", "unit": "V"},
+                        "givens": [
+                            {"symbol": "L", "si_value": 0.2},
+                            {"symbol": "I_initial", "si_value": 2.0},
+                            {"symbol": "I_final", "si_value": 0.0},
+                            {"symbol": "delta_t", "si_value": 0.02},
+                        ],
+                    },
+                    "solution_output": {
+                        "mode": "computational",
+                        "answer_type": "numeric",
+                        "sympy_spec": {
+                            "target_symbol": "epsilon",
+                            "target_unit": "V",
+                            "equations": ["delta_I = I_final - I_initial", "epsilon = -k * L * delta_I / delta_t"],
+                            "known_values": {"L": 0.2, "I_initial": 2.0, "I_final": 0.0, "delta_t": 0.02, "k": 9e9},
+                        },
+                        "solution_steps": [],
+                    },
+                    "errors": [],
+                }
+            )
 
     def test_measurement_maximum_possible_current_uses_uncertainty(self) -> None:
         from agents.physics.Solution.formula_lib import deterministic_solution
@@ -2976,6 +3337,574 @@ class PhysicsWorkflowTests(unittest.TestCase):
         expected = math.sqrt(9**2 + 12**2 + 2 * 9 * 12 * math.cos(math.radians(135)))
         self.assertAlmostEqual(computed["verified_output"]["final_answer"]["value"], expected)
 
+    def _assert_deterministic_numeric_answer(self, parsed: dict[str, Any], expected: float, rel_tol: float = 1e-3) -> dict[str, Any]:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        solution = deterministic_solution(parsed)
+        self.assertIsNotNone(solution, parsed["question"])
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+        value = computed["verified_output"]["final_answer"]["value"]
+        actual = value["magnitude"] if isinstance(value, dict) else value
+        tolerance = max(abs(expected) * rel_tol, 1e-6)
+        self.assertAlmostEqual(actual, expected, delta=tolerance, msg=parsed["question"])
+        return computed
+
+    def test_acceptance_coulomb_vector_force_regressions(self) -> None:
+        cases = [
+            (
+                {
+                    "question": "Two charges q1 = +4 microC and q2 = +4 microC are 10 cm apart. A charge q0 = -2 microC lies between them, 4 cm from q1 and 6 cm from q2. Find the magnitude of the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 4e-6},
+                        {"symbol": "q2", "si_value": 4e-6},
+                        {"symbol": "q0", "si_value": -2e-6},
+                        {"symbol": "AB", "si_value": 0.10},
+                        {"symbol": "AM", "si_value": 0.04},
+                        {"symbol": "BM", "si_value": 0.06},
+                    ],
+                    "relations": ["q0 lies between q1 at A and q2 at B"],
+                    "question_kind": "computational",
+                    "answer_format": {"requested_form": "magnitude"},
+                    "geometry": {"present": True, "type": "collinear", "line_order": ["A", "M", "B"]},
+                },
+                25.0,
+            ),
+            (
+                {
+                    "question": "Charges q1 = +3 microC and q2 = -3 microC are at A and B, 8 cm apart. Point M is on the extension beyond A with AM = 4 cm and BM = 12 cm. A charge q0 = +1 microC is placed at M. Find the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 3e-6},
+                        {"symbol": "q2", "si_value": -3e-6},
+                        {"symbol": "q0", "si_value": 1e-6},
+                        {"symbol": "AB", "si_value": 0.08},
+                        {"symbol": "AM", "si_value": 0.04},
+                        {"symbol": "BM", "si_value": 0.12},
+                    ],
+                    "relations": ["M is on the extension beyond A"],
+                    "question_kind": "computational",
+                    "geometry": {"present": True, "type": "collinear", "line_order": ["M", "A", "B"]},
+                },
+                15.0,
+            ),
+            (
+                {
+                    "question": "Two charges q1 = +1 microC and q2 = -4 microC are 10 cm apart. A charge q0 = +2 microC is placed at the midpoint. Calculate the magnitude of the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 1e-6},
+                        {"symbol": "q2", "si_value": -4e-6},
+                        {"symbol": "q0", "si_value": 2e-6},
+                        {"symbol": "AB", "si_value": 0.10},
+                    ],
+                    "question_kind": "computational",
+                    "answer_format": {"requested_form": "magnitude"},
+                    "geometry": {"present": True, "type": "midpoint_1d"},
+                },
+                36.0,
+            ),
+            (
+                {
+                    "question": "Points M, A, B are collinear in that order, with AM = 3 cm and AB = 5 cm. Charges q1 = +2 microC at A, q2 = -3 microC at B, and q0 = +1 microC at M. Calculate the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 2e-6},
+                        {"symbol": "q2", "si_value": -3e-6},
+                        {"symbol": "q0", "si_value": 1e-6},
+                        {"symbol": "AM", "si_value": 0.03},
+                        {"symbol": "AB", "si_value": 0.05},
+                    ],
+                    "relations": ["Points M, A, B are collinear in that order"],
+                    "question_kind": "computational",
+                    "geometry": {"present": True, "type": "collinear", "line_order": ["M", "A", "B"]},
+                },
+                15.78125,
+            ),
+            (
+                {
+                    "question": "Two equal positive charges q1 = q2 = +3 microC are fixed at A and B, 12 cm apart. A charge q0 = +1 microC is placed at the midpoint. Determine the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 3e-6},
+                        {"symbol": "q2", "si_value": 3e-6},
+                        {"symbol": "q0", "si_value": 1e-6},
+                        {"symbol": "AB", "si_value": 0.12},
+                    ],
+                    "question_kind": "computational",
+                    "geometry": {"present": True, "type": "midpoint_1d"},
+                },
+                0.0,
+            ),
+            (
+                {
+                    "question": "Charges q1 = +2 microC and q2 = -2 microC are placed at A and B, 8 cm apart. A charge q0 = +1 microC is placed at the midpoint of AB. Find the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 2e-6},
+                        {"symbol": "q2", "si_value": -2e-6},
+                        {"symbol": "q0", "si_value": 1e-6},
+                        {"symbol": "AB", "si_value": 0.08},
+                    ],
+                    "question_kind": "computational",
+                    "geometry": {"present": True, "type": "midpoint_1d"},
+                },
+                22.5,
+            ),
+            (
+                {
+                    "question": "Two charges q1 = +5 microC and q2 = +5 microC are 10 cm apart. A test charge q0 = +1 microC is at C with AC = 6 cm and BC = 8 cm. Calculate the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 5e-6},
+                        {"symbol": "q2", "si_value": 5e-6},
+                        {"symbol": "q0", "si_value": 1e-6},
+                        {"symbol": "AB", "si_value": 0.10},
+                        {"symbol": "AC", "si_value": 0.06},
+                        {"symbol": "BC", "si_value": 0.08},
+                    ],
+                    "question_kind": "computational",
+                    "geometry": {"present": True, "type": "triangle_by_sides"},
+                },
+                14.343,
+            ),
+            (
+                {
+                    "question": "Two identical charges q1 = q2 = +2 microC are 6 cm apart. A charge q0 = +1 microC is on the perpendicular bisector, 4 cm from AB. Find the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 2e-6},
+                        {"symbol": "q2", "si_value": 2e-6},
+                        {"symbol": "q0", "si_value": 1e-6},
+                        {"symbol": "AB", "si_value": 0.06},
+                        {"symbol": "ell", "si_value": 0.04},
+                    ],
+                    "relations": ["q0 lies on the perpendicular bisector of AB"],
+                    "question_kind": "computational",
+                },
+                11.52,
+            ),
+            (
+                {
+                    "question": "Two charges q1 = +2 microC and q2 = -2 microC are 6 cm apart. A test charge q0 = +1 microC is on the perpendicular bisector of AB, 4 cm from AB. Find the magnitude of the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 2e-6},
+                        {"symbol": "q2", "si_value": -2e-6},
+                        {"symbol": "q0", "si_value": 1e-6},
+                        {"symbol": "AB", "si_value": 0.06},
+                        {"symbol": "ell", "si_value": 0.04},
+                    ],
+                    "relations": ["q0 lies on the perpendicular bisector of AB"],
+                    "question_kind": "computational",
+                    "answer_format": {"requested_form": "magnitude"},
+                },
+                8.64,
+            ),
+            (
+                {
+                    "question": "Three identical charges q = +1 microC are placed at the vertices of an isosceles right triangle with equal legs 12 cm. Find the net force on the charge at the right-angle vertex.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [{"symbol": "q", "si_value": 1e-6}, {"symbol": "a", "si_value": 0.12}],
+                    "question_kind": "computational",
+                },
+                0.883883,
+            ),
+            (
+                {
+                    "question": "Three identical charges q = +2 microC are placed at the vertices of an equilateral triangle with side 15 cm. Calculate the net force on one charge.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [{"symbol": "q", "si_value": 2e-6}, {"symbol": "side", "si_value": 0.15}],
+                    "question_kind": "computational",
+                },
+                2.77128,
+            ),
+            (
+                {
+                    "question": "Charges q1 = q2 = +1 microC and q3 = -1 microC are placed at the vertices of an equilateral triangle of side 10 cm. Find the net force on q3.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 1e-6},
+                        {"symbol": "q2", "si_value": 1e-6},
+                        {"symbol": "q3", "si_value": -1e-6},
+                        {"symbol": "side", "si_value": 0.10},
+                    ],
+                    "question_kind": "computational",
+                },
+                1.55885,
+            ),
+            (
+                {
+                    "question": "Two equal charges q1 = q2 = +2 microC are at two vertices of an equilateral triangle of side 5 cm. A charge q0 = +1 microC is at the third vertex. Find the magnitude of the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 2e-6},
+                        {"symbol": "q2", "si_value": 2e-6},
+                        {"symbol": "q0", "si_value": 1e-6},
+                        {"symbol": "side", "si_value": 0.05},
+                    ],
+                    "question_kind": "computational",
+                    "answer_format": {"requested_form": "magnitude"},
+                },
+                12.4708,
+            ),
+            (
+                {
+                    "question": "A charge is acted on by two equal electric forces of 5 N. The resultant force is also 5 N. Find the angle between the two forces.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "theta", "unit": "degrees"},
+                    "givens": [
+                        {"symbol": "F1", "si_value": 5},
+                        {"symbol": "F2", "si_value": 5},
+                        {"symbol": "F_resultant", "si_value": 5},
+                    ],
+                    "question_kind": "computational",
+                },
+                120.0,
+            ),
+        ]
+
+        for parsed, expected in cases:
+            with self.subTest(question=parsed["question"]):
+                computed = self._assert_deterministic_numeric_answer(parsed, expected)
+                self.assertNotEqual(computed["result"]["answer"], "Unknown")
+
+    def test_acceptance_existing_correct_cases_do_not_regress(self) -> None:
+        cases = [
+            (
+                {
+                    "question": "Two charges q1 = -3 microC and q2 = +2 microC are separated by 9 cm. Calculate the magnitude of the force between them and state whether it is attractive or repulsive.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F", "unit": "N"},
+                    "givens": [{"symbol": "q1", "si_value": -3e-6}, {"symbol": "q2", "si_value": 2e-6}, {"symbol": "r", "si_value": 0.09}],
+                    "question_kind": "computational",
+                },
+                6.66667,
+                "attractive",
+            ),
+            (
+                {
+                    "question": "Three charges lie on a straight line: q1 = +2 microC, q0 = +1 microC, and q2 = +6 microC. The distances are q1q0 = 3 cm and q0q2 = 6 cm. Find the net force on q0.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net_magnitude", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 2e-6},
+                        {"symbol": "q0", "si_value": 1e-6},
+                        {"symbol": "q2", "si_value": 6e-6},
+                        {"symbol": "AM", "si_value": 0.03},
+                        {"symbol": "BM", "si_value": 0.06},
+                    ],
+                    "relations": ["q0 lies between q1 and q2 on a straight line"],
+                    "question_kind": "computational",
+                    "geometry": {"present": True, "type": "collinear", "line_order": ["A", "M", "B"]},
+                },
+                5.0,
+                "",
+            ),
+            (
+                {
+                    "question": "Two charges q1 = +2x10^-8 C and q2 = +5x10^-8 C are separated by 4 cm. Calculate the repulsive force between them.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F", "unit": "N"},
+                    "givens": [{"symbol": "q1", "si_value": 2e-8}, {"symbol": "q2", "si_value": 5e-8}, {"symbol": "r", "si_value": 0.04}],
+                    "question_kind": "computational",
+                },
+                0.005625,
+                "repulsive",
+            ),
+            (
+                {
+                    "question": "Two identical point charges q are 12 cm apart in air and repel each other with a force of 3.6 N. Find q.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "q", "unit": "C"},
+                    "givens": [{"symbol": "F", "si_value": 3.6}, {"symbol": "r", "si_value": 0.12}],
+                    "question_kind": "computational",
+                },
+                2.40166e-6,
+                "",
+            ),
+            (
+                {
+                    "question": "Two point charges q1 = +3 microC and q2 = -4 microC are placed 6 cm apart in air. Calculate the magnitude of the electric force between them.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F", "unit": "N"},
+                    "givens": [{"symbol": "q1", "si_value": 3e-6}, {"symbol": "q2", "si_value": -4e-6}, {"symbol": "r", "si_value": 0.06}],
+                    "question_kind": "computational",
+                    "answer_format": {"requested_form": "magnitude"},
+                },
+                30.0,
+                "",
+            ),
+            (
+                {
+                    "question": "Two equal electric forces, each 12 N, act at an angle of 120 degrees to each other. Calculate the resultant force.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_resultant", "unit": "N"},
+                    "givens": [{"symbol": "F1", "si_value": 12}, {"symbol": "F2", "si_value": 12}, {"symbol": "theta", "si_value": 120}],
+                    "question_kind": "computational",
+                },
+                12.0,
+                "",
+            ),
+            (
+                {
+                    "question": "Two electric forces have magnitudes 6 N and 10 N and form an angle of 60 degrees. Find the resultant force.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_resultant", "unit": "N"},
+                    "givens": [{"symbol": "F1", "si_value": 6}, {"symbol": "F2", "si_value": 10}, {"symbol": "theta", "si_value": 60}],
+                    "question_kind": "computational",
+                },
+                14.0,
+                "",
+            ),
+            (
+                {
+                    "question": "Two electric forces of 8 N and 15 N act perpendicular to each other. Calculate the magnitude of the resultant force.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_resultant", "unit": "N"},
+                    "givens": [{"symbol": "F1", "si_value": 8}, {"symbol": "F2", "si_value": 15}],
+                    "question_kind": "computational",
+                    "answer_format": {"requested_form": "magnitude"},
+                },
+                17.0,
+                "",
+            ),
+            (
+                {
+                    "question": "Two collinear electric forces of 18 N and 7 N act in opposite directions on a charge. Find the magnitude of the resultant force.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_resultant", "unit": "N"},
+                    "givens": [{"symbol": "F1", "si_value": 18}, {"symbol": "F2", "si_value": 7}],
+                    "question_kind": "computational",
+                    "answer_format": {"requested_form": "magnitude"},
+                },
+                11.0,
+                "",
+            ),
+            (
+                {
+                    "question": "Two electric forces act in the same direction with magnitudes 6 N and 9 N. Calculate the resultant force.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_resultant", "unit": "N"},
+                    "givens": [{"symbol": "F1", "si_value": 6}, {"symbol": "F2", "si_value": 9}],
+                    "question_kind": "computational",
+                },
+                15.0,
+                "",
+            ),
+            (
+                {
+                    "question": "A series RLC circuit with C = 20 microF resonates at f = 100 Hz. Calculate the inductance.",
+                    "domain": "Alternating-Current Circuits",
+                    "target": {"symbol": "L", "unit": "H"},
+                    "givens": [{"symbol": "C", "si_value": 20e-6}, {"symbol": "f", "si_value": 100}],
+                    "relations": ["series RLC resonance"],
+                    "question_kind": "computational",
+                },
+                0.126651,
+                "",
+            ),
+        ]
+
+        for parsed, expected, answer_fragment in cases:
+            with self.subTest(question=parsed["question"]):
+                computed = self._assert_deterministic_numeric_answer(parsed, expected)
+                if answer_fragment:
+                    self.assertIn(answer_fragment, computed["result"]["answer"])
+
+    def test_acceptance_uncompleted_run_rule_based_regressions(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        cases: list[tuple[dict[str, Any], Any]] = [
+            (
+                {
+                    "question": "An ammeter has a least count of 0.05 A and reads 2.5 A. Taking the absolute error equal to the least count, calculate the relative error.",
+                    "domain": "Measurement and Uncertainty",
+                    "target": {"symbol": "relative_error", "unit": ""},
+                    "givens": [
+                        {"symbol": "least_count", "si_value": 0.05, "si_unit": "A"},
+                        {"symbol": "measured_value", "si_value": 2.5, "si_unit": "A"},
+                    ],
+                    "question_kind": "computational",
+                },
+                0.02,
+            ),
+            (
+                {
+                    "question": "Power is calculated by P = UI. Given U = 15 +/- 0.6 V and I = 2.0 +/- 0.05 A, calculate the percentage relative error of P.",
+                    "domain": "Measurement and Uncertainty",
+                    "target": {"symbol": "percentage_relative_error", "unit": "%"},
+                    "givens": [
+                        {"symbol": "U", "si_value": 15.0, "si_unit": "V", "uncertainty": {"si_value": 0.6}},
+                        {"symbol": "I", "si_value": 2.0, "si_unit": "A", "uncertainty": {"si_value": 0.05}},
+                    ],
+                    "question_kind": "computational",
+                },
+                6.5,
+            ),
+            (
+                {
+                    "question": "An isolated charged air capacitor initially has voltage U0 = 500 V. A dielectric with relative permittivity epsilon_r = 5 is inserted fully between the plates. Find the new voltage.",
+                    "domain": "Capacitance",
+                    "target": {"symbol": "U_new", "unit": "V"},
+                    "givens": [
+                        {"symbol": "U0", "si_value": 500.0, "si_unit": "V"},
+                        {"symbol": "epsilon_r", "si_value": 5.0},
+                    ],
+                    "question_kind": "computational",
+                },
+                100.0,
+            ),
+            (
+                {
+                    "question": "A 30 pF capacitor remains connected to a 90 V battery. A dielectric with relative permittivity epsilon_r = 4 is inserted fully. Find the new charge on the capacitor.",
+                    "domain": "Capacitance",
+                    "target": {"symbol": "Q_new", "unit": "C"},
+                    "givens": [
+                        {"symbol": "C", "si_value": 30e-12, "si_unit": "F"},
+                        {"symbol": "U", "si_value": 90.0, "si_unit": "V"},
+                        {"symbol": "epsilon_r", "si_value": 4.0},
+                    ],
+                    "question_kind": "computational",
+                },
+                1.08e-8,
+            ),
+            (
+                {
+                    "question": "In an ideal LC circuit, the total energy is 80 mJ. At one instant, the electric energy equals the magnetic energy. Find each energy.",
+                    "domain": "Alternating-Current Circuits",
+                    "target": {"symbol": "each_energy", "unit": "mJ"},
+                    "givens": [{"symbol": "E_total", "si_value": 80e-3, "si_unit": "J"}],
+                    "question_kind": "computational",
+                },
+                {"electric_energy": 40.0, "magnetic_energy": 40.0},
+            ),
+            (
+                {
+                    "question": "A coil of inductance L = 0.04 H stores magnetic energy W = 0.08 J. Find the current through the coil.",
+                    "domain": "Inductance",
+                    "target": {"symbol": "I", "unit": "A"},
+                    "givens": [
+                        {"symbol": "L", "si_value": 0.04, "si_unit": "H"},
+                        {"symbol": "W", "si_value": 0.08, "si_unit": "J"},
+                    ],
+                    "question_kind": "computational",
+                },
+                2.0,
+            ),
+            (
+                {
+                    "question": "Two identical positive point charges Q1 = Q2 = +3 microC are 6 cm apart. Determine the net electric field at the midpoint.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "E_net_magnitude", "unit": "N/C"},
+                    "givens": [
+                        {"symbol": "Q1", "si_value": 3e-6, "si_unit": "C"},
+                        {"symbol": "Q2", "si_value": 3e-6, "si_unit": "C"},
+                        {"symbol": "AB", "si_value": 0.06, "si_unit": "m"},
+                    ],
+                    "question_kind": "computational",
+                    "geometry": {"present": True, "type": "midpoint_1d"},
+                },
+                0.0,
+            ),
+            (
+                {
+                    "question": "Four identical charges are placed at the four vertices of a square. A test charge is placed at the center of the square. What is the net electric force on the test charge?",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F_net", "unit": "N"},
+                    "givens": [],
+                    "question_kind": "computational",
+                    "geometry": {"present": True, "type": "square_center"},
+                },
+                0.0,
+            ),
+            (
+                {
+                    "question": "Two identical point charges q are 12 cm apart in air and repel each other with a force of 3.6 N. Find q.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "q", "unit": "C"},
+                    "givens": [
+                        {"symbol": "F", "si_value": 3.6, "si_unit": "N"},
+                        {"symbol": "r", "si_value": 0.12, "si_unit": "m"},
+                    ],
+                    "question_kind": "computational",
+                },
+                2.40166e-6,
+            ),
+            (
+                {
+                    "question": "A series AC circuit has resistance R = 40 Ohm and net reactance |XL - XC| = 30 Ohm. Calculate the power factor.",
+                    "domain": "Alternating-Current Circuits",
+                    "target": {"symbol": "power_factor", "unit": ""},
+                    "givens": [
+                        {"symbol": "R", "si_value": 40.0, "si_unit": "Ohm"},
+                        {"symbol": "X_net", "si_value": 30.0, "si_unit": "Ohm"},
+                    ],
+                    "question_kind": "computational",
+                },
+                0.8,
+            ),
+        ]
+
+        for parsed, expected in cases:
+            with self.subTest(question=parsed["question"]):
+                solution = deterministic_solution(parsed)
+                self.assertIsNotNone(solution)
+                computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": solution, "errors": []})
+                value = computed["verified_output"]["final_answer"]["value"]
+                self.assertNotIn("status", computed["result"])
+                if isinstance(expected, dict):
+                    self.assertIsInstance(value, dict)
+                    for key, expected_value in expected.items():
+                        self.assertAlmostEqual(value[key], expected_value, delta=max(abs(expected_value) * 1e-6, 1e-9))
+                    continue
+                actual = value["magnitude"] if isinstance(value, dict) and "magnitude" in value else value
+                self.assertAlmostEqual(actual, expected, delta=max(abs(expected) * 1e-3, 1e-9))
+
+    def test_solution_provider_falls_back_to_deterministic_coulomb_when_json_repair_fails(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution
+
+        parsed = {
+            "question": "Two charges q1 = +4 microC and q2 = +4 microC are 10 cm apart. A charge q0 = -2 microC lies between them, 4 cm from q1 and 6 cm from q2. Find the magnitude of the net force on q0.",
+            "domain": "Electric Charges and Fields",
+            "target": {"symbol": "F_net_magnitude", "unit": "N"},
+            "givens": [
+                {"symbol": "q1", "si_value": 4e-6},
+                {"symbol": "q2", "si_value": 4e-6},
+                {"symbol": "q0", "si_value": -2e-6},
+                {"symbol": "AB", "si_value": 0.10},
+                {"symbol": "AM", "si_value": 0.04},
+                {"symbol": "BM", "si_value": 0.06},
+            ],
+            "relations": ["q0 lies between q1 and q2"],
+            "question_kind": "computational",
+            "answer_format": {"requested_form": "magnitude"},
+            "geometry": {"present": True, "type": "collinear", "line_order": ["A", "M", "B"]},
+        }
+        llm = RecordingLLM({"physics.solution": "not json", "physics.solution.retry": "still not json", "physics.solution.repair": "still not json"})
+        provider = LLMSolutionProvider(llm)
+
+        deterministic = deterministic_solution(parsed)
+        output = provider._request_solution(provider._build_prompt(parsed), parsed, deterministic)
+
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution", "physics.solution.retry", "physics.solution.repair"])
+        computed = PhysicsWorkflow().compute_sympy({"parsed_question": parsed, "solution_output": output, "errors": []})
+        value = computed["verified_output"]["final_answer"]["value"]
+        self.assertAlmostEqual(value["magnitude"], 25.0)
+
 
 class FormattingRegressionTests(unittest.TestCase):
     def test_format_number_keeps_tiny_nonzero_values(self) -> None:
@@ -2985,6 +3914,81 @@ class FormattingRegressionTests(unittest.TestCase):
 
 
 class SolutionProviderRegressionTests(unittest.TestCase):
+    def test_formula_registry_and_legacy_import_support_core_domains(self) -> None:
+        from agents.physics.Solution.formula_lib import deterministic_solution as legacy_deterministic_solution
+        from agents.physics.formulas.registry import deterministic_solution as registry_deterministic_solution
+
+        cases = [
+            (
+                {
+                    "question": "A capacitor has capacitance C = 4 microF and voltage U = 50 V. Calculate energy.",
+                    "domain": "Capacitance",
+                    "target": {"symbol": "W", "unit": "J"},
+                    "givens": [{"symbol": "C", "si_value": 4e-6}, {"symbol": "U", "si_value": 50}],
+                },
+                "capacitance.stored_energy",
+                "W",
+            ),
+            (
+                {
+                    "question": "Two charges q1 and q2 separated by r. Calculate force.",
+                    "domain": "Electric Charges and Fields",
+                    "target": {"symbol": "F", "unit": "N"},
+                    "givens": [
+                        {"symbol": "q1", "si_value": 2e-6},
+                        {"symbol": "q2", "si_value": 3e-6},
+                        {"symbol": "r", "si_value": 0.1},
+                    ],
+                },
+                "electrostatics.coulomb_two_charge_force",
+                "F",
+            ),
+            (
+                {
+                    "question": "A series RLC circuit has L and C. Find resonant frequency.",
+                    "domain": "Alternating-Current Circuits",
+                    "target": {"symbol": "f_res", "unit": "Hz"},
+                    "givens": [{"symbol": "L", "si_value": 0.2}, {"symbol": "C", "si_value": 40e-6}],
+                },
+                "ac.resonance.frequency",
+                "f_res",
+            ),
+            (
+                {
+                    "question": "The true value is 30.0 cm, the measured result is 29.7 cm. Calculate the absolute error and relative error.",
+                    "domain": "Measurements",
+                    "target": {"symbol": "percentage_relative_error", "unit": "%"},
+                    "givens": [{"symbol": "true_value", "si_value": 30.0}, {"symbol": "measured_result", "si_value": 29.7}],
+                },
+                "measurement.absolute_and_relative_error",
+                "percentage_relative_error",
+            ),
+            (
+                {
+                    "question": "A solenoid has N = 1000 turns, current I = 2 A and length ell = 0.5 m. Calculate magnetic field.",
+                    "domain": "Sources of Magnetic Fields",
+                    "target": {"symbol": "B", "unit": "T"},
+                    "givens": [
+                        {"symbol": "N", "si_value": 1000},
+                        {"symbol": "I", "si_value": 2},
+                        {"symbol": "ell", "si_value": 0.5},
+                    ],
+                },
+                "magnetism.solenoid_magnetic_field",
+                "B",
+            ),
+        ]
+
+        for parsed, expected_formula_id, expected_target in cases:
+            with self.subTest(formula_id=expected_formula_id):
+                legacy_solution = legacy_deterministic_solution(parsed)
+                registry_solution = registry_deterministic_solution(parsed)
+                self.assertIsNotNone(legacy_solution)
+                self.assertIsNotNone(registry_solution)
+                self.assertEqual(registry_solution, legacy_solution)
+                self.assertIn(expected_formula_id, registry_solution["formula_ids"])
+                self.assertEqual(registry_solution["sympy_spec"]["target_symbol"], expected_target)
+
     def test_solution_provider_retargets_undefined_mean_and_mae_target(self) -> None:
         llm = RecordingLLM(
             {
