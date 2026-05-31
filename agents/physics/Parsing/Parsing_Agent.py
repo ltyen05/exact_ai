@@ -43,8 +43,14 @@ SYMBOL_REPLACEMENTS = {
 UNIT_TO_SI: dict[str, tuple[float, str]] = {
     "m": (1.0, "m"),
     "m2": (1.0, "m2"),
+    "m^2": (1.0, "m2"),
+    "m²": (1.0, "m2"),
     "cm2": (1e-4, "m2"),
+    "cm^2": (1e-4, "m2"),
+    "cm²": (1e-4, "m2"),
     "mm2": (1e-6, "m2"),
+    "mm^2": (1e-6, "m2"),
+    "mm²": (1e-6, "m2"),
     "cm": (1e-2, "m"),
     "mm": (1e-3, "m"),
     "km": (1e3, "m"),
@@ -199,6 +205,19 @@ class ParsingAgent:
             "Use question_kind computational, yes_no_computational, yes_no_conceptual, "
             "multiple_choice, or conceptual. Do not solve the problem.\n\n"
             f"Question:\n{question}\n\nMalformed response:\n{response}\n\nJSON:"
+        )
+
+    @staticmethod
+    def _build_retry_prompt(question: str, response_preview: str) -> str:
+        """Ask the LLM for a fresh compact JSON parse after malformed output."""
+        return (
+            "Return exactly one complete valid JSON object parsing this physics question. "
+            "No markdown, no prose, no calculation. Required fields: question, domain, target, "
+            "givens, relations, question_kind. Use ASCII symbols such as mu_0, ell, omega; "
+            "convert stated numeric quantities to SI floats where possible.\n\n"
+            f"Question:\n{question}\n\n"
+            f"Previous invalid response preview:\n{response_preview}\n\n"
+            "JSON:"
         )
 
     @staticmethod
@@ -712,6 +731,32 @@ class ParsingAgent:
             "Valid JSON:"
         )
 
+    @staticmethod
+    def _heuristic_parse(question: str) -> dict[str, Any] | None:
+        text = _normalize_text(question).lower()
+        if "solenoid" in text and "magnetic field" in text:
+            current_match = re.search(
+                r"current[^0-9+-]*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*a\b",
+                text,
+            )
+            turns_match = re.search(
+                r"(?:turns per meter|turn per meter|n)\s*(?:is|=)?\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))",
+                text,
+            )
+            if current_match and turns_match:
+                return {
+                    "question": question,
+                    "domain": "Sources of Magnetic Fields",
+                    "target": {"symbol": "B", "unit": "T"},
+                    "givens": [
+                        {"symbol": "I", "si_value": float(current_match.group(1)), "si_unit": "A", "uncertainty": None},
+                        {"symbol": "n", "si_value": float(turns_match.group(1)), "si_unit": "1/m", "uncertainty": None},
+                    ],
+                    "relations": ["long solenoid"],
+                    "question_kind": "computational",
+                }
+        return None
+
     def run(self, input_data: Any) -> dict[str, Any]:
         """Return semantic JSON extracted from one physics question."""
         question = str(input_data)
@@ -728,6 +773,16 @@ class ParsingAgent:
             stage="physics.parsing",
         )
         parsed = extract_json(response)
+        if not isinstance(parsed, dict):
+            response_preview = response[:200] if response else "(empty)"
+            retry_response = self.llm_provider.chat(
+                [{"role": "user", "content": self._build_retry_prompt(question, response_preview)}],
+                temperature=0.0,
+                max_tokens=self.config.get("retry_max_tokens", self.config.get("repair_max_tokens", 2048)),
+                response_format={"type": "json_object"},
+                stage="physics.parsing.retry",
+            )
+            parsed = extract_json(retry_response)
         if not isinstance(parsed, dict):
             # Repair attempt 1: standard repair prompt
             repair_response = self.llm_provider.chat(
@@ -749,6 +804,9 @@ class ParsingAgent:
             )
             parsed = extract_json(repair_response_2)
         if not isinstance(parsed, dict):
+            heuristic = self._heuristic_parse(question)
+            if isinstance(heuristic, dict):
+                return self._compact_output(heuristic, question)
             response_preview = response[:200] if response else "(empty)"
             raise ValueError(
                 f"Physics parser response must be a JSON object. "
