@@ -199,6 +199,7 @@ class LLMSolutionProvider(SolutionProvider):
         "Re": sp.re,
         "re": sp.re,
         "conjugate": sp.conjugate,
+        "acos": sp.acos,
         "atan": sp.atan,
         "cos": sp.cos,
         "exp": sp.exp,
@@ -1178,12 +1179,204 @@ class LLMSolutionProvider(SolutionProvider):
         return None
 
     @classmethod
+    def _capacitor_deterministic_solution(cls, semantic_output: dict[str, Any]) -> dict[str, Any] | None:
+        text = cls._semantic_text(semantic_output)
+        if "reactance" in text or "resonance" in text or "rlc" in text:
+            return None
+        if not any(term in text for term in ("capacit", "capacitor", "dielectric", "tụ", "điện dung")):
+            return None
+
+        values = cls._numeric_values(semantic_output)
+        target = cls._target_from_terms(semantic_output, "result")
+        target_unit = cls._target_unit_from_semantics(semantic_output)
+        c_value = _lookup_value(values, "C")
+        q_value = _lookup_value(values, "Q")
+        u_value = _lookup_value(values, "U")
+        c1_value = values.get("C1")
+        c2_value = values.get("C2")
+        s_value = values.get("S")
+        d_value = values.get("d")
+
+        if cls._target_is(target, "W", "E") and c_value is not None and u_value is not None:
+            public_target = target if _is_identifier(target) else "W"
+            return cls._solution(
+                ["capacitor.energy"],
+                public_target,
+                target_unit or "J",
+                [f"{public_target} = C * U**2 / 2"],
+                {"C": c_value, "U": u_value},
+                ["Use the energy stored in a capacitor: W = C*U**2/2."],
+            )
+        if cls._target_is(target, "Q") and c_value is not None and u_value is not None:
+            return cls._solution(
+                ["capacitor.charge_from_capacitance_voltage"],
+                "Q",
+                target_unit or "C",
+                ["Q = C * U"],
+                {"C": c_value, "U": u_value},
+                ["Use Q = C*U for a charged capacitor."],
+            )
+        if cls._target_is(target, "U", "V") and q_value is not None and c_value is not None:
+            return cls._solution(
+                ["capacitor.voltage_from_charge_capacitance"],
+                "U",
+                target_unit or "V",
+                ["U = Q / C"],
+                {"Q": q_value, "C": c_value},
+                ["Use U = Q/C from Q = C*U."],
+            )
+        if cls._target_is(target, "C"):
+            if q_value is not None and u_value is not None:
+                return cls._solution(
+                    ["capacitor.capacitance_from_charge_voltage"],
+                    "C",
+                    target_unit or "F",
+                    ["C = Q / U"],
+                    {"Q": q_value, "U": u_value},
+                    ["Use C = Q/U."],
+                )
+            if c1_value is not None and c2_value is not None and "series" in text:
+                return cls._solution(
+                    ["capacitors.series_equivalent"],
+                    "C",
+                    target_unit or "F",
+                    ["C = 1 / (1 / C1 + 1 / C2)"],
+                    {"C1": c1_value, "C2": c2_value},
+                    ["For two capacitors in series, add reciprocals of capacitance."],
+                )
+            if c1_value is not None and c2_value is not None and "parallel" in text:
+                return cls._solution(
+                    ["capacitors.parallel_equivalent"],
+                    "C",
+                    target_unit or "F",
+                    ["C = C1 + C2"],
+                    {"C1": c1_value, "C2": c2_value},
+                    ["For capacitors in parallel, capacitances add directly."],
+                )
+            if s_value is not None and d_value is not None:
+                return cls._solution(
+                    ["capacitor.parallel_plate"],
+                    "C",
+                    target_unit or "F",
+                    ["C = epsilon_0 * S / d"],
+                    {"S": s_value, "d": d_value},
+                    ["Use the parallel-plate capacitance formula C = epsilon_0*S/d."],
+                )
+        return None
+
+    @classmethod
+    def _vector_deterministic_solution(cls, semantic_output: dict[str, Any]) -> dict[str, Any] | None:
+        text = cls._semantic_text(semantic_output)
+        if "vector_resultant" not in text and "resultant" not in text and "net force" not in text:
+            return None
+        values = cls._numeric_values(semantic_output)
+        f1 = values.get("F1")
+        f2 = values.get("F2")
+        if f1 is None or f2 is None:
+            return None
+        target = cls._target_from_terms(semantic_output, "F_net")
+        target_unit = cls._target_unit_from_semantics(semantic_output)
+
+        if cls._target_is(target, "alpha", "theta", "angle"):
+            f_net = values.get("F_net")
+            if f_net is None:
+                return None
+            return cls._solution(
+                ["vector.angle_from_resultant"],
+                "alpha",
+                target_unit or "degree",
+                [
+                    "cos_alpha = (F_net**2 - F1**2 - F2**2) / (2 * F1 * F2)",
+                    "alpha = 180 * acos(cos_alpha) / pi",
+                ],
+                {"F1": f1, "F2": f2, "F_net": f_net},
+                ["Rearrange the law of cosines for vector addition to solve the included angle."],
+            )
+
+        alpha = values.get("alpha")
+        if "same_direction" in text:
+            formula_id = "vector.resultant_same_direction"
+            equations = ["F_net = F1 + F2"]
+            steps = ["For forces in the same direction, add magnitudes."]
+            knowns = {"F1": f1, "F2": f2}
+        elif "opposite" in text:
+            formula_id = "vector.resultant_opposite_direction"
+            equations = ["F_net = Abs(F1 - F2)"]
+            steps = ["For opposite directions, subtract magnitudes and take the absolute value."]
+            knowns = {"F1": f1, "F2": f2}
+        elif "perpendicular" in text:
+            formula_id = "vector.resultant_perpendicular"
+            equations = ["F_net = sqrt(F1**2 + F2**2)"]
+            steps = ["For perpendicular forces, use the Pythagorean resultant."]
+            knowns = {"F1": f1, "F2": f2}
+        elif "angle" in text and alpha is not None:
+            formula_id = "vector.resultant_angle"
+            equations = ["F_net = sqrt(F1**2 + F2**2 + 2 * F1 * F2 * cos(alpha * pi / 180))"]
+            steps = ["Use the law of cosines for two force vectors with included angle alpha."]
+            knowns = {"F1": f1, "F2": f2, "alpha": alpha}
+        else:
+            return None
+
+        return cls._solution(
+            [formula_id],
+            "F_net",
+            target_unit or "N",
+            equations,
+            knowns,
+            steps,
+        )
+
+    @classmethod
+    def _coulomb_scalar_deterministic_solution(cls, semantic_output: dict[str, Any]) -> dict[str, Any] | None:
+        text = cls._semantic_text(semantic_output)
+        if not any(term in text for term in ("coulomb", "electric field", "charge", "điện tích", "điện trường")):
+            return None
+        values = cls._numeric_values(semantic_output)
+        target = cls._target_from_terms(semantic_output, "result")
+        target_unit = cls._target_unit_from_semantics(semantic_output)
+
+        if cls._target_is(target, "F") and all(symbol in values for symbol in ("q1", "q2", "r")):
+            return cls._solution(
+                ["coulomb.pair_force"],
+                "F",
+                target_unit or "N",
+                ["F = Abs(k * q1 * q2 / r**2)"],
+                {symbol: values[symbol] for symbol in ("q1", "q2", "r")},
+                ["Use Coulomb's law for the magnitude of the force between two point charges."],
+            )
+        if cls._target_is(target, "q") and all(symbol in values for symbol in ("F", "r")):
+            return cls._solution(
+                ["coulomb.equal_charge_from_force"],
+                "q",
+                target_unit or "C",
+                ["q = sqrt(F * r**2 / k)"],
+                {"F": values["F"], "r": values["r"]},
+                ["For equal charges, rearrange F = k*q**2/r**2 to solve q."],
+            )
+        q_value = values.get("q")
+        r_value = values.get("r")
+        if cls._target_is(target, "E", "E_field") and q_value is not None and r_value is not None:
+            return cls._solution(
+                ["electric_field.point_charge"],
+                "E",
+                target_unit or "N/C",
+                ["E = Abs(k * q / r**2)"],
+                {"q": q_value, "r": r_value},
+                ["Use the point-charge electric field magnitude E = k*|q|/r**2."],
+            )
+        return None
+
+    @classmethod
     def _deterministic_solution(cls, semantic_output: dict[str, Any]) -> dict[str, Any] | None:
         values = cls._numeric_values(semantic_output)
         question = str(semantic_output.get("question") or "").lower()
         domain = str(semantic_output.get("domain") or "").lower()
         geometry = semantic_output.get("geometry") or {}
         geometry_type = str(geometry.get("type") or "").lower() if isinstance(geometry, dict) else ""
+
+        vector_solution = cls._vector_deterministic_solution(semantic_output)
+        if vector_solution is not None:
+            return vector_solution
 
         if "electric" in domain or "charge" in domain:
             if "equilateral" in geometry_type or "equilateral triangle" in question:
@@ -1193,9 +1386,17 @@ class LLMSolutionProvider(SolutionProvider):
             if "field is zero" in question or "electric field is zero" in question or "zero-field" in question:
                 return cls._zero_field_solution(semantic_output)
 
+        coulomb_solution = cls._coulomb_scalar_deterministic_solution(semantic_output)
+        if coulomb_solution is not None:
+            return coulomb_solution
+
         ac_solution = cls._ac_deterministic_solution(semantic_output)
         if ac_solution is not None:
             return ac_solution
+
+        capacitor_solution = cls._capacitor_deterministic_solution(semantic_output)
+        if capacitor_solution is not None:
+            return capacitor_solution
 
         if "rlc" in question and "impedance" in question and all(symbol in values for symbol in ("R", "L", "C", "f")):
             return cls._solution(
@@ -1380,7 +1581,7 @@ class LLMSolutionProvider(SolutionProvider):
             "a non-empty equations array, and a known_values object, plus a solution_steps array. "
             "If mode is direct, include direct_answer with answer and a rationale_steps array. "
             "Use explicit '*' for multiplication between symbols (e.g., L*C, not LC). "
-            "Allowed functions/constants in equations: Abs, abs, sqrt, sin, cos, tan, atan, exp, log, pi, Im, Re, conjugate, "
+            "Allowed functions/constants in equations: Abs, abs, sqrt, sin, cos, tan, acos, atan, exp, log, pi, Im, Re, conjugate, "
             "k, k_e, epsilon_0, mu_0, c. Every RHS symbol in sympy_spec.equations must be either a known value, "
             "an allowed physical constant/function, or defined by another equation. The target_symbol must be defined by an equation. "
             "For magnitude/strength/intensity answers, make the final target nonnegative using Abs(...) or a "
@@ -1456,9 +1657,10 @@ class LLMSolutionProvider(SolutionProvider):
                     f"{validation_error} "
                     f"Raw response preview: {response_preview}"
                 )
-            deterministic = self._deterministic_solution(semantic_output)
-            if deterministic is not None:
-                return self._validate_solution(self._semantic_normalize_solution(deterministic, semantic_output))
+            if not response_preview.lstrip().startswith("{"):
+                deterministic = self._deterministic_solution(semantic_output)
+                if deterministic is not None:
+                    return self._validate_solution(self._semantic_normalize_solution(deterministic, semantic_output))
             try:
                 retried = self._retry_solution_json(semantic_output, response_preview)
                 if retried is not None:
@@ -1580,6 +1782,14 @@ class LLMSolutionProvider(SolutionProvider):
             if decision.get("computed_symbol") != spec["target_symbol"] or not decision.get("expected_symbol"):
                 raise ValueError("Computational yes/no decision symbols are invalid.")
         return solution
+
+    @classmethod
+    def deterministic_solution(cls, semantic_output: dict[str, Any]) -> dict[str, Any] | None:
+        """Return a validated deterministic solution when the parsed question is rule-covered."""
+        deterministic = cls._deterministic_solution(semantic_output)
+        if deterministic is None:
+            return None
+        return cls._validate_solution(cls._semantic_normalize_solution(deterministic, semantic_output))
 
     def get_solution(self, question: str, semantic_output: dict[str, Any]) -> dict[str, Any]:
         """Request and validate one structured solution for the parsed question."""

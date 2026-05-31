@@ -14,6 +14,7 @@ os.environ["LANGSMITH_TRACING"] = "false"
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
 
 import api
+from agents.logic import LogicAgent
 from agents.llm.openrouter_provider import OpenRouterClient
 from agents.physics.Parsing import ParsingAgent
 from agents.physics.Solution.llm_provider import LLMSolutionProvider
@@ -21,6 +22,7 @@ from agents.physics.Solution.rag_provider import RAGSolutionProvider
 from agents.workflows.orchestrator import ExactGraph, FormatterNode, WorkflowExecutionError
 from agents.workflows.physics import PhysicsWorkflow
 from agents.workflows.tracing import _clean, _process_llm_inputs, _process_step_outputs
+from eval.p1_evaluator import answer_match, evaluate_prediction, summarize_p1
 from tools.calculator import solve_with_sympy_trace
 
 
@@ -1465,6 +1467,92 @@ class LogicWorkflowTests(unittest.TestCase):
         self.assertTrue(output["cot"])
         formalize_prompt = llm.calls[0]["messages"][0]["content"]
         self.assertIn("P implies Q.", formalize_prompt)
+
+    def test_logic_fallback_answers_without_llm(self) -> None:
+        graph = ExactGraph(llm=None, classifier=StaticClassifier("logic"), use_rag=False)
+        output = graph.predict(
+            {
+                "question": "Is prepared true?",
+                "premises": ["All diligent are prepared."],
+            }
+        )
+        self.assertEqual(output["answer"], "Yes")
+        self.assertIn("prepared(entity)", output["fol"])
+        self.assertTrue(any("deterministic Horn-rule fallback" in step for step in output["cot"]))
+
+    def test_logic_agent_accepts_provided_fol_fallback(self) -> None:
+        agent = LogicAgent(llm=None, use_rag=False)
+        output = agent.solve(
+            question="Is prepared true?",
+            premises_nl=[],
+            premises_fol=["prepared(entity)"],
+        )
+        self.assertEqual(output["answer"], "Yes")
+        self.assertTrue(any("Provided FOL premises" in step for step in output["cot"]))
+
+    def test_logic_rag_examples_are_prompt_guidance_not_public_metadata(self) -> None:
+        llm = RecordingLLM(
+            {
+                "logic.formalize": json.dumps(
+                    {
+                        "facts": [{"pred": "coder", "args": ["entity"], "truth": True, "premise_id": 1}],
+                        "rules": [
+                            {
+                                "if": [{"pred": "coder", "args": ["x"], "truth": True}],
+                                "then": {"pred": "careful", "args": ["x"], "truth": True},
+                                "premise_id": 1,
+                            }
+                        ],
+                        "query": {"pred": "careful", "args": ["entity"], "truth": True},
+                        "choices": {},
+                    }
+                ),
+                "logic.explanation": "Careful follows from the supplied rule.",
+            }
+        )
+        graph = ExactGraph(llm=llm, classifier=StaticClassifier("logic"))
+        output = graph.predict(
+            {
+                "question": "Is careful true?",
+                "premises": ["All coders are careful."],
+            }
+        )
+
+        prompt = llm.calls[0]["messages"][0]["content"]
+        self.assertIn("few-shot guidance", prompt)
+        self.assertIn("similar_premises_nl", prompt)
+        self.assertEqual(output["answer"], "Yes")
+        self.assertNotIn("rag_used", output)
+        self.assertNotIn("confidence", output)
+
+
+class P1EvaluatorTests(unittest.TestCase):
+    def test_logic_answer_aliases_follow_zip_scoring(self) -> None:
+        self.assertTrue(answer_match("true", "Yes"))
+        self.assertTrue(answer_match("cannot be determined", "Unknown"))
+        self.assertTrue(answer_match("a", "A"))
+        result = evaluate_prediction("false", "No")
+        self.assertTrue(result["correct"])
+        self.assertEqual(result["method"], "normalized_answer_exact")
+
+    def test_physics_numeric_scoring_uses_zip_tolerance_and_units(self) -> None:
+        self.assertTrue(answer_match("100.05 V", "100", "v", "volt"))
+        self.assertFalse(answer_match("101 V", "100", "v", "volt"))
+        result = evaluate_prediction("1000 mV", "1", "v")
+        self.assertTrue(result["correct"])
+        self.assertEqual(result["method"], "numeric")
+
+    def test_summary_exposes_zip_p1_and_existing_accuracy_key(self) -> None:
+        summary = summarize_p1(
+            [
+                {"task": "logic", "correct": True},
+                {"task": "logic", "correct": False},
+                {"task": "physics", "correct": True},
+            ]
+        )
+        self.assertEqual(summary["p1"], 2 / 3)
+        self.assertEqual(summary["p1_accuracy"], 2 / 3)
+        self.assertEqual(summary["by_task"]["logic"]["p1"], 0.5)
 
 
 class ApiContractTests(unittest.TestCase):

@@ -18,6 +18,7 @@ PHYSICAL_CONSTANTS = {
 SYMPY_VALUES = {
     "Abs": sp.Abs,
     "abs": sp.Abs,
+    "acos": sp.acos,
     "atan": sp.atan,
     "cos": sp.cos,
     "exp": sp.exp,

@@ -317,6 +317,7 @@ class PhysicsWorkflow:
             "Re",
             "re",
             "conjugate",
+            "acos",
             "sqrt",
             "sin",
             "cos",
@@ -344,11 +345,11 @@ class PhysicsWorkflow:
 
     def parse_question(self, state: WorkflowState) -> dict[str, Any]:
         """Parse one public physics question into compact structured input."""
-        if not _llm_available(self.llm):
-            raise WorkflowExecutionError("Physics ParsingAgent requires a configured LLM.")
         try:
             parsed_question = self.parser.run(state["question"])
         except Exception as exc:
+            if not _llm_available(self.llm) and "llm_provider is required" in str(exc):
+                raise WorkflowExecutionError("Physics ParsingAgent requires a configured LLM.") from exc
             raise WorkflowExecutionError(f"Physics ParsingAgent failed: {exc}") from exc
         logger.debug("physics.parsed_question=%s", parsed_question)
         return {"parsed_question": parsed_question}
@@ -357,6 +358,14 @@ class PhysicsWorkflow:
         """Obtain one structured physics solution specification."""
         parsed_question = state.get("parsed_question", {})
         if self.solution_agent is None or not _llm_available(self.llm):
+            try:
+                deterministic = LLMSolutionProvider.deterministic_solution(parsed_question)
+            except Exception as exc:
+                raise WorkflowExecutionError(f"Physics SolutionAgent failed: {exc}") from exc
+            if deterministic is not None:
+                logger.debug("physics.selected_formula_ids=%s", deterministic.get("formula_ids"))
+                logger.debug("physics.generated_solution_spec=%s", deterministic)
+                return {"solution_output": deterministic}
             raise WorkflowExecutionError("Physics SolutionAgent requires a configured LLM.")
         try:
             solution_output = self.solution_agent.run(state["question"], parsed_question)

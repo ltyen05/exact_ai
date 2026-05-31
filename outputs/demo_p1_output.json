@@ -1,0 +1,155 @@
+{
+  "meta": {
+    "created_at": "2026-05-28T09:45:38.853382+00:00",
+    "logic_file": "C:\\exact_2026\\exact-2026\\data\\Logic_Based_Educational_Queries.json",
+    "physics_file": "C:\\exact_2026\\exact-2026\\data\\Physics_Problems_Text_Only_removeQA.json",
+    "routing": "dataset_source",
+    "p1_definition": "Correctness of Answers",
+    "logic_samples_requested": 1,
+    "physics_samples_requested": 1,
+    "logic_samples_available": 808,
+    "physics_samples_available": 1354
+  },
+  "metrics": {
+    "total": 2,
+    "correct": 1,
+    "p1_accuracy": 0.5,
+    "by_task": {
+      "logic": {
+        "total": 1,
+        "correct": 1,
+        "p1_accuracy": 1.0
+      },
+      "physics": {
+        "total": 1,
+        "correct": 0,
+        "p1_accuracy": 0.0
+      }
+    }
+  },
+  "results": [
+    {
+      "sample_id": "logic-0-0",
+      "task": "logic",
+      "question": "Which conclusion follows with the fewest premises?\nA. If a Python project is not optimized, then it is not well-tested\nB. If all Python projects are optimized, then all Python projects are well-structured\nC. If a Python project is well-tested, then it must be clean and readable\nD. If a Python project is not optimized, then it does not follow PEP 8 standards",
+      "expected_answer": "Unknown",
+      "expected_unit": "",
+      "premises": [
+        "If a Python code is well-tested, then the project is optimized.",
+        "If a Python code does not follow PEP 8 standards, then it is not well-tested.",
+        "All Python projects are easy to maintain.",
+        "All Python code is well-tested.",
+        "If a Python code follows PEP 8 standards, then it is easy to maintain.",
+        "If a Python code is well-tested, then it follows PEP 8 standards.",
+        "If a Python project is well-structured, then it is optimized.",
+        "If a Python project is easy to maintain, then it is well-tested.",
+        "If a Python project is optimized, then it has clean and readable code.",
+        "All Python projects are well-structured.",
+        "All Python projects have clean and readable code.",
+        "There exists at least one Python project that follows best practices.",
+        "There exists at least one Python project that is optimized.",
+        "If a Python project is not well-structured, then it does not follow PEP 8 standards."
+      ],
+      "source_file": "C:\\exact_2026\\exact-2026\\data\\Logic_Based_Educational_Queries.json",
+      "record_index": 0,
+      "question_index": 0,
+      "payload": {
+        "question": "Which conclusion follows with the fewest premises?\nA. If a Python project is not optimized, then it is not well-tested\nB. If all Python projects are optimized, then all Python projects are well-structured\nC. If a Python project is well-tested, then it must be clean and readable\nD. If a Python project is not optimized, then it does not follow PEP 8 standards",
+        "premises": [
+          "If a Python code is well-tested, then the project is optimized.",
+          "If a Python code does not follow PEP 8 standards, then it is not well-tested.",
+          "All Python projects are easy to maintain.",
+          "All Python code is well-tested.",
+          "If a Python code follows PEP 8 standards, then it is easy to maintain.",
+          "If a Python code is well-tested, then it follows PEP 8 standards.",
+          "If a Python project is well-structured, then it is optimized.",
+          "If a Python project is easy to maintain, then it is well-tested.",
+          "If a Python project is optimized, then it has clean and readable code.",
+          "All Python projects are well-structured.",
+          "All Python projects have clean and readable code.",
+          "There exists at least one Python project that follows best practices.",
+          "There exists at least one Python project that is optimized.",
+          "If a Python project is not well-structured, then it does not follow PEP 8 standards."
+        ]
+      },
+      "expected": {
+        "answer": "Unknown",
+        "unit": ""
+      },
+      "predicted_answer": "Unknown",
+      "output": {
+        "answer": "Unknown",
+        "explanation": "Horn-rule verification result for the requested conclusion: Unknown.",
+        "premises": [
+          "If a Python code is well-tested, then the project is optimized.",
+          "If a Python code does not follow PEP 8 standards, then it is not well-tested.",
+          "All Python projects are easy to maintain.",
+          "All Python code is well-tested.",
+          "If a Python code follows PEP 8 standards, then it is easy to maintain.",
+          "If a Python code is well-tested, then it follows PEP 8 standards.",
+          "If a Python project is well-structured, then it is optimized.",
+          "If a Python project is easy to maintain, then it is well-tested.",
+          "If a Python project is optimized, then it has clean and readable code.",
+          "All Python projects are well-structured.",
+          "All Python projects have clean and readable code.",
+          "There exists at least one Python project that follows best practices.",
+          "There exists at least one Python project that is optimized.",
+          "If a Python project is not well-structured, then it does not follow PEP 8 standards."
+        ]
+      },
+      "correct": true,
+      "match_reason": "normalized exact match",
+      "p1_evaluation": {
+        "correct": true,
+        "method": "normalized_exact",
+        "reason": "normalized exact match",
+        "predicted_normalized": "unknown",
+        "expected_normalized": "unknown"
+      },
+      "latency_ms": 20427.155,
+      "error": ""
+    },
+    {
+      "sample_id": "TD401",
+      "task": "physics",
+      "question": "Calculate the energy stored in capacitor C when C = 100 \\u03bcF and U = 30 V.",
+      "expected_answer": "45",
+      "expected_unit": "J",
+      "premises": [],
+      "source_file": "C:\\exact_2026\\exact-2026\\data\\Physics_Problems_Text_Only_removeQA.json",
+      "record_index": 0,
+      "question_index": null,
+      "payload": {
+        "question": "Calculate the energy stored in capacitor C when C = 100 \\u03bcF and U = 30 V."
+      },
+      "expected": {
+        "answer": "45",
+        "unit": "J"
+      },
+      "predicted_answer": "0.045 J",
+      "output": {
+        "answer": "0.045 J",
+        "explanation": "The energy stored in a capacitor is given by the formula W = C * U^2 / 2. Here, C = 100 μF (or 9.999999999999999e-05 F) and U = 30 V. Substituting these values into the formula gives W = 9.999999999999999e-05 * 30^2 / 2 = 0.045 J.",
+        "cot": [
+          "Use the energy stored in a capacitor: W = C*U**2/2."
+        ],
+        "premises": [
+          "W = C * U**2 / 2"
+        ]
+      },
+      "correct": false,
+      "match_reason": "numeric tolerance=0.45",
+      "p1_evaluation": {
+        "correct": false,
+        "method": "numeric",
+        "reason": "numeric tolerance=0.45",
+        "predicted_value": 0.045,
+        "expected_value": 45.0,
+        "predicted_unit": "j",
+        "expected_unit": "j"
+      },
+      "latency_ms": 4164.498,
+      "error": ""
+    }
+  ]
+}
