@@ -18,11 +18,16 @@ load_dotenv()
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_PHYSICS_KB = ROOT / "data" / "Physics_Problems_Text_Only_removeQA.json"
+DEFAULT_LOGIC_KB = ROOT / "data" / "Logic_Based_Educational_Queries.json"
 
 OPENROUTER_API_KEY_ENV = "OR_TOKEN"
 
 llm = OpenRouterClient(api_key_env=OPENROUTER_API_KEY_ENV)
-graph = ExactGraph(llm=llm, physics_kb_path=str(DEFAULT_PHYSICS_KB))
+graph = ExactGraph(
+    llm=llm,
+    physics_kb_path=str(DEFAULT_PHYSICS_KB),
+    logic_kb_path=str(DEFAULT_LOGIC_KB),
+)
 
 app = FastAPI(title="EXACT 2026 Multi-Agent QA", version="2.0-langgraph")
 
@@ -64,6 +69,7 @@ def info() -> dict[str, Any]:
         },
         "features": [
             "Logic verification with Z3",
+            "Logic few-shot retrieval and deterministic fallback parsing",
             "Physics formula generation and SymPy computation",
             "LangGraph workflow routing",
             "LangSmith step tracing",

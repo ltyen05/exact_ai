@@ -78,8 +78,10 @@ class ExactGraph:
         self,
         llm: Any = None,
         physics_kb_path: str | None = None,
+        logic_kb_path: str | None = None,
         classifier: TfidfLogisticClassifier | None = None,
         use_abstract_templates: bool = True,
+        use_rag: bool = True,
     ) -> None:
         """Configure the nested workflows and compile the orchestration graph."""
         from .logic import LogicWorkflow
@@ -87,10 +89,12 @@ class ExactGraph:
 
         self.llm = llm
         self.physics_kb_path = physics_kb_path
+        self.logic_kb_path = logic_kb_path
         self.use_abstract_templates = use_abstract_templates
+        self.use_rag = use_rag
         self.router = ClassifyNode(classifier)
         self.physics = PhysicsWorkflow(llm=llm, kb_path=physics_kb_path)
-        self.logic = LogicWorkflow(llm=llm)
+        self.logic = LogicWorkflow(llm=llm, rag_path=logic_kb_path, use_rag=use_rag)
         self.graph = self._build_graph()
 
     def _build_graph(self) -> Any:
@@ -151,8 +155,11 @@ class ExactGraph:
         outputs: list[dict[str, Any]] = []
         for index, question in enumerate(questions):
             payload = {"question": question}
-            if isinstance(record.get("premises"), list):
-                payload["premises"] = record["premises"]
+            premises = record.get("premises")
+            if not isinstance(premises, list):
+                premises = record.get("premises-NL")
+            if isinstance(premises, list):
+                payload["premises"] = premises
             output = self.predict(payload)
             output["question_index"] = index
             outputs.append(output)

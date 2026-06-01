@@ -17,6 +17,49 @@ from .prompts import (
     build_repair_prompt,
     build_retry_prompt,
 )
+NUMBER_PATTERN = (
+    r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)"
+    r"(?:(?:[eE][+-]?\d+)|(?:\s*(?:x|\*)\s*10\s*(?:\^|\*\*)\s*\{?\s*[+-]?\s*\d+\s*\}?))?"
+)
+
+
+def _parse_number(value: str) -> float:
+    cleaned = _normalize_text(value).strip().replace("{", "").replace("}", "")
+    compact = re.sub(r"\s+", "", cleaned)
+    scientific = re.fullmatch(
+        r"(?P<coeff>[+-]?(?:\d+(?:\.\d*)?|\.\d+))(?:x|\*)10(?:\^|\*\*)?(?P<exp>[+-]?\d+)",
+        compact,
+        flags=re.IGNORECASE,
+    )
+    if scientific:
+        return float(scientific.group("coeff")) * (10 ** int(scientific.group("exp")))
+    return float(compact)
+
+
+def _normalize_unit(unit: str) -> str:
+    return _normalize_text(unit).strip().lower().replace(" ", "")
+
+
+def _convert_to_si(value: float, unit: str) -> tuple[float, str] | None:
+    conversion = UNIT_TO_SI.get(_normalize_unit(unit))
+    if conversion is None:
+        return None
+    scale, si_unit = conversion
+    return value * scale, si_unit
+
+
+def _given(symbol: str, value: float, unit: str, si_value: float, si_unit: str) -> dict[str, Any]:
+    return {
+        "symbol": symbol,
+        "value": value,
+        "unit": unit,
+        "si_value": si_value,
+        "si_unit": si_unit,
+    }
+
+
+def _unit_options(units: tuple[str, ...]) -> str:
+    return "|".join(re.escape(unit) for unit in sorted(units, key=len, reverse=True))
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -61,8 +104,38 @@ class ParsingAgent:
         """Enforce the compact internal parser contract and drop empty sections."""
         return self.normalizer.compact_output(parsed, question)
 
+    @staticmethod
+    def _heuristic_parse(question: str) -> dict[str, Any] | None:
+        text = _normalize_text(question).lower()
+        if "solenoid" in text and "magnetic field" in text:
+            current_match = re.search(
+                r"current[^0-9+-]*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*a\b",
+                text,
+            )
+            turns_match = re.search(
+                r"(?:turns per meter|turn per meter|n)\s*(?:is|=)?\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))",
+                text,
+            )
+            if current_match and turns_match:
+                return {
+                    "question": question,
+                    "domain": "Sources of Magnetic Fields",
+                    "target": {"symbol": "B", "unit": "T"},
+                    "givens": [
+                        {"symbol": "I", "si_value": float(current_match.group(1)), "si_unit": "A", "uncertainty": None},
+                        {"symbol": "n", "si_value": float(turns_match.group(1)), "si_unit": "1/m", "uncertainty": None},
+                    ],
+                    "relations": ["long solenoid"],
+                    "question_kind": "computational",
+                }
+        return None
+
     def run(self, input_data: Any) -> dict[str, Any]:
         """Return semantic JSON extracted from one physics question."""
+        question = str(input_data)
+        rule_based = self._rule_based_parse(question)
+        if rule_based is not None:
+            return rule_based
         if self.llm_provider is None:
             raise ValueError("llm_provider is required for physics parsing.")
 

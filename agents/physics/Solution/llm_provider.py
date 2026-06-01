@@ -114,6 +114,7 @@ class LLMSolutionProvider(SolutionProvider):
         "re": sp.re,
         "acos": sp.acos,
         "conjugate": sp.conjugate,
+        "acos": sp.acos,
         "atan": sp.atan,
         "cos": sp.cos,
         "diff": sp.diff,
@@ -944,6 +945,14 @@ class LLMSolutionProvider(SolutionProvider):
             if decision.get("computed_symbol") != spec["target_symbol"] or not decision.get("expected_symbol"):
                 raise ValueError("Computational yes/no decision symbols are invalid.")
         return solution
+
+    @classmethod
+    def deterministic_solution(cls, semantic_output: dict[str, Any]) -> dict[str, Any] | None:
+        """Return a validated deterministic solution when the parsed question is rule-covered."""
+        deterministic = cls._deterministic_solution(semantic_output)
+        if deterministic is None:
+            return None
+        return cls._validate_solution(cls._semantic_normalize_solution(deterministic, semantic_output))
 
     def get_solution(self, question: str, semantic_output: dict[str, Any]) -> dict[str, Any]:
         """Request and validate one structured solution for the parsed question."""
