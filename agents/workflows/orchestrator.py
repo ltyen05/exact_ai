@@ -2,33 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
 from agents.classify import TfidfLogisticClassifier
 
+from .state import WorkflowExecutionError, WorkflowState
 from .tracing import trace_step
-
-
-class WorkflowState(TypedDict, total=False):
-    """Represent the data shared by the routed LangGraph nodes."""
-
-    question: str
-    premises: list[str]
-    route: str
-    parsed_question: dict[str, Any]
-    solution_output: dict[str, Any]
-    verified_output: dict[str, Any]
-    logic_spec: dict[str, Any]
-    premises_fol: list[str]
-    result: dict[str, Any]
-    errors: list[str]
-    output: dict[str, Any]
-
-
-class WorkflowExecutionError(RuntimeError):
-    """Raised when a valid request cannot complete the selected workflow."""
 
 
 class ClassifyNode:
@@ -47,6 +28,16 @@ class ClassifyNode:
 
 class FormatterNode:
     """Unify outputs from both subgraphs into the public response contract."""
+
+    @staticmethod
+    def _format_cot(value: Any) -> list[str] | None:
+        if isinstance(value, str):
+            text = value.strip()
+            return [line.strip() for line in text.splitlines() if line.strip()] or None
+        if isinstance(value, list):
+            steps = [str(step).strip() for step in value if str(step).strip()]
+            return steps or None
+        return None
 
     @trace_step("formatter.output")
     def __call__(self, state: WorkflowState) -> dict[str, Any]:
@@ -72,8 +63,9 @@ class FormatterNode:
         fol = str(result.get("fol") or "").strip()
         if fol:
             output["fol"] = fol
-        if cot:
-            output["cot"] = [str(step) for step in cot]
+        cot_steps = self._format_cot(cot)
+        if cot_steps:
+            output["cot"] = cot_steps
         if premises:
             output["premises"] = [str(premise) for premise in premises]
         return {"output": output}

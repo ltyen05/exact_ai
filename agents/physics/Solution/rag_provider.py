@@ -74,17 +74,24 @@ class RAGSolutionProvider(LLMSolutionProvider):
         """Convert a retrieved solved problem into a small formula/strategy hint."""
         return self._compact_rag_example(item)
 
+    def _deterministic_solution(self, semantic_output: dict[str, Any]) -> dict[str, Any] | None:
+        """Use shared deterministic formulas before falling back to retrieved prompts."""
+        return super()._deterministic_solution(semantic_output)
+
     def get_solution(self, question: str, semantic_output: dict[str, Any]) -> dict[str, Any]:
-        """Request a validated solution with retrieved examples as additional context."""
+        """Request a validated solution with parsed data, deterministic hints, and retrieved examples."""
         deterministic = self._deterministic_solution(semantic_output)
-        if deterministic is not None:
-            self.last_prompt_diagnostics = {
-                "prompt_chars": 0,
-                "rag_chars": 0,
-                "selected_rule_pack": ["deterministic"],
-                "used_json_mode": False,
-                "used_repair": False,
-            }
-            return self._validate_solution(self._semantic_normalize_solution(deterministic, semantic_output))
+        if self._should_use_deterministic_direct(deterministic):
+            return self._validated_deterministic_fallback(semantic_output, deterministic) or deterministic
         examples = [self._compact_example(item) for item in self.retrieve(question)]
-        return self._request_solution(self._build_prompt(semantic_output, examples), semantic_output)
+        prompt = self._build_prompt(
+            semantic_output,
+            retrieved_examples=examples,
+            deterministic_solution=deterministic,
+        )
+        llm_solution = self._request_solution(
+            prompt,
+            semantic_output,
+            deterministic_fallback=deterministic,
+        )
+        return self._merge_deterministic_metadata(llm_solution, deterministic)

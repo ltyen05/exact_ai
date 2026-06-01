@@ -8,7 +8,7 @@ import sympy as sp
 
 PHYSICAL_CONSTANTS = {
     "k": 9_000_000_000.0,
-    "k_e": 8_987_551_792.3,
+    "k_e": 9_000_000_000.0,
     "epsilon_0": 8.8541878128e-12,
     "mu_0": 1.25663706212e-6,
     "c": 299_792_458.0,
@@ -21,6 +21,7 @@ SYMPY_VALUES = {
     "acos": sp.acos,
     "atan": sp.atan,
     "cos": sp.cos,
+    "diff": sp.diff,
     "exp": sp.exp,
     "log": sp.log,
     "pi": sp.pi,
@@ -73,12 +74,29 @@ def solve_with_sympy_trace(
 
         equations: list[sp.Equality] = []
         equation_pairs: list[tuple[sp.Expr, sp.Expr]] = []
+        symbolic_definitions: dict[str, str] = {}
+
+        def expand_diff_references(expression_text: str) -> str:
+            def replace_reference(match: re.Match[str]) -> str:
+                expression_name = match.group("expr")
+                variable_name = match.group("var")
+                if expression_name not in symbolic_definitions:
+                    return match.group(0)
+                return f"diff(({symbolic_definitions[expression_name]}), {variable_name})"
+
+            return re.sub(
+                r"\bdiff\s*\(\s*(?P<expr>[A-Za-z_][A-Za-z0-9_]*)\s*,\s*(?P<var>[A-Za-z_][A-Za-z0-9_]*)\s*\)",
+                replace_reference,
+                expression_text,
+            )
+
         for formula in formulas:
             if formula.count("=") != 1:
                 return None
             lhs, rhs = formula.split("=", 1)
             lhs_expr = sp.sympify(lhs.strip(), locals=parsing_values)
-            rhs_expr = sp.sympify(rhs.strip(), locals=parsing_values)
+            rhs_source = expand_diff_references(rhs.strip())
+            rhs_expr = sp.sympify(rhs_source, locals=parsing_values)
             equation_pairs.append((lhs_expr, rhs_expr))
             equations.append(
                 sp.Eq(
@@ -86,6 +104,9 @@ def solve_with_sympy_trace(
                     rhs_expr,
                 )
             )
+            lhs_name = lhs.strip()
+            if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", lhs_name):
+                symbolic_definitions[lhs_name] = rhs_source
 
         target_symbol = symbols.get(target)
         if target_symbol is None:
@@ -95,7 +116,13 @@ def solve_with_sympy_trace(
             for name, value in quantities.items()
             if name in symbols and value is not None
         }
-        if target_symbol in substitutions:
+        target_defined_by_equation = any(
+            isinstance(lhs_expr, sp.Symbol) and lhs_expr == target_symbol
+            for lhs_expr, _ in equation_pairs
+        )
+        if target_defined_by_equation:
+            substitutions.pop(target_symbol, None)
+        elif target_symbol in substitutions:
             value = _numeric_value(substitutions[target_symbol])
             return SympyComputation(value, [], {target: value}) if value is not None else None
 

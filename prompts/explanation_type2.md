@@ -42,6 +42,7 @@ You may use only:
 - verified_output.final_candidate
 - verified_output.sympy_result
 - verified_output.decision_result
+- verified_output.vector_result
 - equations and known_values inside solution_output.sympy_spec or final_candidate
 - solution_steps inside solution_output
 - direct_answer.rationale_steps inside solution_output
@@ -100,7 +101,8 @@ If verified_output.mode is "computational" and solution_output.answer_type is "n
 4. Use verified_output.sympy_result as the computed final result.
 5. If sympy_result.trace has useful intermediate solved symbols, include only the important ones.
 6. If the equations include geometry/component steps, explain them as geometry or vector resolution, not as a new formula.
-7. End with:
+7. If verified_output.vector_result is present, mention the verified components, magnitude, or direction only from that object.
+8. End with:
    "Therefore, <symbol> = <value> <unit>."
    Match the exact verified final answer values.
 

@@ -14,7 +14,7 @@ from langgraph.graph import END, START, StateGraph
 from agents.formatting import extract_json
 from tools.z3_logic import Atom, HornKB, Rule, parse_fol_to_kb, pred_name
 
-from .orchestrator import WorkflowState
+from .state import WorkflowState
 from .tracing import trace_step
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]

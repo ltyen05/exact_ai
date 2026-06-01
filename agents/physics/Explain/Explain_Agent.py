@@ -20,6 +20,20 @@ def _comparison_tolerance(expected_value: float) -> float:
     return max(rounding_tolerance, abs(expected_value) * 1e-3)
 
 
+def _clean_steps(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str):
+        text = value.strip()
+        return [text] if text else []
+    return []
+
+
+def _format_known_values(known_values: Dict[str, Any], limit: int = 4) -> str:
+    items = [f"{key}={value}" for key, value in list(known_values.items())[:limit]]
+    return ", ".join(items)
+
+
 class ExplainAgent:
     """Create a final physics explanation using the prompt-driven Type 2 format."""
 
@@ -176,6 +190,72 @@ class ExplainAgent:
             }
         return verified_output
 
+    def build_cot(
+        self,
+        parsed_question: Dict[str, Any],
+        solution_output: Dict[str, Any],
+        verified_output: Dict[str, Any] | None = None,
+    ) -> list[str]:
+        verified = verified_output or self._build_verified_output(parsed_question, solution_output)
+        parsed_target = (parsed_question or {}).get("target") or {}
+        mode = str(verified.get("mode") or solution_output.get("mode") or "").lower()
+        answer_type = str(verified.get("answer_type") or solution_output.get("answer_type") or "").lower()
+        final_answer = verified.get("final_answer") or {}
+        target_symbol = str(final_answer.get("symbol") or parsed_target.get("symbol") or "answer")
+        target_unit = str(final_answer.get("unit") or parsed_target.get("unit") or "")
+        final_value = final_answer.get("value")
+
+        if mode == "direct":
+            rationale_steps = _clean_steps((solution_output.get("direct_answer") or {}).get("rationale_steps"))
+            if not rationale_steps:
+                rationale_steps = ["Use the verified direct conclusion from the parsed solution."]
+            if len(rationale_steps) == 1:
+                rationale_steps.append(f"That supports the verified answer {final_value}.")
+            return rationale_steps
+
+        sympy_spec = solution_output.get("sympy_spec") or {}
+        equations = _clean_steps(sympy_spec.get("equations"))
+        known_values = sympy_spec.get("known_values") or {}
+        solution_steps = _clean_steps(solution_output.get("solution_steps"))
+        trace = _clean_steps((verified.get("sympy_result") or {}).get("trace"))
+        decision_result = verified.get("decision_result") if isinstance(verified.get("decision_result"), dict) else {}
+        vector_result = verified.get("vector_result") if isinstance(verified.get("vector_result"), dict) else {}
+
+        cot: list[str] = []
+        if solution_steps:
+            cot.extend(solution_steps)
+        if not cot and equations:
+            cot.append(f"Use the verified equation {equations[0]}.")
+        if equations and len(equations) > 1:
+            cot.append(f"Continue with {equations[-1]}.")
+        if known_values:
+            cot.append(f"Substitute the parsed values {_format_known_values(known_values)} into the equations.")
+        if trace:
+            cot.append(f"The symbolic solver reduces the system through {', '.join(trace[:3])}.")
+
+        if answer_type == "yes_no" and decision_result:
+            cot.append(
+                "Compare the computed value "
+                f"{decision_result.get('computed_value')} with the expected value "
+                f"{decision_result.get('expected_value')} using tolerance {decision_result.get('tolerance')}; "
+                f"the difference is {decision_result.get('difference')} so the answer is {decision_result.get('answer')}."
+            )
+        elif vector_result:
+            cot.append(
+                "Combine the resolved components "
+                f"{vector_result.get('components')} to obtain magnitude {vector_result.get('magnitude')} "
+                f"and direction {vector_result.get('direction')}."
+            )
+        if answer_type == "yes_no" and decision_result:
+            cot.append(f"Therefore, the answer is {final_value}.")
+        elif vector_result:
+            cot.append(f"Therefore, the vector result has magnitude {vector_result.get('magnitude')} {target_unit} and direction {vector_result.get('direction')}.")
+        elif target_unit:
+            cot.append(f"Therefore, {target_symbol} = {final_value} {target_unit}.")
+        else:
+            cot.append(f"Therefore, {target_symbol} = {final_value}.")
+        return [step for step in cot if step]
+
     def run(
         self,
         parsed_question: Dict[str, Any],
@@ -188,6 +268,7 @@ class ExplainAgent:
             raise ValueError("llm_provider is required and must be enabled.")
 
         verified = verified_output or self._build_verified_output(parsed_question, solution_output)
+        cot = self.build_cot(parsed_question, solution_output, verified)
         prompt = self.prompt_template
         prompt = prompt.replace(
             "{{PARSED_QUESTION}}",
@@ -214,4 +295,5 @@ class ExplainAgent:
             raise ValueError("LLM response must contain 'answer' and 'explanation'.")
         if parsed["answer"] != verified.get("final_answer"):
             raise ValueError("LLM answer does not match verified_output.final_answer.")
+        parsed["cot"] = cot
         return parsed

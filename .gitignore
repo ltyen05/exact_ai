@@ -30,3 +30,7 @@ details.json
 *.swp
 
 .pytest_cache/
+
+error_log.txt
+tests/*
+data/*
