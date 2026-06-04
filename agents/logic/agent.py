@@ -27,7 +27,7 @@ class LogicAgent:
         exclude_idx: Any = None,
         use_rag: bool = True,
     ) -> dict[str, Any]:
-        del exclude_record_index, exclude_idx
+        del premises_fol, exclude_record_index, exclude_idx
         previous_use_rag = self.workflow.use_rag
         self.workflow.use_rag = use_rag
         try:
@@ -35,7 +35,6 @@ class LogicAgent:
                 {
                     "question": str(question or "").strip(),
                     "premises": list(premises_nl or []),
-                    "premises_fol": list(premises_fol or []),
                     "errors": [],
                 }
             )
