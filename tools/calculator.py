@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any
 
 import sympy as sp
@@ -50,6 +51,17 @@ def _numeric_value(expression: Any) -> float | None:
         return float(numeric)
     except (TypeError, ValueError):
         return None
+
+
+def _sympify_quantity(value: Any) -> sp.Expr:
+    """Preserve user-facing decimal values instead of importing binary float noise."""
+    if isinstance(value, bool):
+        return sp.sympify(value, locals=SYMPY_VALUES)
+    if isinstance(value, int):
+        return sp.Integer(value)
+    if isinstance(value, (float, Decimal)):
+        return sp.Rational(str(value))
+    return sp.sympify(value, locals=SYMPY_VALUES)
 
 
 def solve_with_sympy_trace(
@@ -112,7 +124,7 @@ def solve_with_sympy_trace(
         if target_symbol is None:
             return None
         substitutions = {
-            symbols[name]: sp.sympify(value, locals=SYMPY_VALUES)
+            symbols[name]: _sympify_quantity(value)
             for name, value in quantities.items()
             if name in symbols and value is not None
         }
