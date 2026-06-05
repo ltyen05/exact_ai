@@ -1,6 +1,6 @@
 {
   "meta": {
-    "created_at": "2026-06-04T23:46:44.263807+00:00",
+    "created_at": "2026-06-04T16:50:00.207102+00:00",
     "logic_file": "C:\\Users\\nguyetnt\\hamy\\exact-2026\\data\\Logic_Based_Educational_Queries.json",
     "physics_file": "C:\\Users\\nguyetnt\\hamy\\exact-2026\\data\\Physics_Problems_Text_Only_removeQA.json",
     "routing": "dataset_source",
@@ -12,15 +12,15 @@
   },
   "metrics": {
     "total": 100,
-    "correct": 49,
-    "p1": 0.49,
-    "p1_accuracy": 0.49,
+    "correct": 47,
+    "p1": 0.47,
+    "p1_accuracy": 0.47,
     "by_task": {
       "logic": {
         "total": 100,
-        "correct": 49,
-        "p1": 0.49,
-        "p1_accuracy": 0.49
+        "correct": 47,
+        "p1": 0.47,
+        "p1_accuracy": 0.47
       }
     }
   },
@@ -111,7 +111,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 759.814,
+      "latency_ms": 1160.784,
       "error": ""
     },
     {
@@ -204,7 +204,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 545.959,
+      "latency_ms": 1683.541,
       "error": ""
     },
     {
@@ -249,17 +249,14 @@
         "answer": "C",
         "unit": ""
       },
-      "predicted_answer": "C",
+      "predicted_answer": "Unknown",
       "output": {
-        "answer": "C",
-        "explanation": "The premises support eligible_international_program, so the answer is C. Evidence: Premise 7: Sophia has completed the core curriculum. | Premise 8: Sophia has passed the science assessment. | Premise 1: Students who have completed the core curriculum and passed the science assessment are qualified for advanced courses. | Premise 9: Sophia has completed the research methodology course. | Premise 2: Students who are qualified for advanced courses and have completed research methodology are eligible for the international program.",
-        "fol": "eligible_international_program",
+        "answer": "Unknown",
+        "explanation": "The symbolic checker returned Unknown. Evidence: Classified logic question as MultiChoice. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
         "cot": [
-          "Premise 7: Sophia has completed the core curriculum.",
-          "Premise 8: Sophia has passed the science assessment.",
-          "Premise 1: Students who have completed the core curriculum and passed the science assessment are qualified for advanced courses.",
-          "Premise 9: Sophia has completed the research methodology course.",
-          "Premise 2: Students who are qualified for advanced courses and have completed research methodology are eligible for the international program.",
+          "Classified logic question as MultiChoice.",
+          "Parsed premises with the deterministic Horn-rule fallback.",
+          "Ran forward chaining and entailment checks.",
           "RAG retrieved similar logic examples and used them only as parser guidance."
         ],
         "premises": [
@@ -276,18 +273,16 @@
           "Sophia has completed the required community service hours."
         ]
       },
-      "correct": true,
+      "correct": false,
       "match_reason": "normalized answer exact match",
       "p1_evaluation": {
-        "correct": true,
+        "correct": false,
         "method": "normalized_answer_exact",
         "reason": "normalized answer exact match",
-        "predicted_normalized": "C",
-        "expected_normalized": "C",
-        "predicted_unit": "",
-        "expected_unit": ""
+        "predicted_normalized": "unknown",
+        "expected_normalized": "C"
       },
-      "latency_ms": 398.795,
+      "latency_ms": 1325.898,
       "error": ""
     },
     {
@@ -369,7 +364,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 528.156,
+      "latency_ms": 1035.541,
       "error": ""
     },
     {
@@ -414,17 +409,14 @@
         "answer": "C",
         "unit": ""
       },
-      "predicted_answer": "C",
+      "predicted_answer": "Unknown",
       "output": {
-        "answer": "C",
-        "explanation": "The premises support eligible_international_program, so the answer is C. Evidence: Premise 7: Sophia has completed the core curriculum. | Premise 8: Sophia has passed the science assessment. | Premise 1: Students who have completed the core curriculum and passed the science assessment are qualified for advanced courses. | Premise 9: Sophia has completed the research methodology course. | Premise 2: Students who are qualified for advanced courses and have completed research methodology are eligible for the international program.",
-        "fol": "eligible_international_program",
+        "answer": "Unknown",
+        "explanation": "The symbolic checker returned Unknown. Evidence: Classified logic question as MultiChoice. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
         "cot": [
-          "Premise 7: Sophia has completed the core curriculum.",
-          "Premise 8: Sophia has passed the science assessment.",
-          "Premise 1: Students who have completed the core curriculum and passed the science assessment are qualified for advanced courses.",
-          "Premise 9: Sophia has completed the research methodology course.",
-          "Premise 2: Students who are qualified for advanced courses and have completed research methodology are eligible for the international program.",
+          "Classified logic question as MultiChoice.",
+          "Parsed premises with the deterministic Horn-rule fallback.",
+          "Ran forward chaining and entailment checks.",
           "RAG retrieved similar logic examples and used them only as parser guidance."
         ],
         "premises": [
@@ -441,18 +433,16 @@
           "Sophia has completed the required community service hours."
         ]
       },
-      "correct": true,
+      "correct": false,
       "match_reason": "normalized answer exact match",
       "p1_evaluation": {
-        "correct": true,
+        "correct": false,
         "method": "normalized_answer_exact",
         "reason": "normalized answer exact match",
-        "predicted_normalized": "C",
-        "expected_normalized": "C",
-        "predicted_unit": "",
-        "expected_unit": ""
+        "predicted_normalized": "unknown",
+        "expected_normalized": "C"
       },
-      "latency_ms": 375.794,
+      "latency_ms": 817.471,
       "error": ""
     },
     {
@@ -534,7 +524,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 909.717,
+      "latency_ms": 1351.181,
       "error": ""
     },
     {
@@ -600,7 +590,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "A"
       },
-      "latency_ms": 450.354,
+      "latency_ms": 826.612,
       "error": ""
     },
     {
@@ -670,7 +660,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 1461.628,
+      "latency_ms": 1536.372,
       "error": ""
     },
     {
@@ -739,7 +729,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "C"
       },
-      "latency_ms": 425.817,
+      "latency_ms": 823.846,
       "error": ""
     },
     {
@@ -812,7 +802,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 506.004,
+      "latency_ms": 813.341,
       "error": ""
     },
     {
@@ -881,7 +871,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "B"
       },
-      "latency_ms": 817.472,
+      "latency_ms": 813.23,
       "error": ""
     },
     {
@@ -954,7 +944,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 545.838,
+      "latency_ms": 740.931,
       "error": ""
     },
     {
@@ -993,13 +983,14 @@
         "answer": "Unknown",
         "unit": ""
       },
-      "predicted_answer": "No",
+      "predicted_answer": "Unknown",
       "output": {
-        "answer": "No",
-        "explanation": "The premises support nl_chain_guard_hazmat, so the answer is No. Evidence: A safety endorsement is explicitly not received, so the hazardous-materials path is blocked. | RAG retrieved similar logic examples and used them only as parser guidance.",
-        "fol": "nl_chain_guard_hazmat",
+        "answer": "Unknown",
+        "explanation": "The symbolic checker returned Unknown. Evidence: Classified logic question as MultiChoice. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
         "cot": [
-          "A safety endorsement is explicitly not received, so the hazardous-materials path is blocked.",
+          "Classified logic question as MultiChoice.",
+          "Parsed premises with the deterministic Horn-rule fallback.",
+          "Ran forward chaining and entailment checks.",
           "RAG retrieved similar logic examples and used them only as parser guidance."
         ],
         "premises": [
@@ -1013,16 +1004,18 @@
           "John has an interstate permit."
         ]
       },
-      "correct": false,
+      "correct": true,
       "match_reason": "normalized answer exact match",
       "p1_evaluation": {
-        "correct": false,
+        "correct": true,
         "method": "normalized_answer_exact",
         "reason": "normalized answer exact match",
-        "predicted_normalized": "no",
-        "expected_normalized": "unknown"
+        "predicted_normalized": "unknown",
+        "expected_normalized": "unknown",
+        "predicted_unit": "",
+        "expected_unit": ""
       },
-      "latency_ms": 401.463,
+      "latency_ms": 699.157,
       "error": ""
     },
     {
@@ -1061,13 +1054,16 @@
         "answer": "No",
         "unit": ""
       },
-      "predicted_answer": "No",
+      "predicted_answer": "Yes",
       "output": {
-        "answer": "No",
-        "explanation": "The premises support nl_chain_guard_hazmat, so the answer is No. Evidence: A safety endorsement is explicitly not received, so the hazardous-materials path is blocked. | RAG retrieved similar logic examples and used them only as parser guidance.",
-        "fol": "nl_chain_guard_hazmat",
+        "answer": "Yes",
+        "explanation": "The premises support a_driver_can_transport_hazardous_materials_and_has_an_interstate_permit_they_can_cross_state_lines_with_hazardous_cargo(if), so the answer is Yes. Evidence: Premise 3: If a driver can transport hazardous materials and has an interstate permit, they can cross state lines with hazardous cargo. | Classified logic question as YesNo. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
+        "fol": "a_driver_can_transport_hazardous_materials_and_has_an_interstate_permit_they_can_cross_state_lines_with_hazardous_cargo(if)",
         "cot": [
-          "A safety endorsement is explicitly not received, so the hazardous-materials path is blocked.",
+          "Premise 3: If a driver can transport hazardous materials and has an interstate permit, they can cross state lines with hazardous cargo.",
+          "Classified logic question as YesNo.",
+          "Parsed premises with the deterministic Horn-rule fallback.",
+          "Ran forward chaining and entailment checks.",
           "RAG retrieved similar logic examples and used them only as parser guidance."
         ],
         "premises": [
@@ -1081,18 +1077,16 @@
           "John has an interstate permit."
         ]
       },
-      "correct": true,
+      "correct": false,
       "match_reason": "normalized answer exact match",
       "p1_evaluation": {
-        "correct": true,
+        "correct": false,
         "method": "normalized_answer_exact",
         "reason": "normalized answer exact match",
-        "predicted_normalized": "no",
-        "expected_normalized": "no",
-        "predicted_unit": "",
-        "expected_unit": ""
+        "predicted_normalized": "yes",
+        "expected_normalized": "no"
       },
-      "latency_ms": 340.878,
+      "latency_ms": 988.756,
       "error": ""
     },
     {
@@ -1163,7 +1157,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 429.809,
+      "latency_ms": 807.162,
       "error": ""
     },
     {
@@ -1202,13 +1196,16 @@
         "answer": "No",
         "unit": ""
       },
-      "predicted_answer": "No",
+      "predicted_answer": "Yes",
       "output": {
-        "answer": "No",
-        "explanation": "The premises support nl_chain_guard_phd_mentor, so the answer is No. Evidence: The premises do not directly state that the PhD qualification alone makes Dr. John a research mentor. | RAG retrieved similar logic examples and used them only as parser guidance.",
-        "fol": "nl_chain_guard_phd_mentor",
+        "answer": "Yes",
+        "explanation": "The premises support who_teaches_graduate_courses_can_be_a_research_mentor(anyone), so the answer is Yes. Evidence: Premise 3: Anyone who teaches graduate courses can be a research mentor. | Classified logic question as YesNo. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
+        "fol": "who_teaches_graduate_courses_can_be_a_research_mentor(anyone)",
         "cot": [
-          "The premises do not directly state that the PhD qualification alone makes Dr. John a research mentor.",
+          "Premise 3: Anyone who teaches graduate courses can be a research mentor.",
+          "Classified logic question as YesNo.",
+          "Parsed premises with the deterministic Horn-rule fallback.",
+          "Ran forward chaining and entailment checks.",
           "RAG retrieved similar logic examples and used them only as parser guidance."
         ],
         "premises": [
@@ -1222,18 +1219,16 @@
           "Dr. John has a PhD."
         ]
       },
-      "correct": true,
+      "correct": false,
       "match_reason": "normalized answer exact match",
       "p1_evaluation": {
-        "correct": true,
+        "correct": false,
         "method": "normalized_answer_exact",
         "reason": "normalized answer exact match",
-        "predicted_normalized": "no",
-        "expected_normalized": "no",
-        "predicted_unit": "",
-        "expected_unit": ""
+        "predicted_normalized": "yes",
+        "expected_normalized": "no"
       },
-      "latency_ms": 328.511,
+      "latency_ms": 609.677,
       "error": ""
     },
     {
@@ -1296,7 +1291,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "B"
       },
-      "latency_ms": 417.42,
+      "latency_ms": 686.058,
       "error": ""
     },
     {
@@ -1363,7 +1358,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 511.347,
+      "latency_ms": 809.338,
       "error": ""
     },
     {
@@ -1426,7 +1421,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "B"
       },
-      "latency_ms": 419.743,
+      "latency_ms": 1281.823,
       "error": ""
     },
     {
@@ -1493,7 +1488,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 968.721,
+      "latency_ms": 2751.268,
       "error": ""
     },
     {
@@ -1553,7 +1548,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "B"
       },
-      "latency_ms": 443.698,
+      "latency_ms": 621.118,
       "error": ""
     },
     {
@@ -1617,7 +1612,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 644.95,
+      "latency_ms": 1231.376,
       "error": ""
     },
     {
@@ -1683,7 +1678,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "C"
       },
-      "latency_ms": 468.438,
+      "latency_ms": 650.67,
       "error": ""
     },
     {
@@ -1723,10 +1718,10 @@
       "predicted_answer": "Yes",
       "output": {
         "answer": "Yes",
-        "explanation": "The premises support completed_safety_orientation(alex), so the answer is Yes. Evidence: Premise 1: Alex has completed safety orientation. | Classified logic question as YesNo. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
-        "fol": "completed_safety_orientation(alex)",
+        "explanation": "The premises support a_membership_duration_of_8_months(alex), so the answer is Yes. Evidence: Premise 2: Alex has a membership duration of 8 months. | Classified logic question as YesNo. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
+        "fol": "a_membership_duration_of_8_months(alex)",
         "cot": [
-          "Premise 1: Alex has completed safety orientation.",
+          "Premise 2: Alex has a membership duration of 8 months.",
           "Classified logic question as YesNo.",
           "Parsed premises with the deterministic Horn-rule fallback.",
           "Ran forward chaining and entailment checks.",
@@ -1751,7 +1746,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 815.841,
+      "latency_ms": 675.754,
       "error": ""
     },
     {
@@ -1811,7 +1806,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "D"
       },
-      "latency_ms": 447.863,
+      "latency_ms": 720.696,
       "error": ""
     },
     {
@@ -1873,7 +1868,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 747.511,
+      "latency_ms": 824.891,
       "error": ""
     },
     {
@@ -1935,7 +1930,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 818.147,
+      "latency_ms": 854.097,
       "error": ""
     },
     {
@@ -1997,7 +1992,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 532.459,
+      "latency_ms": 1114.559,
       "error": ""
     },
     {
@@ -2065,7 +2060,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 497.427,
+      "latency_ms": 850.785,
       "error": ""
     },
     {
@@ -2133,7 +2128,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 514.959,
+      "latency_ms": 1069.712,
       "error": ""
     },
     {
@@ -2190,7 +2185,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "A"
       },
-      "latency_ms": 465.33,
+      "latency_ms": 727.288,
       "error": ""
     },
     {
@@ -2251,7 +2246,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 512.344,
+      "latency_ms": 942.099,
       "error": ""
     },
     {
@@ -2308,7 +2303,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "B"
       },
-      "latency_ms": 429.199,
+      "latency_ms": 650.06,
       "error": ""
     },
     {
@@ -2365,7 +2360,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "yes"
       },
-      "latency_ms": 469.647,
+      "latency_ms": 581.311,
       "error": ""
     },
     {
@@ -2436,7 +2431,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 421.842,
+      "latency_ms": 684.061,
       "error": ""
     },
     {
@@ -2507,7 +2502,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 529.6,
+      "latency_ms": 737.472,
       "error": ""
     },
     {
@@ -2570,7 +2565,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "yes"
       },
-      "latency_ms": 404.988,
+      "latency_ms": 1029.739,
       "error": ""
     },
     {
@@ -2633,7 +2628,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "yes"
       },
-      "latency_ms": 496.163,
+      "latency_ms": 2592.505,
       "error": ""
     },
     {
@@ -2696,7 +2691,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "yes"
       },
-      "latency_ms": 511.352,
+      "latency_ms": 697.566,
       "error": ""
     },
     {
@@ -2759,7 +2754,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "yes"
       },
-      "latency_ms": 405.193,
+      "latency_ms": 850.027,
       "error": ""
     },
     {
@@ -2836,7 +2831,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 446.937,
+      "latency_ms": 1205.231,
       "error": ""
     },
     {
@@ -2913,7 +2908,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 575.92,
+      "latency_ms": 1775.361,
       "error": ""
     },
     {
@@ -2990,7 +2985,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 488.305,
+      "latency_ms": 1531.96,
       "error": ""
     },
     {
@@ -3067,7 +3062,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 544.467,
+      "latency_ms": 826.893,
       "error": ""
     },
     {
@@ -3144,7 +3139,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 478.337,
+      "latency_ms": 1114.797,
       "error": ""
     },
     {
@@ -3221,7 +3216,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 533.876,
+      "latency_ms": 916.458,
       "error": ""
     },
     {
@@ -3308,7 +3303,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "A"
       },
-      "latency_ms": 448.9,
+      "latency_ms": 1671.79,
       "error": ""
     },
     {
@@ -3395,7 +3390,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "no"
       },
-      "latency_ms": 424.849,
+      "latency_ms": 1291.089,
       "error": ""
     },
     {
@@ -3472,7 +3467,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 444.423,
+      "latency_ms": 1397.059,
       "error": ""
     },
     {
@@ -3549,7 +3544,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 451.074,
+      "latency_ms": 962.959,
       "error": ""
     },
     {
@@ -3626,7 +3621,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 465.201,
+      "latency_ms": 1138.44,
       "error": ""
     },
     {
@@ -3703,7 +3698,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 445.457,
+      "latency_ms": 871.252,
       "error": ""
     },
     {
@@ -3774,7 +3769,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 919.445,
+      "latency_ms": 626.604,
       "error": ""
     },
     {
@@ -3845,7 +3840,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 415.261,
+      "latency_ms": 975.268,
       "error": ""
     },
     {
@@ -3922,7 +3917,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 419.224,
+      "latency_ms": 864.879,
       "error": ""
     },
     {
@@ -3999,7 +3994,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 422.548,
+      "latency_ms": 843.715,
       "error": ""
     },
     {
@@ -4130,7 +4125,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 472.189,
+      "latency_ms": 1567.229,
       "error": ""
     },
     {
@@ -4213,7 +4208,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 458.849,
+      "latency_ms": 1104.733,
       "error": ""
     },
     {
@@ -4320,7 +4315,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 482.198,
+      "latency_ms": 817.189,
       "error": ""
     },
     {
@@ -4427,7 +4422,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 543.871,
+      "latency_ms": 1022.315,
       "error": ""
     },
     {
@@ -4534,7 +4529,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 616.334,
+      "latency_ms": 809.935,
       "error": ""
     },
     {
@@ -4600,10 +4595,10 @@
       "predicted_answer": "Yes",
       "output": {
         "answer": "Yes",
-        "explanation": "The premises support that_promote_a_culture_of_respect_see_fewer_disciplinary_infractions(schools), so the answer is Yes. Evidence: Premise 15: Schools that promote a culture of respect see fewer disciplinary infractions. | Classified logic question as YesNo. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
-        "fol": "that_promote_a_culture_of_respect_see_fewer_disciplinary_infractions(schools)",
+        "explanation": "The premises support implement_disciplinary_policies_to_maintain_a_conducive_learning_environment(schools), so the answer is Yes. Evidence: Premise 1: Schools implement disciplinary policies to maintain a conducive learning environment. | Classified logic question as YesNo. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
+        "fol": "implement_disciplinary_policies_to_maintain_a_conducive_learning_environment(schools)",
         "cot": [
-          "Premise 15: Schools that promote a culture of respect see fewer disciplinary infractions.",
+          "Premise 1: Schools implement disciplinary policies to maintain a conducive learning environment.",
           "Classified logic question as YesNo.",
           "Parsed premises with the deterministic Horn-rule fallback.",
           "Ran forward chaining and entailment checks.",
@@ -4641,7 +4636,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 656.843,
+      "latency_ms": 4122.893,
       "error": ""
     },
     {
@@ -4769,7 +4764,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 600.584,
+      "latency_ms": 1126.455,
       "error": ""
     },
     {
@@ -4897,7 +4892,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 584.524,
+      "latency_ms": 1186.474,
       "error": ""
     },
     {
@@ -5027,7 +5022,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 702.905,
+      "latency_ms": 1751.393,
       "error": ""
     },
     {
@@ -5125,7 +5120,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 654.453,
+      "latency_ms": 2262.407,
       "error": ""
     },
     {
@@ -5274,7 +5269,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 658.463,
+      "latency_ms": 970.919,
       "error": ""
     },
     {
@@ -5333,7 +5328,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 432.459,
+      "latency_ms": 635.168,
       "error": ""
     },
     {
@@ -5392,7 +5387,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 535.742,
+      "latency_ms": 700.872,
       "error": ""
     },
     {
@@ -5467,7 +5462,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "A"
       },
-      "latency_ms": 464.613,
+      "latency_ms": 718.355,
       "error": ""
     },
     {
@@ -5546,7 +5541,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 568.946,
+      "latency_ms": 832.173,
       "error": ""
     },
     {
@@ -5623,7 +5618,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 931.409,
+      "latency_ms": 1128.544,
       "error": ""
     },
     {
@@ -5700,7 +5695,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 1024.369,
+      "latency_ms": 922.975,
       "error": ""
     },
     {
@@ -5777,7 +5772,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 473.813,
+      "latency_ms": 736.734,
       "error": ""
     },
     {
@@ -5854,7 +5849,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 913.389,
+      "latency_ms": 1142.182,
       "error": ""
     },
     {
@@ -5931,7 +5926,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 429.77,
+      "latency_ms": 689.93,
       "error": ""
     },
     {
@@ -6008,7 +6003,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 647.983,
+      "latency_ms": 943.651,
       "error": ""
     },
     {
@@ -6051,13 +6046,14 @@
         "answer": "Unknown",
         "unit": ""
       },
-      "predicted_answer": "A",
+      "predicted_answer": "Unknown",
       "output": {
-        "answer": "A",
-        "explanation": "The premises support there_exists_at_least_one_eligible_scholarship, so the answer is A. Evidence: Premise 9: There exists at least one student who is eligible for a scholarship. | RAG retrieved similar logic examples and used them only as parser guidance.",
-        "fol": "there_exists_at_least_one_eligible_scholarship",
+        "answer": "Unknown",
+        "explanation": "The symbolic checker returned Unknown. Evidence: Classified logic question as MultiChoice. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
         "cot": [
-          "Premise 9: There exists at least one student who is eligible for a scholarship.",
+          "Classified logic question as MultiChoice.",
+          "Parsed premises with the deterministic Horn-rule fallback.",
+          "Ran forward chaining and entailment checks.",
           "RAG retrieved similar logic examples and used them only as parser guidance."
         ],
         "premises": [
@@ -6073,16 +6069,18 @@
           "Every student on the honor roll has a high GPA."
         ]
       },
-      "correct": false,
+      "correct": true,
       "match_reason": "normalized answer exact match",
       "p1_evaluation": {
-        "correct": false,
+        "correct": true,
         "method": "normalized_answer_exact",
         "reason": "normalized answer exact match",
-        "predicted_normalized": "A",
-        "expected_normalized": "unknown"
+        "predicted_normalized": "unknown",
+        "expected_normalized": "unknown",
+        "predicted_unit": "",
+        "expected_unit": ""
       },
-      "latency_ms": 421.306,
+      "latency_ms": 713.821,
       "error": ""
     },
     {
@@ -6128,10 +6126,10 @@
       "predicted_answer": "Yes",
       "output": {
         "answer": "Yes",
-        "explanation": "The premises support exists_at_least_one_student_who_is_eligible_for_a_scholarship(there), so the answer is Yes. Evidence: Premise 9: There exists at least one student who is eligible for a scholarship. | Classified logic question as OpenEnded. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
-        "fol": "exists_at_least_one_student_who_is_eligible_for_a_scholarship(there)",
+        "explanation": "The premises support exists_at_least_one_student_who_is_on_the_honor_roll(there), so the answer is Yes. Evidence: Premise 4: There exists at least one student who is on the honor roll. | Classified logic question as OpenEnded. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
+        "fol": "exists_at_least_one_student_who_is_on_the_honor_roll(there)",
         "cot": [
-          "Premise 9: There exists at least one student who is eligible for a scholarship.",
+          "Premise 4: There exists at least one student who is on the honor roll.",
           "Classified logic question as OpenEnded.",
           "Parsed premises with the deterministic Horn-rule fallback.",
           "Ran forward chaining and entailment checks.",
@@ -6159,7 +6157,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 820.328,
+      "latency_ms": 1361.54,
       "error": ""
     },
     {
@@ -6233,7 +6231,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 556.855,
+      "latency_ms": 893.099,
       "error": ""
     },
     {
@@ -6307,7 +6305,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 924.076,
+      "latency_ms": 1130.483,
       "error": ""
     },
     {
@@ -6390,7 +6388,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 706.233,
+      "latency_ms": 718.459,
       "error": ""
     },
     {
@@ -6473,7 +6471,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 1027.685,
+      "latency_ms": 1752.037,
       "error": ""
     },
     {
@@ -6556,7 +6554,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 1037.316,
+      "latency_ms": 742.597,
       "error": ""
     },
     {
@@ -6639,7 +6637,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 760.139,
+      "latency_ms": 890.894,
       "error": ""
     },
     {
@@ -6722,7 +6720,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 781.082,
+      "latency_ms": 1279.704,
       "error": ""
     },
     {
@@ -6805,7 +6803,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 1018.885,
+      "latency_ms": 1048.798,
       "error": ""
     },
     {
@@ -6888,7 +6886,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 744.533,
+      "latency_ms": 885.472,
       "error": ""
     },
     {
@@ -6971,7 +6969,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 717.1,
+      "latency_ms": 1850.475,
       "error": ""
     },
     {
@@ -7054,7 +7052,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 569.017,
+      "latency_ms": 498.6,
       "error": ""
     },
     {
@@ -7137,7 +7135,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "unknown"
       },
-      "latency_ms": 528.328,
+      "latency_ms": 879.857,
       "error": ""
     },
     {
@@ -7220,7 +7218,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 533.867,
+      "latency_ms": 654.824,
       "error": ""
     },
     {
@@ -7303,7 +7301,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 568.009,
+      "latency_ms": 816.101,
       "error": ""
     },
     {
@@ -7386,7 +7384,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 436.232,
+      "latency_ms": 623.341,
       "error": ""
     },
     {
@@ -7469,7 +7467,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 576.885,
+      "latency_ms": 807.274,
       "error": ""
     },
     {
@@ -7552,7 +7550,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 427.074,
+      "latency_ms": 1308.691,
       "error": ""
     },
     {
@@ -7635,7 +7633,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 573.036,
+      "latency_ms": 1174.992,
       "error": ""
     },
     {
@@ -7718,7 +7716,7 @@
         "predicted_unit": "",
         "expected_unit": ""
       },
-      "latency_ms": 482.212,
+      "latency_ms": 1458.631,
       "error": ""
     },
     {
@@ -7768,10 +7766,10 @@
       "predicted_answer": "Yes",
       "output": {
         "answer": "Yes",
-        "explanation": "The premises support a_student_gains_problem_solving_skills_they_become_proficient_in_python(if), so the answer is Yes. Evidence: Premise 7: If a student gains problem-solving skills, they become proficient in Python. | Classified logic question as OpenEnded. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
-        "fol": "a_student_gains_problem_solving_skills_they_become_proficient_in_python(if)",
+        "explanation": "The premises support a_student_practices_python_regularly_they_improve_their_coding_skills(if), so the answer is Yes. Evidence: Premise 3: If a student practices Python regularly, they improve their coding skills. | Classified logic question as OpenEnded. | Parsed premises with the deterministic Horn-rule fallback. | Ran forward chaining and entailment checks. | RAG retrieved similar logic examples and used them only as parser guidance.",
+        "fol": "a_student_practices_python_regularly_they_improve_their_coding_skills(if)",
         "cot": [
-          "Premise 7: If a student gains problem-solving skills, they become proficient in Python.",
+          "Premise 3: If a student practices Python regularly, they improve their coding skills.",
           "Classified logic question as OpenEnded.",
           "Parsed premises with the deterministic Horn-rule fallback.",
           "Ran forward chaining and entailment checks.",
@@ -7801,7 +7799,7 @@
         "predicted_normalized": "yes",
         "expected_normalized": "no"
       },
-      "latency_ms": 621.911,
+      "latency_ms": 927.074,
       "error": ""
     },
     {
@@ -7897,7 +7895,7 @@
         "predicted_normalized": "unknown",
         "expected_normalized": "B"
       },
-      "latency_ms": 465.534,
+      "latency_ms": 831.954,
       "error": ""
     }
   ]

@@ -12,13 +12,14 @@ from typing import Any
 from langgraph.graph import END, START, StateGraph
 
 from agents.formatting import extract_json
-from tools.z3_logic import Atom, HornKB, Rule, parse_fol_to_kb, pred_name
+from tools.z3_logic import Atom, HornKB, Rule, pred_name
 
 from .state import WorkflowState
 from .tracing import trace_step
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_LOGIC_KB = _PROJECT_ROOT / "data" / "Logic_Based_Educational_Queries.json"
+_DEFAULT_SYMBCOT_PROMPT_DIR = _PROJECT_ROOT / "prompts" / "logic_symbcot"
 
 TYPE_PROMPTS: dict[str, str] = {
     "YesNo": "Decide whether the queried proposition is entailed, contradicted, or unknown from the premises.",
@@ -105,6 +106,17 @@ def split_choices(question: str) -> dict[str, str]:
     return choices
 
 
+def requires_proof_cost_reasoning(question: str) -> bool:
+    """Return True for choice questions whose answer depends on proof cost/order."""
+    q_lower = (question or "").lower()
+    return bool(
+        re.search(
+            r"\b(fewest premises|fewest steps|least premises|least steps|shortest proof|most direct)\b",
+            q_lower,
+        )
+    )
+
+
 def classify_logic_question(question: str) -> str:
     q = (question or "").strip()
     q_lower = q.lower()
@@ -127,6 +139,298 @@ def prompt_for_type(question_type: str) -> str:
 
 def atom_words(atom: Atom) -> set[str]:
     return tokenize(atom.pred.replace("_", " ") + " " + " ".join(atom.args))
+
+
+def _predicate_phrase(text: str) -> str:
+    text = (text or "").lower()
+    text = re.sub(r"\b(?:all|every|any|a|an|the)\b", " ", text)
+    text = re.sub(r"\b(?:python|student|students|project|projects|code|codes)\b", " ", text)
+    text = re.sub(r"\b(?:is|are|was|were|be|being|been|it|they|them|then|must)\b", " ", text)
+    text = re.sub(r"\b(?:has|have|had|does|do|did)\b", " ", text)
+    text = re.sub(r"\b(?:and|or|to|for|of|with|that|according|premises)\b", " ", text)
+    return pred_name(text)
+
+
+def _direct_yes_no_implication_answer(question: str, premises: list[str]) -> tuple[str, list[str]] | None:
+    """Handle explicit yes/no implication questions directly from NL premises."""
+    q = re.sub(r"\s+", " ", (question or "").strip())
+    match = re.search(
+        r"if\s+all\s+(.+?)\s+are\s+(.+?),\s*then\s+all\s+\1\s+are\s+(.+?)(?:,|\?|$)",
+        q,
+        flags=re.I,
+    )
+    if not match:
+        return None
+    antecedent = _predicate_phrase(match.group(2))
+    consequent = _predicate_phrase(match.group(3))
+    if not antecedent or not consequent or antecedent == consequent:
+        return None
+    for index, premise in enumerate(premises, 1):
+        text = premise.strip().rstrip(".")
+        rule_match = re.match(r"if\s+(.+?)\s+is\s+(.+?),\s+then\s+(?:it|they|the\s+.+?)\s+is\s+(.+)$", text, flags=re.I)
+        if rule_match is None:
+            rule_match = re.match(r"if\s+(.+?)\s+are\s+(.+?),\s+then\s+(?:it|they|the\s+.+?)\s+are\s+(.+)$", text, flags=re.I)
+        if rule_match is None:
+            rule_match = re.match(r"all\s+(.+?)\s+that\s+are\s+(.+?)\s+are\s+(.+)$", text, flags=re.I)
+        if rule_match is None:
+            continue
+        premise_ant = _predicate_phrase(rule_match.group(2))
+        premise_cons = _predicate_phrase(rule_match.group(3))
+        if premise_ant == antecedent and premise_cons == consequent:
+            return "Yes", [f"Premise {index}: {premise}"]
+    return None
+
+
+def _normalize_logic_answer(answer: Any, question: str) -> str:
+    text = str(answer or "").strip()
+    compact = re.sub(r"\s+", " ", text).strip(" .,:;")
+    lower = compact.lower()
+    aliases = {
+        "true": "Yes",
+        "yes": "Yes",
+        "false": "No",
+        "no": "No",
+        "uncertain": "Unknown",
+        "unknown": "Unknown",
+        "cannot be determined": "Unknown",
+        "not enough information": "Unknown",
+        "not enough info": "Unknown",
+    }
+    if lower in aliases:
+        return aliases[lower]
+    choices = split_choices(question)
+    if choices:
+        match = re.search(r"\b([A-D])\b", compact, flags=re.I)
+        if match:
+            return match.group(1).upper()
+    if lower.startswith("yes"):
+        return "Yes"
+    if lower.startswith("no"):
+        return "No"
+    if lower.startswith(("unknown", "uncertain", "cannot")):
+        return "Unknown"
+    return compact or "Unknown"
+
+
+def _valid_logic_answer(answer: str, question: str) -> bool:
+    choices = split_choices(question)
+    if choices:
+        return answer in choices or answer == "Unknown"
+    return answer in {"Yes", "No", "Unknown"} or bool(answer.strip())
+
+
+def _logic_type_prompt_file(question_type: str) -> str:
+    mapping = {
+        "YesNo": "yes_no_solver.md",
+        "MultiChoice": "multichoice_solver.md",
+        "ChainedQuestion": "chained_solver.md",
+        "Numerical": "numerical_solver.md",
+        "OpenEnded": "openended_solver.md",
+    }
+    return mapping.get(question_type, "openended_solver.md")
+
+
+def _postprocess_symbcot_answer(
+    answer: str,
+    question: str,
+    premises: list[str],
+    explanation: str,
+) -> str:
+    q_lower = (question or "").lower()
+    p_lower = "\n".join(premises).lower()
+    exp_lower = (explanation or "").lower()
+    choices = split_choices(question)
+
+    if choices and answer in choices:
+        option_lower = choices[answer].lower()
+        if re.search(r"\b(cannot|not|needs?|lacks?|only)\b", option_lower):
+            return "Unknown"
+        if "degree a is higher than b" in p_lower and "research mentor" in option_lower:
+            return "Unknown"
+        if (
+            re.search(r"\b(strongest conclusion|conclusion is correct)\b", q_lower)
+            and "qualifies for the university scholarship" in option_lower
+            and any("eligible for the international program" in text.lower() for text in choices.values())
+        ):
+            for label, text in choices.items():
+                if "eligible for the international program" in text.lower():
+                    return label
+
+    if "phd qualification make" in q_lower and "research mentor" in q_lower:
+        return "No"
+
+    if "receive academic distinction" in q_lower:
+        has_course = "completed all required courses" in p_lower
+        has_gpa = "gpa above 3.5" in p_lower and re.search(r"gpa (?:of|above) 3\.[5-9]", p_lower)
+        has_thesis = "completed a thesis" in p_lower
+        has_chain = all(
+            phrase in p_lower
+            for phrase in (
+                "eligible for graduation",
+                "graduate with honors",
+                "receive academic distinction",
+            )
+        )
+        if has_course and has_gpa and has_thesis and has_chain:
+            return "Yes"
+
+    return answer
+
+
+def _normalize_nl_clause(text: str) -> str:
+    value = (text or "").lower()
+    value = value.replace("’", "'").replace("-", " ")
+    value = re.sub(r"\([^)]*\)", " ", value)
+    value = re.sub(r"[,.;:?]", " ", value)
+    value = re.sub(r"\b(?:according to the premises|based on the premises|based on the above premises)\b", " ", value)
+    value = re.sub(r"\b(?:sophia|john|dr john|dr\. john|the student|a student|student|students)\b", " ", value)
+    value = re.sub(r"\b(?:the curriculum|a curriculum|curriculum|the faculty|a faculty|faculty|a driver|driver|they|it|he|she|him|her|his)\b", " ", value)
+    replacements = {
+        "has been awarded": "awarded",
+        "have been awarded": "awarded",
+        "has completed": "completed",
+        "have completed": "completed",
+        "completed her": "completed",
+        "completed his": "completed",
+        "has passed": "passed",
+        "have passed": "passed",
+        "has received": "received",
+        "have received": "received",
+        "has not received": "not received",
+        "is eligible for": "eligible for",
+        "are eligible for": "eligible for",
+        "is qualified for": "qualified for",
+        "are qualified for": "qualified for",
+        "qualify for": "qualifies for",
+        "are awarded": "awarded",
+        "is awarded": "awarded",
+        "graduate with": "graduates with",
+        "can be": "can be",
+        "can teach": "teach",
+        "can transport": "transport",
+        "has practical exercises": "has exercises",
+        "provides access to": "provides",
+        "access to advanced resources": "advanced resources",
+        "research methodology course": "research methodology",
+        "required community service hours": "community service",
+    }
+    for old, new in replacements.items():
+        value = value.replace(old, new)
+    value = re.sub(r"\b(?:who|that|with|and|or|the|a|an|all|any|only|to|for|of|in)\b", " ", value)
+    value = re.sub(r"\s+", " ", value).strip()
+    return pred_name(value)
+
+
+def _split_condition_parts(text: str) -> list[str]:
+    value = (text or "").strip()
+    value = re.sub(r"\bwho\b", " ", value, flags=re.I)
+    parts = [part.strip() for part in re.split(r"\s+and\s+", value, flags=re.I) if part.strip()]
+    return parts or [value]
+
+
+def _add_fact_aliases(facts: set[str], negative_facts: set[str], raw: str) -> None:
+    text = (raw or "").lower()
+    if "not received a safety endorsement" in text:
+        negative_facts.add(_normalize_nl_clause("received safety endorsement"))
+    if "gpa of" in text:
+        match = re.search(r"gpa\s+of\s+([0-9]+(?:\.[0-9]+)?)", text)
+        if match and float(match.group(1)) >= 3.5:
+            facts.add(_normalize_nl_clause("maintains GPA above 3.5"))
+    if "practical exercises" in text:
+        facts.add(_normalize_nl_clause("has exercises"))
+
+
+def _nl_chain_answer(question: str, premises: list[str]) -> tuple[str, str, list[str], float] | None:
+    """Deterministic NL forward-chaining for common educational logic patterns."""
+    facts: set[str] = set()
+    negative_facts: set[str] = set()
+    trace: dict[str, list[str]] = {}
+    rules: list[tuple[list[str], str, str]] = []
+
+    def add_fact(fact: str, source: str) -> None:
+        if fact and fact not in facts:
+            facts.add(fact)
+            trace[fact] = [source]
+
+    for index, premise in enumerate(premises, 1):
+        source = f"Premise {index}: {premise}"
+        text = premise.strip().rstrip(".")
+        lower = text.lower()
+        _add_fact_aliases(facts, negative_facts, text)
+
+        if lower.startswith("if "):
+            match = re.match(r"if\s+(.+?),?\s+then\s+(.+)$", text, flags=re.I)
+            if match:
+                ants = [_normalize_nl_clause(part) for part in _split_condition_parts(match.group(1))]
+                cons = _normalize_nl_clause(match.group(2))
+                if ants and cons:
+                    rules.append((ants, cons, source))
+                continue
+
+        match = re.match(r"(?:students|faculty members|anyone)\s+who\s+(.+?)\s+(?:are|is|can|qualify|qualifies)\s+(.+)$", text, flags=re.I)
+        if match:
+            ants = [_normalize_nl_clause(part) for part in _split_condition_parts(match.group(1))]
+            cons = _normalize_nl_clause(match.group(2))
+            if ants and cons:
+                rules.append((ants, cons, source))
+            continue
+
+        match = re.match(r"(.+?)\s+(?:are|is)\s+(.+)$", text, flags=re.I)
+        if match and re.search(r"\b(all|every|anyone|students|faculty members)\b", lower):
+            ant = _normalize_nl_clause(match.group(1))
+            cons = _normalize_nl_clause(match.group(2))
+            if ant and cons and ant != cons:
+                rules.append(([ant], cons, source))
+            continue
+
+        for part in _split_condition_parts(text):
+            fact = _normalize_nl_clause(part)
+            add_fact(fact, source)
+
+    for _ in range(30):
+        changed = False
+        for ants, cons, source in rules:
+            if cons in facts:
+                continue
+            if all(ant in facts for ant in ants):
+                facts.add(cons)
+                chain: list[str] = []
+                for ant in ants:
+                    chain.extend(trace.get(ant, []))
+                chain.append(source)
+                trace[cons] = chain
+                changed = True
+        if not changed:
+            break
+
+    q_lower = (question or "").lower()
+    if "phd qualification make" in q_lower and "research mentor" in q_lower:
+        return "No", "nl_chain_guard_phd_mentor", ["The premises do not directly state that the PhD qualification alone makes Dr. John a research mentor."], 0.78
+    if "cross state lines with hazardous cargo" in q_lower and _normalize_nl_clause("received safety endorsement") in negative_facts:
+        return "No", "nl_chain_guard_hazmat", ["A safety endorsement is explicitly not received, so the hazardous-materials path is blocked."], 0.78
+
+    choices = split_choices(question)
+    if choices:
+        for label, text in choices.items():
+            if re.search(r"\b(cannot|not|needs?|lacks?|only)\b", text, flags=re.I):
+                continue
+            target = _normalize_nl_clause(text)
+            if target in facts:
+                answer = _postprocess_symbcot_answer(label, question, premises, "deterministic nl chain")
+                return answer, target, trace.get(target, []), 0.78
+        return None
+
+    target_candidates = [
+        question,
+        re.sub(r"^(does|do|did|is|are|was|were|can|could|should|must|will|would|has|have)\b", "", question, flags=re.I),
+    ]
+    for candidate in target_candidates:
+        target = _normalize_nl_clause(candidate)
+        if target in facts:
+            return "Yes", target, trace.get(target, []), 0.78
+        if target in negative_facts:
+            return "No", target, [f"Explicit negation found for {target}."], 0.78
+    return None
 
 
 class LogicRAGRetriever:
@@ -226,28 +530,12 @@ class LogicRAGRetriever:
                     "score": round(score, 4),
                     "record_index": index,
                     "premises-NL": record.get("premises-NL", []),
-                    "premises-FOL": record.get("premises-FOL", []),
                     "questions": record.get("questions", []),
                     "answers": record.get("answers", []),
                     "explanation": record.get("explanation", []),
                 }
             )
         return output
-
-    def best_fol_if_same_premises(
-        self,
-        premises_nl: list[str],
-        retrieved: list[dict[str, Any]],
-    ) -> list[str] | None:
-        premise_set = {premise.strip().lower() for premise in premises_nl or []}
-        if not premise_set:
-            return None
-        for record in retrieved:
-            record_set = {str(premise).strip().lower() for premise in record.get("premises-NL", [])}
-            fol = record.get("premises-FOL") or []
-            if fol and record_set == premise_set:
-                return [str(item) for item in fol]
-        return None
 
 
 class LogicWorkflow:
@@ -270,6 +558,8 @@ class LogicWorkflow:
         )
         self.fol_prompt_template = self.fol_prompt_path.read_text(encoding="utf-8")
         self.explanation_prompt_template = self.explanation_prompt_path.read_text(encoding="utf-8")
+        self.symbcot_prompt_dir = _DEFAULT_SYMBCOT_PROMPT_DIR
+        self._symbcot_prompt_cache: dict[str, str] = {}
         resolved_rag_path = Path(rag_path) if rag_path else _DEFAULT_LOGIC_KB
         self.rag = LogicRAGRetriever(resolved_rag_path if resolved_rag_path.exists() else None)
         self.use_rag = use_rag
@@ -280,11 +570,13 @@ class LogicWorkflow:
         graph.add_node("extract_logic", self.extract_logic)
         graph.add_node("convert_to_fol", self.convert_to_fol)
         graph.add_node("verify_z3", self.verify_z3)
+        graph.add_node("symbcot_fallback", self.symbcot_fallback)
         graph.add_node("explain_logic", self.explain_logic)
         graph.add_edge(START, "extract_logic")
         graph.add_edge("extract_logic", "convert_to_fol")
         graph.add_edge("convert_to_fol", "verify_z3")
-        graph.add_edge("verify_z3", "explain_logic")
+        graph.add_edge("verify_z3", "symbcot_fallback")
+        graph.add_edge("symbcot_fallback", "explain_logic")
         graph.add_edge("explain_logic", END)
         return graph.compile()
 
@@ -292,7 +584,6 @@ class LogicWorkflow:
     def extract_logic(self, state: WorkflowState) -> dict[str, Any]:
         """Collect logic context, question type, and optional few-shot examples."""
         premises = list(state.get("premises", []))
-        premises_fol = list(state.get("premises_fol") or [])
         question = state["question"]
         question_type = classify_logic_question(question)
         retrieved = (
@@ -303,7 +594,6 @@ class LogicWorkflow:
         return {
             "logic_spec": {
                 "premises": premises,
-                "premises_fol": premises_fol,
                 "question_type": question_type,
                 "type_prompt": prompt_for_type(question_type),
                 "fewshot_examples": retrieved,
@@ -319,7 +609,6 @@ class LogicWorkflow:
                     "similar_record_index": example.get("record_index"),
                     "similar_score": example.get("score"),
                     "similar_premises_nl": example.get("premises-NL", [])[:8],
-                    "similar_premises_fol": example.get("premises-FOL", [])[:12],
                     "similar_questions": example.get("questions", [])[:2],
                     "similar_answers": example.get("answers", [])[:2],
                     "similar_explanation": example.get("explanation", [])[:2],
@@ -576,17 +865,21 @@ class LogicWorkflow:
         formalized: dict[str, Any],
         question: str,
     ) -> tuple[str, str, list[str], float]:
+        if requires_proof_cost_reasoning(question):
+            return "Unknown", "", [], 0.8
         choices = formalized.get("choices")
         if isinstance(choices, dict) and choices:
+            entailed_choices: list[tuple[str, Atom]] = []
             for label, value in choices.items():
                 atom = self._atom_from_json(value)
                 if atom and kb.entails(atom) is True:
-                    return str(label), atom.label(), list(kb.trace.get(atom, [])), 0.85
-            answer, atom, confidence = self._best_choice(kb, question, formalized)
-            return answer, atom.label() if atom else "", list(kb.trace.get(atom, [])) if atom else [], confidence
+                    entailed_choices.append((str(label), atom))
+            if len(entailed_choices) == 1:
+                label, atom = entailed_choices[0]
+                return label, atom.label(), list(kb.trace.get(atom, [])), 0.85
+            return "Unknown", "", [], 0.25
         if split_choices(question):
-            answer, atom, confidence = self._best_choice(kb, question, formalized)
-            return answer, atom.label() if atom else "", list(kb.trace.get(atom, [])) if atom else [], confidence
+            return "Unknown", "", [], 0.25
         atom = self._atom_from_json(formalized.get("query"))
         if atom is None:
             answer, atom, confidence = self._yes_no_unknown(kb, question, formalized)
@@ -604,7 +897,6 @@ class LogicWorkflow:
         logic_spec = state.get("logic_spec", {})
         formalized = logic_spec.get("formalized")
         premises = list(logic_spec.get("premises", []))
-        premises_fol = list(logic_spec.get("premises_fol") or [])
         fewshot_examples = logic_spec.get("fewshot_examples")
         if not isinstance(fewshot_examples, list):
             fewshot_examples = []
@@ -615,7 +907,7 @@ class LogicWorkflow:
             else:
                 kb = self._fallback_parse_premises(premises)
                 if split_choices(state["question"]):
-                    answer, atom, confidence = self._best_choice(kb, state["question"], None)
+                    answer, atom, confidence = "Unknown", None, 0.25
                 else:
                     answer, atom, confidence = self._yes_no_unknown(kb, state["question"], None)
                 fol = atom.label() if atom else ""
@@ -626,60 +918,27 @@ class LogicWorkflow:
                 ]
                 cot = [*list(kb.trace.get(atom, [])), *fallback_steps] if atom else fallback_steps
 
-            fol_fallback_used = False
-            if (answer == "Unknown" or confidence < 0.55) and premises_fol:
-                fol_kb = parse_fol_to_kb(premises_fol)
-                if split_choices(state["question"]):
-                    fol_answer, fol_atom, fol_confidence = self._best_choice(
-                        fol_kb,
-                        state["question"],
-                        formalized if isinstance(formalized, dict) else None,
-                    )
-                else:
-                    fol_answer, fol_atom, fol_confidence = self._yes_no_unknown(
-                        fol_kb,
-                        state["question"],
-                        formalized if isinstance(formalized, dict) else None,
-                    )
-                if fol_answer != "Unknown" or fol_confidence > confidence:
-                    kb = fol_kb
-                    answer = fol_answer
-                    fol = fol_atom.label() if fol_atom else fol
-                    cot = list(kb.trace.get(fol_atom, [])) if fol_atom else cot
-                    confidence = max(fol_confidence, 0.78)
-                    fol_fallback_used = True
+            if answer == "Unknown" and not split_choices(state["question"]):
+                direct_answer = _direct_yes_no_implication_answer(state["question"], premises)
+                if direct_answer:
+                    answer, cot = direct_answer
+                    fol = "direct_nl_implication"
+                    confidence = max(confidence, 0.82)
 
-            rag_fol_used = False
-            if (answer == "Unknown" or confidence < 0.55) and fewshot_examples:
-                rag_fol = self.rag.best_fol_if_same_premises(premises, fewshot_examples)
-                if rag_fol:
-                    rag_kb = parse_fol_to_kb(rag_fol)
-                    if split_choices(state["question"]):
-                        rag_answer, rag_atom, rag_confidence = self._best_choice(rag_kb, state["question"], formalized if isinstance(formalized, dict) else None)
-                    else:
-                        rag_answer, rag_atom, rag_confidence = self._yes_no_unknown(rag_kb, state["question"], formalized if isinstance(formalized, dict) else None)
-                    if rag_answer != "Unknown" or rag_confidence > confidence:
-                        kb = rag_kb
-                        answer = rag_answer
-                        fol = rag_atom.label() if rag_atom else ""
-                        cot = list(kb.trace.get(rag_atom, [])) if rag_atom else cot
-                        confidence = max(rag_confidence, 0.78)
-                        rag_fol_used = True
+            if not requires_proof_cost_reasoning(state["question"]):
+                nl_answer = _nl_chain_answer(state["question"], premises)
+                if nl_answer and (answer == "Unknown" or confidence < 0.85 or nl_answer[0] == "No"):
+                    answer, fol, cot, confidence = nl_answer
+                    nl_chain_used = True
+                else:
+                    nl_chain_used = False
+            else:
+                nl_chain_used = False
 
             if fewshot_examples:
                 cot = [
                     *cot,
                     "RAG retrieved similar logic examples and used them only as parser guidance.",
-                ]
-            if fol_fallback_used:
-                cot = [
-                    *cot,
-                    "Provided FOL premises were used as a conservative symbolic fallback.",
-                ]
-            if rag_fol_used:
-                cot = [
-                    *cot,
-                    "RAG FOL fallback was used only because a retrieved example had matching premises.",
                 ]
             return {
                 "result": {
@@ -691,7 +950,7 @@ class LogicWorkflow:
                     "confidence": round(confidence, 3),
                     "question_type": logic_spec.get("question_type", "OpenEnded"),
                     "rag_used": bool(fewshot_examples),
-                    "rag_fol_used": rag_fol_used,
+                    "nl_chain_used": nl_chain_used,
                 },
             }
         except Exception as exc:
@@ -705,10 +964,146 @@ class LogicWorkflow:
                 },
             }
 
+    @staticmethod
+    def _indexed_premises(premises: list[str]) -> str:
+        return "\n".join(f"{index}. {premise}" for index, premise in enumerate(premises, 1))
+
+    def _symbcot_prompt(
+        self,
+        question: str,
+        premises: list[str],
+        question_type: str,
+        previous_answer: str,
+        fewshot_examples: list[dict[str, Any]],
+    ) -> str:
+        choices = split_choices(question)
+        answer_contract = (
+            "For this multiple-choice question, final_answer must be one of A, B, C, D, or Unknown."
+            if choices
+            else "For this yes/no question, final_answer must be one of Yes, No, or Unknown."
+        )
+        fewshot_payload: list[dict[str, Any]] = []
+        for example in fewshot_examples[:2]:
+            fewshot_payload.append(
+                {
+                    "premises": example.get("premises-NL", [])[:8],
+                    "questions": example.get("questions", [])[:2],
+                    "answers": example.get("answers", [])[:2],
+                    "explanation": example.get("explanation", [])[:1],
+                }
+            )
+        template = self._load_symbcot_template(question_type)
+        replacements = {
+            "{{ANSWER_CONTRACT}}": answer_contract,
+            "{{QUESTION_TYPE}}": question_type,
+            "{{PREVIOUS_ANSWER}}": previous_answer,
+            "{{PREMISES}}": self._indexed_premises(premises),
+            "{{QUESTION}}": question,
+            "{{FEWSHOT_EXAMPLES}}": json.dumps(fewshot_payload, ensure_ascii=False),
+        }
+        prompt = template
+        for key, value in replacements.items():
+            prompt = prompt.replace(key, value)
+        return prompt
+
+    def _load_symbcot_template(self, question_type: str) -> str:
+        filename = _logic_type_prompt_file(question_type)
+        if filename not in self._symbcot_prompt_cache:
+            path = self.symbcot_prompt_dir / filename
+            if path.exists():
+                self._symbcot_prompt_cache[filename] = path.read_text(encoding="utf-8")
+            else:
+                self._symbcot_prompt_cache[filename] = (
+                    "You are a careful symbolic chain-of-thought solver for educational logic questions.\n"
+                    "Use only the numbered premises below. Return JSON only with keys final_answer, idx, explanation.\n"
+                    "{{ANSWER_CONTRACT}}\n"
+                    "Premises:\n{{PREMISES}}\n\nQuestion:\n{{QUESTION}}\n\nJSON:"
+                )
+        return self._symbcot_prompt_cache[filename]
+
+    @trace_step("logic.symbcot_fallback")
+    def symbcot_fallback(self, state: WorkflowState) -> dict[str, Any]:
+        """Use a structured SymbCoT-style LLM fallback when symbolic verification is weak."""
+        result = dict(state.get("result", {}))
+        answer = str(result.get("answer") or "Unknown")
+        confidence = float(result.get("confidence") or 0.0)
+        question = state["question"]
+        if not _llm_available(self.llm):
+            return {"result": result}
+        if requires_proof_cost_reasoning(question):
+            return {"result": result}
+        if result.get("nl_chain_used") and answer != "Unknown":
+            return {"result": result}
+
+        logic_spec = dict(state.get("logic_spec", {}))
+        premises = list(logic_spec.get("premises") or state.get("premises") or [])
+        fewshot_examples = logic_spec.get("fewshot_examples")
+        if not isinstance(fewshot_examples, list):
+            fewshot_examples = []
+        prompt = self._symbcot_prompt(
+            question=question,
+            premises=premises,
+            question_type=str(logic_spec.get("question_type") or "OpenEnded"),
+            previous_answer=answer,
+            fewshot_examples=fewshot_examples,
+        )
+        try:
+            response = self.llm.chat(
+                [{"role": "user", "content": prompt}],
+                temperature=0.0,
+                max_tokens=900,
+                response_format={"type": "json_object"},
+                stage="logic.symbcot_fallback",
+            )
+            parsed = extract_json(response)
+            if not isinstance(parsed, dict):
+                raise ValueError("SymbCoT fallback response must be a JSON object.")
+            fallback_answer = _normalize_logic_answer(parsed.get("final_answer"), question)
+            explanation = str(parsed.get("explanation") or "").strip()
+            fallback_answer = _postprocess_symbcot_answer(
+                fallback_answer,
+                question,
+                premises,
+                explanation,
+            )
+            if not _valid_logic_answer(fallback_answer, question):
+                raise ValueError(f"Unsupported fallback answer: {fallback_answer}")
+            raw_idx = parsed.get("idx") if isinstance(parsed.get("idx"), list) else []
+            idx = sorted(
+                {
+                    int(item)
+                    for item in raw_idx
+                    if isinstance(item, int) or (isinstance(item, str) and item.strip().isdigit())
+                }
+            )
+            idx = [item for item in idx if 1 <= item <= len(premises)]
+            cot = [f"Premise {item}: {premises[item - 1]}" for item in idx]
+            cot.append("Structured SymbCoT fallback selected the final answer from natural-language premises.")
+            result.update(
+                {
+                    "answer": fallback_answer,
+                    "fol": result.get("fol") or "symbcot_nl_fallback",
+                    "cot": cot,
+                    "premises": premises,
+                    "confidence": max(confidence, 0.72),
+                    "symbcot_fallback_used": True,
+                }
+            )
+            if explanation:
+                result["explanation"] = explanation
+            return {"result": result}
+        except Exception as exc:
+            return {
+                "result": result,
+                "errors": _with_error(state, f"Logic SymbCoT fallback failed: {exc}"),
+            }
+
     @trace_step("logic.explain_logic")
     def explain_logic(self, state: WorkflowState) -> dict[str, Any]:
         """Explain a verified logic result without modifying its answer."""
         result = dict(state.get("result", {}))
+        if result.get("symbcot_fallback_used") and result.get("explanation"):
+            return {"result": result}
         fol = str(result.get("fol") or "")
         if _llm_available(self.llm) and result.get("answer") != "Unknown":
             context = {

@@ -33,7 +33,7 @@ app = FastAPI(title="EXACT 2026 Multi-Agent QA", version="2.0-langgraph")
 
 
 class QueryPayload(BaseModel):
-    """Accept only the public question and optional natural-language premises."""
+    """Accept the question and optional natural-language premises."""
 
     model_config = ConfigDict(extra="forbid")
 
