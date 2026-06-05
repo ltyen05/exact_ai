@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
 from agents.formatting import extract_json
 from agents.llm import LLMClientBase
+from agents.physics.domain.symbols import _normalize_text
 from agents.physics.domain.units import UNIT_TO_SI
 
 from .heuristics import heuristic_parse
@@ -133,7 +135,7 @@ class ParsingAgent:
     def run(self, input_data: Any) -> dict[str, Any]:
         """Return semantic JSON extracted from one physics question."""
         question = str(input_data)
-        rule_based = self._rule_based_parse(question)
+        rule_based = self._heuristic_parse(question)
         if rule_based is not None:
             return rule_based
         if self.llm_provider is None:
