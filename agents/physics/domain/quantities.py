@@ -24,6 +24,17 @@ def expand_quantity_aliases(quantities: dict[str, float]) -> dict[str, float]:
             continue
         for alias in group:
             expanded.setdefault(alias, first_value)
+        delta_group = tuple(f"delta_{symbol}" for symbol in group)
+        if any(re.fullmatch(rf"{re.escape(symbol)}_\d+", key) for symbol in delta_group for key in expanded):
+            continue
+        delta_present = [(symbol, expanded[symbol]) for symbol in delta_group if symbol in expanded]
+        if not delta_present:
+            continue
+        first_delta = delta_present[0][1]
+        if any(not math.isclose(first_delta, value, rel_tol=1e-9, abs_tol=1e-12) for _, value in delta_present[1:]):
+            continue
+        for alias in delta_group:
+            expanded.setdefault(alias, first_delta)
     return expanded
 
 

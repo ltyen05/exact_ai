@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from agents.physics.Solution.formula_lib import build_solution_cot_steps
+from agents.physics.Solution.formula_lib import build_solution_cot_steps, deterministic_solution
 from agents.workflows.state import WorkflowExecutionError, WorkflowState
 
 from .executor import SympyExecutor
@@ -16,6 +16,18 @@ logger = logging.getLogger(__name__)
 
 def _llm_available(llm: Any) -> bool:
     return llm is not None and bool(getattr(llm, "enabled", True))
+
+
+def _should_replan(validation_error: str) -> bool:
+    text = validation_error.lower()
+    return any(
+        phrase in text
+        for phrase in (
+            "undefined symbols",
+            "unresolved symbols",
+            "could not resolve the target",
+        )
+    )
 
 
 class SolutionRepairController:
@@ -84,6 +96,15 @@ class SolutionRepairController:
         solution_output: dict[str, Any],
         validation_error: str,
     ) -> dict[str, Any]:
+        if _should_replan(validation_error):
+            fallback = deterministic_solution(state.get("parsed_question", {}))
+            if isinstance(fallback, dict) and fallback.get("mode") == "computational":
+                try:
+                    self.validator.validate(state.get("parsed_question", {}), fallback)
+                    logger.debug("physics.repair_used_deterministic_replan=%s", fallback.get("formula_ids"))
+                    return fallback
+                except ValueError as exc:
+                    logger.debug("physics.deterministic_replan_rejected=%s", exc)
         if self.solution_agent is None or not _llm_available(self.llm):
             raise WorkflowExecutionError(validation_error)
         try:

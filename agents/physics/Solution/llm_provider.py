@@ -149,6 +149,7 @@ class LLMSolutionProvider(SolutionProvider):
     def _numeric_values(semantic_output: dict[str, Any]) -> dict[str, float]:
         values: dict[str, float] = {}
         conflicted_symbols: set[str] = set()
+        generic_uncertainties: list[float] = []
 
         def put_value(symbol: Any, value: Any) -> None:
             if not isinstance(value, (int, float)):
@@ -171,8 +172,10 @@ class LLMSolutionProvider(SolutionProvider):
                     if isinstance(uncertainty_value, (int, float)):
                         clean_symbol = _clean_symbol_name(symbol)
                         put_value(f"delta_{clean_symbol}", uncertainty_value)
-                        put_value("uncertainty", uncertainty_value)
-                        put_value("absolute_uncertainty", uncertainty_value)
+                        generic_uncertainties.append(float(uncertainty_value))
+        if len(generic_uncertainties) == 1:
+            put_value("uncertainty", generic_uncertainties[0])
+            put_value("absolute_uncertainty", generic_uncertainties[0])
         geometry = semantic_output.get("geometry") or {}
         if isinstance(geometry, dict):
             for field in ("segments", "derived_distances"):
@@ -403,8 +406,12 @@ class LLMSolutionProvider(SolutionProvider):
                 continue
             lhs, rhs = equation.split("=", 1)
             lhs_str = lhs.strip()
+            lhs_str = re.sub(r"\b[UuVv]\s*\(\s*t\s*\)", "U_inst", lhs_str)
+            lhs_str = re.sub(r"\b[Ii]\s*\(\s*t\s*\)", "I_inst", lhs_str)
             lhs = _canonical_symbol_name(lhs_str) if _is_identifier(lhs_str) else lhs_str
             rhs_text = rhs.strip()
+            rhs_text = re.sub(r"\b[UuVv]\s*\(\s*t\s*\)", "U_inst", rhs_text)
+            rhs_text = re.sub(r"\b[Ii]\s*\(\s*t\s*\)", "I_inst", rhs_text)
             rhs_text = re.sub(r"\blambda\b", "lambda_", rhs_text)
             rhs_text = re.sub(r"\bcharge_q_?(\d+)\b", r"q\1", rhs_text)
             rhs_text = re.sub(r"\bq_(\d+)\b", r"q\1", rhs_text)
@@ -638,9 +645,13 @@ class LLMSolutionProvider(SolutionProvider):
             "electrostatics.identical_charge_from_force",
             "capacitance.battery_connected_dielectric_charge",
             "capacitance.isolated_dielectric_voltage",
+            "capacitance.energy_ratio_",
+            "capacitance.series_parallel_identical_energy_ratio",
             "lc.energy_equal_split",
             "measurement.power_percentage_relative_error",
+            "measurement.power_relative_error",
             "measurement.relative_error_from_least_count",
+            "ac.resonance.frequency_factor_from_reactances",
             "rlc.series.power_factor_from_net_reactance",
             "inductance.current_from_magnetic_energy",
             "vectors.resultant_two_vectors_inverse_angle",

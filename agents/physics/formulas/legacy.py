@@ -136,6 +136,18 @@ def _canonical_formula_symbol(symbol: Any) -> str:
         return "I_max"
     if name in {"U_peak", "U_amplitude", "V_peak", "V_amplitude", "maximum_voltage", "peak_voltage", "voltage_amplitude"}:
         return "U_max"
+    if name in {"W_B", "U_B", "magnetic_energy", "magnetic_field_energy", "E_magn", "inductor_energy"}:
+        return "W_L"
+    if name in {"W_C", "electric_energy", "E_elec", "capacitor_energy"}:
+        return "W_C"
+    if name in {"total_energy"}:
+        return "W_total"
+    if name in {"C0", "C_initial", "C_air", "capacitance"}:
+        return "C"
+    if name in {"U0", "V0", "U_initial", "V_initial", "voltage"}:
+        return "U"
+    if name in {"er", "eps_r", "relative_permittivity"}:
+        return "epsilon_r"
     return name
 
 
@@ -156,6 +168,7 @@ def _comparison_symbol(comparison: dict[str, Any]) -> str:
 def _numeric_values(semantic_output: dict[str, Any]) -> dict[str, float]:
     values: dict[str, float] = {}
     conflicted_symbols: set[str] = set()
+    generic_uncertainties: list[float] = []
 
     def put_value(symbol: Any, value: Any) -> None:
         if not isinstance(value, (int, float)):
@@ -178,8 +191,10 @@ def _numeric_values(semantic_output: dict[str, Any]) -> dict[str, float]:
                 if isinstance(uncertainty_value, (int, float)):
                     clean_symbol = _clean_symbol_name(symbol)
                     put_value(f"delta_{clean_symbol}", uncertainty_value)
-                    put_value("uncertainty", uncertainty_value)
-                    put_value("absolute_uncertainty", uncertainty_value)
+                    generic_uncertainties.append(float(uncertainty_value))
+    if len(generic_uncertainties) == 1:
+        put_value("uncertainty", generic_uncertainties[0])
+        put_value("absolute_uncertainty", generic_uncertainties[0])
     geometry = semantic_output.get("geometry") or {}
     if isinstance(geometry, dict):
         for field in ("segments", "derived_distances"):
@@ -220,8 +235,8 @@ def _numeric_sequence_items(semantic_output: dict[str, Any], *symbols: str) -> l
 def _target_from_semantics(semantic_output: dict[str, Any]) -> str:
     target = semantic_output.get("target") or {}
     if isinstance(target, dict):
-        return _clean_symbol_name(target.get("symbol"))
-    return _clean_symbol_name(target)
+        return _canonical_formula_symbol(target.get("symbol"))
+    return _canonical_formula_symbol(target)
 
 
 def _target_unit_from_semantics(semantic_output: dict[str, Any], default: str = "") -> str:
@@ -576,8 +591,8 @@ def _triangle_point_symbols(values: dict[str, float]) -> tuple[str, str, str] | 
     return None
 
 
-def _direct(answer: str, steps: list[str]) -> dict[str, Any]:
-    return {
+def _direct(answer: str, steps: list[str], formula_ids: list[str] | None = None) -> dict[str, Any]:
+    output = {
         "mode": "direct",
         "answer_type": "conceptual",
         "direct_answer": {
@@ -586,6 +601,9 @@ def _direct(answer: str, steps: list[str]) -> dict[str, Any]:
             "rationale_steps": steps,
         },
     }
+    if formula_ids:
+        output["formula_ids"] = formula_ids
+    return output
 
 
 def _direct_multiple_choice(answer: str, selected_option: str, steps: list[str]) -> dict[str, Any]:
@@ -601,6 +619,22 @@ def _direct_multiple_choice(answer: str, selected_option: str, steps: list[str])
 
 
 def _formula_only_solution(semantic_output: dict[str, Any], text: str, values: dict[str, float]) -> dict[str, Any] | None:
+    if (
+        "identical capacitor" in text
+        and "series" in text
+        and "parallel" in text
+        and "energy" in text
+        and any(term in text for term in ("compare", "compared", "how does", "ratio"))
+    ):
+        return _direct(
+            "The series connection stores one quarter of the energy stored by the parallel connection.",
+            [
+                "For two identical capacitors, C_series = C/2 and C_parallel = 2*C.",
+                "Stored energy at the same source voltage is W = C_eq*U**2/2.",
+                "Therefore W_series/W_parallel = (C/2)/(2*C) = 1/4.",
+            ],
+            ["capacitance.series_parallel_identical_energy_ratio"],
+        )
     if "solenoid" in text and "turn" in text and "double" in text and "inductance" in text:
         return _direct(
             "4",
@@ -857,37 +891,39 @@ def _zero_field_solution(semantic_output: dict[str, Any]) -> dict[str, Any] | No
             ["Outside the segment the fields never balance, and between the charges they add."],
         )
     if abs_q1 < abs_q2:
-        if requested_target == "BM":
+        if requested_target in {"BM", "BP"}:
             return _solution(
                 ["electrostatics.zero_field_point_two_charges_1d"],
-                "BM",
+                requested_target,
                 "m",
-                ["BM = AB * sqrt(Abs(q2)) / (sqrt(Abs(q2)) - sqrt(Abs(q1)))"],
+                [f"{requested_target} = AB * sqrt(Abs(q2)) / (sqrt(Abs(q2)) - sqrt(Abs(q1)))"],
                 {"q1": q1, "q2": q2, "AB": ab},
                 ["For opposite-sign charges, the zero-field point is outside the segment on the side of the smaller charge."],
             )
+        target = "AP" if requested_target == "AP" else "AM"
         return _solution(
             ["electrostatics.zero_field_point_two_charges_1d"],
-            "AM",
+            target,
             "m",
-            ["AM = AB * sqrt(Abs(q1)) / (sqrt(Abs(q2)) - sqrt(Abs(q1)))"],
+            [f"{target} = AB * sqrt(Abs(q1)) / (sqrt(Abs(q2)) - sqrt(Abs(q1)))"],
             {"q1": q1, "q2": q2, "AB": ab},
             ["For opposite-sign charges, the zero-field point is outside the segment on the side of the smaller charge."],
         )
-    if requested_target == "AM":
+    if requested_target in {"AM", "AP"}:
         return _solution(
             ["electrostatics.zero_field_point_two_charges_1d"],
-            "AM",
+            requested_target,
             "m",
-            ["AM = AB * sqrt(Abs(q1)) / (sqrt(Abs(q1)) - sqrt(Abs(q2)))"],
+            [f"{requested_target} = AB * sqrt(Abs(q1)) / (sqrt(Abs(q1)) - sqrt(Abs(q2)))"],
             {"q1": q1, "q2": q2, "AB": ab},
             ["For opposite-sign charges, the zero-field point is outside the segment on the side of the smaller charge."],
         )
+    target = "BP" if requested_target == "BP" else "BM"
     return _solution(
         ["electrostatics.zero_field_point_two_charges_1d"],
-        "BM",
+        target,
         "m",
-        ["BM = AB * sqrt(Abs(q2)) / (sqrt(Abs(q1)) - sqrt(Abs(q2)))"],
+        [f"{target} = AB * sqrt(Abs(q2)) / (sqrt(Abs(q1)) - sqrt(Abs(q2)))"],
         {"q1": q1, "q2": q2, "AB": ab},
         ["For opposite-sign charges, the zero-field point is outside the segment on the side of the smaller charge."],
     )
@@ -1154,6 +1190,28 @@ def _square_center_symmetry_force_solution(semantic_output: dict[str, Any], text
         [
             "The center of a square is equidistant from all four identical corner charges.",
             "Forces from opposite vertices have equal magnitudes and opposite directions, so the vector sum is zero.",
+        ],
+    )
+
+
+def _equilateral_center_identical_field_solution(semantic_output: dict[str, Any], text: str) -> dict[str, Any] | None:
+    if "equilateral triangle" not in text or not any(term in text for term in ("center", "centroid", "centre")):
+        return None
+    if "identical" not in text and "same" not in text and "three charges" not in text:
+        return None
+    if not any(term in text for term in ("electric field", "field intensity", "field strength")):
+        return None
+    target = _target_from_terms(semantic_output, "E_net_magnitude")
+    target = target if _is_identifier(target) and target != "result" else "E_net_magnitude"
+    return _solution(
+        ["electrostatics.equilateral_center_identical_charges_cancel"],
+        target,
+        _target_unit_from_semantics(semantic_output, "N/C"),
+        [f"{target} = 0"],
+        {},
+        [
+            "The center of an equilateral triangle is equidistant from all three identical source charges.",
+            "The three equal field vectors are separated by 120 degrees, so their vector sum is zero.",
         ],
     )
 
@@ -1533,6 +1591,9 @@ def _electric_solution(semantic_output: dict[str, Any], text: str) -> dict[str, 
     square_symmetry = _square_center_symmetry_force_solution(semantic_output, text)
     if square_symmetry is not None:
         return square_symmetry
+    equilateral_center = _equilateral_center_identical_field_solution(semantic_output, text)
+    if equilateral_center is not None:
+        return equilateral_center
     unknown_charge = _unknown_identical_charge_from_force_solution(semantic_output, values, text)
     if unknown_charge is not None:
         return unknown_charge
@@ -1696,17 +1757,56 @@ def _is_resonance_context(text: str) -> bool:
 
 
 def _is_ac_context(text: str) -> bool:
-    return any(term in text for term in ("alternating-current", "ac circuit", "rlc", "reson", "reactance", "impedance", "lc circuit"))
+    return any(
+        term in text
+        for term in (
+            "alternating-current",
+            "ac circuit",
+            "rlc",
+            "reson",
+            "reactance",
+            "impedance",
+            "lc circuit",
+            "rms voltage",
+            "lcomega",
+            "lc*omega",
+            "uam",
+            "umb",
+        )
+    )
 
 
 def _two_section_phase_power_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
     target = _target_from_terms(semantic_output, "P")
     if not ("am" in text and "mb" in text and ("90" in text or "quadrature" in text or "out of phase" in text)):
         return None
-    if "power" not in text and not target.startswith("P"):
-        return None
     u_value = _lookup_value(values, "U")
     if u_value is None:
+        return None
+    if all(symbol in values for symbol in ("R1", "R2")) and (
+        "voltage" in text
+        or _target_is(target, "U_MB", "UMB", "uMB", "V_MB", "U_AM", "UAM", "uAM", "V_AM")
+    ):
+        target_text = target.lower()
+        asks_mb = "mb" in target_text or "across segment mb" in text or "voltage across mb" in text
+        asks_am = "am" in target_text or "across segment am" in text or "voltage across am" in text
+        if asks_mb or asks_am:
+            solved_target = target if _is_identifier(target) and target != "result" else ("U_MB" if asks_mb else "U_AM")
+            segment_resistance = "R2" if asks_mb else "R1"
+            return _solution(
+                ["ac.two_section_phase_balanced_segment_voltage"],
+                solved_target,
+                _target_unit_from_semantics(semantic_output, "V"),
+                ["R_total = R1 + R2", f"{solved_target} = U * sqrt({segment_resistance} / R_total)"],
+                {"U": float(u_value), "R1": float(values["R1"]), "R2": float(values["R2"])},
+                [
+                    "With LC*omega**2 = 1 and uAM perpendicular to uMB, the reactive magnitudes satisfy X**2 = R1*R2.",
+                    "The total impedance is purely resistive, so I = U/(R1+R2).",
+                    "The RMS voltage across a segment is I times that segment impedance magnitude.",
+                ],
+                assumptions={"circuit_type": "two_section_phase_balanced"},
+            )
+    if "power" not in text and not target.startswith("P"):
         return None
     if _target_is(target, "R2") and "R1" in values:
         p_value = _lookup_value(values, "P")
@@ -1753,6 +1853,31 @@ def _resonance_basic_solution(semantic_output: dict[str, Any], values: dict[str,
     u_value = _lookup_value(values, "U")
     i_value = _lookup_value(values, "I")
     z_value = values.get("Z")
+    l_value = values.get("L")
+    c_value = values.get("C")
+
+    if (
+        _target_is(target, "U_L", "UL", "V_L", "VL")
+        and u_value is not None
+        and r_value is not None
+        and l_value is not None
+        and c_value is not None
+        and r_value != 0
+    ):
+        solved_target = target if _is_identifier(target) and target != "result" else "U_L"
+        return _solution(
+            ["ac.resonance.inductor_voltage_from_lc"],
+            solved_target,
+            unit or "V",
+            ["I = U / R", "omega = 1 / sqrt(L * C)", "X_L = omega * L", f"{solved_target} = I * X_L"],
+            {"U": float(u_value), "R": float(r_value), "L": float(l_value), "C": float(c_value)},
+            [
+                "At series resonance the source current is set by the resistance: I = U/R.",
+                "Use L and C to compute omega = 1/sqrt(L*C), then X_L = omega*L.",
+                "The inductor voltage magnitude is U_L = I*X_L.",
+            ],
+            assumptions={"circuit_type": "series_assumed"},
+        )
 
     if ("power" in text or target.startswith("P")) and r_value is not None:
         if u_value is not None:
@@ -1924,6 +2049,16 @@ def _reactance_solution(semantic_output: dict[str, Any], values: dict[str, float
     xc_value = _lookup_value(values, "XC")
     x_net_value = _lookup_value(values, "X_net", "net_reactance")
     r_value = values.get("R")
+    if "multiple" in text and xl_value is not None and xc_value is not None:
+        solved_target = target if _target_is(target, "factor", "frequency_factor", "omega_factor", "k") else "omega_factor"
+        return _solution(
+            ["ac.resonance.frequency_factor_from_reactances"],
+            solved_target,
+            "dimensionless",
+            [f"{solved_target} = sqrt(XC / XL)"],
+            {"XL": float(xl_value), "XC": float(xc_value)},
+            ["Because XL scales with angular frequency and XC scales inversely, resonance requires k*XL = XC/k, so k = sqrt(XC/XL)."],
+        )
     if (_target_is(target, "power_factor", "pf", "cos_phi") or "power factor" in text) and r_value is not None:
         if x_net_value is None:
             net_match = re.search(
@@ -2180,6 +2315,38 @@ def _extract_voltage_from_text(question_norm: str) -> float | None:
     return _parse_number_token(match.group("value")) if match else None
 
 
+def _extract_time_from_text(question_norm: str) -> float | None:
+    unit_scales = {"s": 1.0, "ms": 1e-3, "microseconds": 1e-6, "microsecond": 1e-6, "us": 1e-6}
+    pi_match = re.search(
+        r"\bt\s*=\s*pi\s*/\s*(?P<denominator>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?P<unit>ms|microseconds?|us|s)\b",
+        question_norm,
+    )
+    if pi_match:
+        denominator = float(pi_match.group("denominator"))
+        if denominator != 0:
+            return math.pi / denominator * unit_scales[pi_match.group("unit")]
+    match = re.search(
+        r"\bt\s*=\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?P<unit>ms|microseconds?|us|s)\b",
+        question_norm,
+    )
+    if match:
+        return float(match.group("value")) * unit_scales[match.group("unit")]
+    return None
+
+
+def _time_function_rhs(question_norm: str, function_name: str, output_symbol: str | None = None) -> str | None:
+    pattern = rf"\b{function_name}\s*\(\s*t\s*\)\s*=\s*(?P<amp>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*\*?\s*(?P<trig>sin|cos)\s*\(\s*(?P<omega>{_NUMBER_PATTERN})\s*\*?\s*t\s*\)"
+    match = re.search(pattern, question_norm)
+    if not match:
+        return None
+    amplitude = _parse_number_token(match.group("amp"))
+    omega = _parse_number_token(match.group("omega"))
+    if amplitude is None or omega is None:
+        return None
+    symbol = output_symbol or f"{function_name}_inst"
+    return f"{symbol} = {amplitude} * {match.group('trig')}({omega} * t)"
+
+
 def _capacitance_solution(semantic_output: dict[str, Any], values: dict[str, float], text: str) -> dict[str, Any] | None:
     domain = str(semantic_output.get("domain") or "").lower()
     if (
@@ -2208,6 +2375,142 @@ def _capacitance_solution(semantic_output: dict[str, Any], values: dict[str, flo
     text_energy = _extract_energy_from_text(question_norm)
     area_value = _extract_area_from_text(question_norm) or values.get("A") or values.get("S")
     separation_value = _extract_length_from_text(question_norm, "plate separation", "separation", "distance", "d") or values.get("d")
+    t_value = _lookup_value(values, "t", "time")
+
+    if (
+        "identical capacitor" in question_norm
+        and "series" in question_norm
+        and "parallel" in question_norm
+        and "energy" in question_norm
+    ):
+        return _direct(
+            "The series connection stores one quarter of the energy stored by the parallel connection.",
+            [
+                "For two identical capacitors, C_series = C/2 and C_parallel = 2*C.",
+                "Stored energy at the same source voltage is W = C_eq*U**2/2.",
+                "Therefore W_series/W_parallel = (C/2)/(2*C) = 1/4.",
+            ],
+            ["capacitance.series_parallel_identical_energy_ratio"],
+        )
+
+    if (
+        ("u is doubled" in question_norm or "voltage is doubled" in question_norm or "if u is doubled" in question_norm)
+        and ("energy" in question_norm or "electric field energy" in question_norm)
+    ):
+        return _direct(
+            "4",
+            [
+                "For a fixed capacitor, electric field energy is W = C*U**2/2.",
+                "Doubling U multiplies the energy by 2**2 = 4.",
+            ],
+            ["capacitance.energy_ratio_voltage_doubled"],
+        )
+
+    charge_items = _numeric_sequence_items(semantic_output, "Q", "q")
+    if len(charge_items) < 2:
+        charge_change_match = re.search(
+            rf"charge\s+of\s+(?P<initial>{_NUMBER_PATTERN})\s*(?P<initial_unit>microc|muc|uc|nc|pc|c).*?"
+            rf"(?:decreases|changes|reduced|drops)\s+to\s+(?P<final>{_NUMBER_PATTERN})\s*(?P<final_unit>microc|muc|uc|nc|pc|c)",
+            question_norm,
+        )
+        if charge_change_match:
+            initial_charge = _scaled_text_value(charge_change_match.group("initial"), charge_change_match.group("initial_unit"), _CHARGE_UNIT_SCALE)
+            final_charge = _scaled_text_value(charge_change_match.group("final"), charge_change_match.group("final_unit"), _CHARGE_UNIT_SCALE)
+            if initial_charge is not None and final_charge is not None:
+                charge_items = [("Q_initial", initial_charge), ("Q_final", final_charge)]
+    if (
+        len(charge_items) >= 2
+        and ("energy change" in question_norm or "energy" in question_norm)
+        and ("how many times" in question_norm or "times" in question_norm or "decreases to" in question_norm)
+    ):
+        initial_symbol, initial_charge = charge_items[0]
+        final_symbol, final_charge = charge_items[-1]
+        if initial_charge != 0:
+            ratio_targets = {"energy_ratio", "ratio", "factor", "change_factor"}
+            solved_target = target if target in ratio_targets else "energy_ratio"
+            return _solution(
+                ["capacitance.energy_ratio_charge_changed"],
+                solved_target,
+                "dimensionless",
+                [f"{solved_target} = ({final_symbol} / {initial_symbol})**2"],
+                {initial_symbol: float(initial_charge), final_symbol: float(final_charge)},
+                [
+                    "For the same capacitor, energy can be written as W = Q**2/(2*C).",
+                    "With capacitance unchanged, the energy ratio is (Q_final/Q_initial)**2.",
+                ],
+            )
+
+    if t_value is None:
+        t_value = _extract_time_from_text(question_norm)
+
+    if ("energy" in question_norm or _target_is(target, "W", "W_C", "E", "W_max")) and c_value is not None and t_value is not None:
+        voltage_equation = _time_function_rhs(question_norm, "u", "U_inst") or _time_function_rhs(question_norm, "v", "U_inst")
+        if voltage_equation is not None:
+            solved_target = target if _target_is(target, "W", "W_C", "E", "W_max") else "W"
+            return _solution(
+                ["capacitance.stored_energy_time_voltage"],
+                solved_target,
+                unit or "J",
+                [voltage_equation, f"{solved_target} = C * U_inst**2 / 2"],
+                {"C": float(c_value), "t": float(t_value)},
+                [
+                    "Flatten the time-dependent voltage U(t) into an instantaneous helper U_inst.",
+                    "Evaluate U_inst at the parsed time, then use W = C*U_inst**2/2.",
+                ],
+            )
+
+    if ("lc circuit" in question_norm or "ideal lc" in question_norm) and (
+        "magnetic field energy" in question_norm
+        or "magnetic energy" in question_norm
+        or _target_is(target, "W_L", "W_B", "U_B")
+    ):
+        total_energy = _lookup_value(values, "W_total", "E_total", "total_energy", "W")
+        electric_energy = _lookup_value(values, "W_C", "electric_energy", "E_elec", "capacitor_energy")
+        if total_energy is None:
+            total_energy = text_energy
+        if total_energy is not None and electric_energy is not None:
+            solved_target = target if _target_is(target, "W_L", "W_B", "U_B") else "W_L"
+            return _solution(
+                ["lc.energy_conservation_magnetic_from_electric"],
+                solved_target,
+                unit or "J",
+                [f"{solved_target} = W_total - W_C"],
+                {"W_total": float(total_energy), "W_C": float(electric_energy)},
+                ["In an ideal LC circuit, total energy is conserved: W_total = W_C + W_L."],
+            )
+
+    if (
+        ("dielectric" in question_norm or "permittivity" in question_norm or "separation" in question_norm or "distance" in question_norm)
+        and (_target_is(target, "C", "C_new") or "capacitance" in question_norm)
+        and c_value is not None
+    ):
+        d_initial = _lookup_value(values, "d_initial", "d0", "d")
+        d_new = _lookup_value(values, "d_new", "d_final")
+        epsilon_initial = _lookup_value(values, "epsilon_r_initial", "er_initial", "epsilon_initial")
+        epsilon_new = _lookup_value(values, "epsilon_r_new", "er_new", "epsilon_new", "epsilon_r")
+        if d_new is None and d_initial is not None:
+            if "distance is doubled" in question_norm or "separation is doubled" in question_norm or "plate separation is doubled" in question_norm:
+                d_new = 2 * d_initial
+            elif "distance is halved" in question_norm or "separation is halved" in question_norm or "plate separation is halved" in question_norm:
+                d_new = d_initial / 2
+        if epsilon_initial is None and any(term in question_norm for term in ("air", "vacuum", "initially air", "air capacitor")):
+            epsilon_initial = 1.0
+        if d_initial is not None and d_new is not None and epsilon_new is not None and epsilon_initial is not None and d_new != 0 and epsilon_initial != 0:
+            solved_target = target if _target_is(target, "C", "C_new") and target != "C" else "C_new"
+            return _solution(
+                ["capacitance.parallel_plate_ratio_dielectric_distance"],
+                solved_target,
+                unit or "F",
+                [
+                    "epsilon_r_initial = 1" if math.isclose(float(epsilon_initial), 1.0, rel_tol=1e-12, abs_tol=1e-12) else f"epsilon_r_initial = {float(epsilon_initial)}",
+                    f"{solved_target} = C * epsilon_r_new / epsilon_r_initial * d_initial / d_new",
+                ],
+                {"C": float(c_value), "epsilon_r_new": float(epsilon_new), "d_initial": float(d_initial), "d_new": float(d_new)},
+                [
+                    "Use the parallel-plate ratio C_new/C_initial = (epsilon_r_new/epsilon_r_initial)*(d_initial/d_new).",
+                    "This avoids introducing the plate area A, which cancels in the ratio.",
+                ],
+            )
 
     if (
         ("lc circuit" in question_norm or "ideal lc" in question_norm)
@@ -2671,6 +2974,32 @@ def _measurement_statistics_solution(semantic_output: dict[str, Any], values: di
                 ["For a product P = U*I, add relative errors and convert to percent."],
                 assumptions={"uncertainty_mode": UNCERTAINTY_MODE or "school_linear"},
             )
+    if "power" in text and "relative error" in text:
+        u_value = _lookup_value(values, "U", "V")
+        i_value = _lookup_value(values, "I")
+        delta_u = _lookup_value(values, "delta_U", "delta_V")
+        delta_i = _lookup_value(values, "delta_I")
+        if all(value is not None for value in (u_value, i_value, delta_u, delta_i)) and u_value != 0 and i_value != 0:
+            wants_percent = "percentage" in text or "%" in unit
+            solved_target = (
+                target
+                if _target_is(target, "relative_error", "percentage_relative_error", "error_percentage")
+                else ("percentage_relative_error" if wants_percent else "relative_error")
+            )
+            equations = ["relative_error = Abs(delta_U / U) + Abs(delta_I / I)"]
+            if wants_percent:
+                equations.append(f"{solved_target} = relative_error * 100")
+            elif solved_target != "relative_error":
+                equations.append(f"{solved_target} = relative_error")
+            return _solution(
+                ["measurement.power_relative_error"],
+                solved_target,
+                "%" if wants_percent else "dimensionless",
+                equations,
+                {"U": float(u_value), "I": float(i_value), "delta_U": float(delta_u), "delta_I": float(delta_i)},
+                ["For a product P = U*I, add the relative errors of voltage and current."],
+                assumptions={"uncertainty_mode": UNCERTAINTY_MODE or "school_linear"},
+            )
     measurement = _measurement_value_and_delta(values, target, "I", "L", "V", "x", "measured_value", "measurement")
     if "maximum possible" in text and measurement is not None:
         symbol, measured_value, delta_value = measurement
@@ -2968,6 +3297,28 @@ def _inductance_solution(semantic_output: dict[str, Any], values: dict[str, floa
             if energy_match:
                 scale = {"j": 1.0, "mj": 1e-3, "uj": 1e-6, "microj": 1e-6}
                 w_value = float(energy_match.group(1)) * scale[energy_match.group(2).lower()]
+        t_value = _lookup_value(values, "t", "time")
+        if t_value is None:
+            t_value = _extract_time_from_text(question)
+        current_equation = _time_function_rhs(question, "i", "I_inst")
+        if (
+            current_equation is not None
+            and t_value is not None
+            and l_value is not None
+            and (_target_is(target, "W", "W_L", "W_B", "W_max", "E") or "magnetic field energy" in text)
+        ):
+            solved_target = target if _target_is(target, "W", "W_L", "W_B", "W_max", "E") else "W_L"
+            return _solution(
+                ["inductance.magnetic_energy_time_current"],
+                solved_target,
+                unit or "J",
+                [current_equation, f"{solved_target} = L * I_inst**2 / 2"],
+                {"L": float(l_value), "t": float(t_value)},
+                [
+                    "Flatten the time-dependent current I(t) into an instantaneous helper I_inst.",
+                    "Evaluate I_inst at the parsed time, then use W_L = L*I_inst**2/2.",
+                ],
+            )
         if (
             w_value is not None
             and ("current is halved" in text or "current is reduced to half" in text or "current is reduced by half" in text)

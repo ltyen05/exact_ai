@@ -354,7 +354,20 @@ def validated_context(
     unresolved = undefined_symbols(equations, quantities, target)
     logger.debug("physics.undefined_symbols_before_sympy=%s", unresolved)
     if unresolved:
-        raise ValueError(f"Undefined symbols before SymPy: {', '.join(unresolved)}.")
+        lhs_symbols = sorted(
+            equation.split("=", 1)[0].strip()
+            for equation in equations
+            if isinstance(equation, str)
+            and equation.count("=") == 1
+            and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", equation.split("=", 1)[0].strip())
+        )
+        raise ValueError(
+            "Undefined symbols before SymPy: "
+            f"{', '.join(unresolved)}. "
+            f"Known symbols: {', '.join(sorted(quantities)) or '(none)'}; "
+            f"defined_by_equation: {', '.join(lhs_symbols) or '(none)'}; "
+            f"target: {target or '(none)'}."
+        )
     consistency_error = target_consistency_error(str(calculation["target"]), target, unit)
     if consistency_error:
         raise ValueError(consistency_error)

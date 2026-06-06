@@ -135,7 +135,7 @@ class ParsingAgent:
     def run(self, input_data: Any) -> dict[str, Any]:
         """Return semantic JSON extracted from one physics question."""
         question = str(input_data)
-        rule_based = self._heuristic_parse(question)
+        rule_based = self._heuristic_parse(question) if self.llm_provider is None else None
         if rule_based is not None:
             return rule_based
         if self.llm_provider is None:

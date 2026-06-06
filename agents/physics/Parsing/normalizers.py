@@ -85,6 +85,38 @@ class ParsingOutputNormalizer:
         return values
 
     @staticmethod
+    def _append_numeric_given(compact: dict[str, Any], symbol: str, value: float, unit: str) -> None:
+        givens = compact.get("givens")
+        if not isinstance(givens, list):
+            givens = []
+            compact["givens"] = givens
+        for item in givens:
+            if isinstance(item, dict) and str(item.get("symbol") or "") == symbol:
+                return
+        givens.append({"symbol": symbol, "si_value": value, "si_unit": unit, "uncertainty": None})
+
+    @staticmethod
+    def _remove_numeric_givens(compact: dict[str, Any], *symbols: str) -> None:
+        givens = compact.get("givens")
+        if not isinstance(givens, list):
+            return
+        blocked = set(symbols)
+        compact["givens"] = [
+            item
+            for item in givens
+            if not (isinstance(item, dict) and str(item.get("symbol") or "") in blocked)
+        ]
+
+    def _put_numeric_given(self, compact: dict[str, Any], symbol: str, value: float, unit: str) -> None:
+        self._remove_numeric_givens(compact, symbol)
+        self._append_numeric_given(compact, symbol, value, unit)
+
+    @staticmethod
+    def _length_from_match(value: str, unit: str) -> float:
+        scale = {"m": 1.0, "cm": 1e-2, "mm": 1e-3}
+        return float(value) * scale[unit.lower()]
+
+    @staticmethod
     def _explicit_si_values(question: str) -> dict[str, tuple[float, str]]:
         values: dict[str, tuple[float, str]] = {}
         pattern = re.compile(
@@ -224,18 +256,37 @@ class ParsingOutputNormalizer:
                 str(geometry.get("type") or ""),
             ]
         ).lower()
-        if "perpendicular bisector" not in text:
+        perpendicular_bisector_like = (
+            "perpendicular bisector" in text
+            or ("equidistant from a and b" in text and "perpendicular" in text and "ab" in text)
+            or ("perpendicular to ab" in text and ("midpoint of ab" in text or "away from ab" in text))
+        )
+        if not perpendicular_bisector_like:
             return
 
         segment_values = self._numeric_by_symbol(geometry.get("segments") or [])
         given_values = self._numeric_by_symbol(compact.get("givens") or [])
         values = {**given_values, **segment_values}
         base = values.get("AB") or values.get("d_AB")
-        height = values.get("ell") or values.get("h")
-        if base is None or height is None:
+        height = values.get("ell") or values.get("h") or values.get("OM")
+        if base is None:
             return
 
         d_mid = base / 2
+        parsed_d_mid = values.get("d_mid")
+        if (
+            height is None
+            and parsed_d_mid is not None
+            and not math.isclose(float(parsed_d_mid), d_mid, rel_tol=1e-9, abs_tol=1e-12)
+        ):
+            height = float(parsed_d_mid)
+        if height is None:
+            return
+
+        self._remove_numeric_givens(compact, "d_mid")
+        self._put_numeric_given(compact, "AB", float(base), "m")
+        self._put_numeric_given(compact, "ell", float(height), "m")
+
         source_distance = math.sqrt(d_mid**2 + height**2)
         geometry["type"] = "perpendicular_bisector"
         geometry.pop("line_order", None)
@@ -252,8 +303,8 @@ class ParsingOutputNormalizer:
             "x-axis from A to B; y-axis from midpoint of AB toward target point"
         )
 
-    @staticmethod
     def _normalize_electrostatic_geometry_from_text(
+        self,
         compact: dict[str, Any],
         question: str,
     ) -> None:
@@ -273,7 +324,11 @@ class ParsingOutputNormalizer:
         if order_match:
             line_order = [order_match.group(index).upper() for index in range(1, 4)]
 
-        if "perpendicular bisector" in text:
+        if (
+            "perpendicular bisector" in text
+            or ("equidistant from a and b" in text and "perpendicular" in text and "ab" in text)
+            or ("perpendicular to ab" in text and ("midpoint of ab" in text or "away from ab" in text))
+        ):
             geometry["type"] = "perpendicular_bisector"
         elif "equilateral triangle" in text:
             geometry["type"] = "equilateral_triangle"
@@ -303,6 +358,25 @@ class ParsingOutputNormalizer:
 
         if geometry.get("type"):
             compact["geometry"] = geometry
+
+        if geometry.get("type") == "perpendicular_bisector":
+            apart_match = re.search(
+                r"(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?P<unit>cm|mm|m)\s+apart",
+                text,
+            )
+            side_match = re.search(
+                r"\ba\s*=\s*(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?P<unit>cm|mm|m)\b",
+                text,
+            )
+            height_match = re.search(
+                r"(?P<value>[+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?P<unit>cm|mm|m)\s+(?:from\s+the\s+midpoint\s+of\s+ab|away\s+from\s+ab|from\s+ab)",
+                text,
+            )
+            base_source = apart_match or side_match
+            if base_source:
+                self._put_numeric_given(compact, "AB", self._length_from_match(base_source.group("value"), base_source.group("unit")), "m")
+            if height_match:
+                self._put_numeric_given(compact, "ell", self._length_from_match(height_match.group("value"), height_match.group("unit")), "m")
 
     @staticmethod
     def _apply_requested_form(compact: dict[str, Any], question: str) -> None:
