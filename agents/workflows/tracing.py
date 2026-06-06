@@ -95,11 +95,14 @@ def _message_chars(payload: dict[str, Any]) -> int:
 def _process_llm_inputs(inputs: dict[str, Any]) -> dict[str, Any]:
     client = inputs.get("self")
     payload = inputs.get("payload") if isinstance(inputs.get("payload"), dict) else {}
+    reasoning = payload.get("reasoning") if isinstance(payload.get("reasoning"), dict) else {}
+    effort = str(reasoning.get("effort") or "") if isinstance(reasoning, dict) else ""
     return {
         "stage": str(inputs.get("stage") or "llm"),
         "provider": str(getattr(client, "provider", "unknown")),
         "model": str(getattr(client, "model", "unknown")),
         "json_mode": bool(payload.get("response_format")),
+        "thinking_disabled": effort == "none",
         "attempt": int(inputs.get("attempt") or 1),
         "request_chars": _message_chars(payload),
     }

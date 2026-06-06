@@ -185,6 +185,7 @@ class LLMClientBase(ABC):
         temperature: float = 0.0,
         max_tokens: int = 1024,
         response_format: Optional[Dict[str, Any]] = None,
+        reasoning: Optional[Dict[str, Any]] = None,
         stage: str = "llm.chat",
     ) -> str:
         """
@@ -216,6 +217,8 @@ class LLMClientBase(ABC):
             payload["response_format"] = response_format
             if self.provider == "openrouter":
                 payload["provider"] = {"require_parameters": True}
+        if reasoning:
+            payload["reasoning"] = reasoning
         first = self._request_attempt("/chat/completions", payload, stage, 1)
         if first["status"] == "ok":
             data = first["_data"]
