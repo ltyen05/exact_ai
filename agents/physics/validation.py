@@ -9,7 +9,7 @@ from typing import Any
 
 from agents.formatting import as_number, convert_si_to_requested, normalize_unit
 from agents.physics.domain.context import build_calculation_input
-from tools.calculator import PHYSICAL_CONSTANTS, solve_with_sympy_trace
+from tools.calculator import PHYSICAL_CONSTANTS, sanitize_sympy_equation, solve_with_sympy_trace
 
 logger = logging.getLogger(__name__)
 
@@ -296,7 +296,7 @@ def validated_context(
     """Validate the solve graph and return quantities, target, unit, and equations."""
     calculation = build_calculation_input(parsed_question)
     spec = solution_output.get("sympy_spec") or {}
-    equations = [str(item) for item in spec.get("equations") or []]
+    equations = [sanitize_sympy_equation(str(item)) for item in spec.get("equations") or []]
     target = str(spec.get("target_symbol") or calculation["target"])
     unit = str(spec.get("target_unit") or calculation["unit"])
     quantities = dict(calculation["quantities"])
