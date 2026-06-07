@@ -1,4 +1,4 @@
-"""Abstract interface for physics formula solution providers."""
+"""Abstract interface for physics solution providers."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 
 class SolutionProvider(ABC):
-    """Provide a validated solution specification for a parsed physics question."""
+    """Provide a solution specification for a parsed physics question."""
 
     @abstractmethod
     def get_solution(self, question: str, semantic_output: dict[str, Any]) -> dict[str, Any]:
