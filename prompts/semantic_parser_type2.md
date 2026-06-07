@@ -110,6 +110,21 @@ Output:
   "answer_format": {"requested_form": "yes_no"}
 }
 
+Input: For an RLC series circuit with constant components, when the angular frequency is omega0, X_L = 54 Ohm and X_C = 216 Ohm. By what factor must the angular frequency be multiplied from omega0 for resonance to occur?
+Output:
+{
+  "question": "For an RLC series circuit with constant components, when the angular frequency is omega0, X_L = 54 Ohm and X_C = 216 Ohm. By what factor must the angular frequency be multiplied from omega0 for resonance to occur?",
+  "domain": "Alternating-Current Circuits",
+  "target": {"symbol": "omega_factor", "unit": "dimensionless"},
+  "givens": [
+    {"symbol": "XL", "si_value": 54, "si_unit": "Ohm", "uncertainty": null},
+    {"symbol": "XC", "si_value": 216, "si_unit": "Ohm", "uncertainty": null}
+  ],
+  "relations": ["series RLC circuit", "components are constant", "frequency is multiplied from omega0 until resonance"],
+  "question_kind": "computational",
+  "answer_format": {"requested_form": "numeric"}
+}
+
 Input: Charges q1 = -2 microC at A and q2 = 3 microC at B lie on A-B-N with AB = 10 cm and BN = 10 cm. Find the electric field magnitude at N.
 Output:
 {

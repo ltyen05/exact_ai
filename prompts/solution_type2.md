@@ -50,27 +50,21 @@ Direct conceptual/yes-no/multiple-choice:
 }
 
 SymPy contract:
-- Use computational mode for numeric or yes_no_computational questions; use direct mode only for conceptual, yes_no_conceptual, or multiple_choice questions.
-- Preserve target consistency: use `parsed_question.target.symbol` as `sympy_spec.target_symbol` unless it is unusable, and define that exact target on a left-hand side.
-- Equations must be ASCII SymPy syntax with exactly one `=`, explicit `*`, and plain identifier symbols.
-- Allowed functions/constants: Abs, abs, sqrt, sin, cos, tan, atan, diff, exp, log, pi, Im, Re, conjugate, k, k_e, epsilon_0, mu_0, c.
-- Every RHS symbol must be in `known_values`, an allowed function/constant, or defined by an earlier equation.
-- `known_values` may contain only parsed numeric givens, parsed numeric geometry/comparison values, or allowed constants.
-- Unit tokens such as microF, uF, mJ, mN, pF, Ohm, Hz, and N/C are units only, never variables.
-- Normalize symbols: ell, phi, theta, omega, mu, lambda_. Flatten time functions as `U_inst` or `I_inst`, not `U(t)` or `I(t)`.
-- If answer_format.requested_form is `magnitude`, make the final target nonnegative with Abs(...) or a magnitude formula. If it is `vector`, define components and add `vector_spec`.
-- For vector electric fields, use signed charges in component equations; use Abs only for final magnitudes.
+- Use computational mode for numeric/yes_no_computational; direct only for conceptual, yes_no_conceptual, or multiple_hoice.
+- Preserve target consistency: use `parsed_question.target.symbol` as `sympy_spec.target_symbol` unless unusable, and define it on a left-hand side.
+- Equations: ASCII SymPy, one `=`, explicit `*`, plain identifiers. Allowed names: Abs, abs, sqrt, sin, cos, tan, atan, diff, exp, log, pi, Im, Re, conjugate, k, k_e, epsilon_0, mu_0, c.
+- Every RHS symbol is in `known_values`, allowed, or defined earlier. `known_values` may contain only parsed numeric givens/geometry/comparison values or constants.
+- Units such as microF, uF, mJ, mN, pF, Ohm, Hz, N/C are never variables. Normalize ell, phi, theta, omega, mu, lambda_; flatten `U(t)`/`I(t)` to `U_inst`/`I_inst`.
+- If requested_form is magnitude, use Abs or magnitude for the final target. If vector, define components and add `vector_spec`; signed charges matter.
 - For yes_no_computational, `decision_spec.computed_symbol` must equal target_symbol and `expected_symbol` must be parsed.
 - Never use Coulomb constant `k` in self-induction or solenoid EMF equations.
 - solution_steps describe the computation plan only.
 
 Minimal strategy guidance:
-- Prefer the simplest equation system that solves the requested target directly.
-- Use deterministic hints as the strongest available scaffold, while keeping `parsed_question` authoritative.
-- Define helper distances, coordinates, reactances, totals, derivatives, or components in equations rather than inventing numeric known_values.
-- Perpendicular bisector geometry normally needs d_mid, source distances, signed x/y components, then a magnitude if requested.
-- Series RLC resonance yes/no computes f_res and compares with parsed f. AC RMS questions preserve RMS symbols such as I_rms.
-- Measurement questions use parsed uncertainties as delta_<symbol>. Optimization can use `diff`.
+- Solve the requested target directly; use deterministic hints as scaffold, with `parsed_question` authoritative.
+- Define helper distances, coordinates, reactances, totals, derivatives, or components in equations.
+- Series RLC resonance yes/no computes f_res and compares with parsed f; a "by what factor" resonance question is numeric.
+- Perpendicular bisector geometry needs distances, signed components, then magnitude if requested. Measurement uncertainty uses delta_<symbol>; optimization can use `diff`.
 
 Examples:
 
@@ -132,6 +126,32 @@ Output:
     "known_values": {"Q": 0.00004, "U": 9}
   },
   "solution_steps": ["Use Q = C*U rearranged as C = Q/U."]
+}
+
+Input parsed_question:
+{
+  "question": "For an RLC series circuit with constant components, when the angular frequency is omega0, X_L = 54 Ohm and X_C = 216 Ohm. By what factor must the angular frequency be multiplied from omega0 for resonance to occur?",
+  "domain": "Alternating-Current Circuits",
+  "target": {"symbol": "omega_factor", "unit": "dimensionless"},
+  "givens": [
+    {"symbol": "XL", "si_value": 54, "si_unit": "Ohm", "uncertainty": null},
+    {"symbol": "XC", "si_value": 216, "si_unit": "Ohm", "uncertainty": null}
+  ],
+  "relations": ["series RLC circuit", "components are constant", "frequency is multiplied from omega0 until resonance"],
+  "question_kind": "computational",
+  "answer_format": {"requested_form": "numeric"}
+}
+Output:
+{
+  "mode": "computational",
+  "answer_type": "numeric",
+  "sympy_spec": {
+    "target_symbol": "omega_factor",
+    "target_unit": "dimensionless",
+    "equations": ["omega_factor = sqrt(XC/XL)"],
+    "known_values": {"XL": 54, "XC": 216}
+  },
+  "solution_steps": ["With constant L and C, XL scales as omega and XC scales as 1/omega.", "At resonance k*XL = XC/k, so k = sqrt(XC/XL)."]
 }
 
 Input parsed_question:
