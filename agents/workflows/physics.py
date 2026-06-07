@@ -10,7 +10,13 @@ from langgraph.graph import END, START, StateGraph
 
 from agents.physics.Explain import ExplainAgent
 from agents.physics.Parsing import ParsingAgent
-from agents.physics.solver import DirectAnswerHandler, PhysicsAnswerBuilder, SolutionRepairController, SympyExecutor
+from agents.physics.solver import (
+    DirectAnswerHandler,
+    PhysicsAnswerBuilder,
+    PhysicsRescueSolver,
+    SolutionRepairController,
+    SympyExecutor,
+)
 from agents.physics.Solution import LLMSolutionProvider, RAGSolutionProvider, SolutionAgent
 from .state import WorkflowExecutionError, WorkflowState
 
@@ -49,6 +55,12 @@ class PhysicsWorkflow:
             executor=self.executor,
         )
         self.answer_builder = PhysicsAnswerBuilder()
+        self.rescue_solver = PhysicsRescueSolver(
+            validator=self.repair_controller.validator,
+            executor=self.executor,
+            answer_builder=self.answer_builder,
+            direct_handler=self.direct_answer_handler,
+        )
         self.graph = self._build_graph()
 
     def _build_graph(self) -> Any:
@@ -97,6 +109,13 @@ class PhysicsWorkflow:
             logger.debug("physics.generated_solution_spec=%s", solution_output)
             return {"solution_output": solution_output}
         except Exception as exc:
+            try:
+                deterministic = LLMSolutionProvider.deterministic_solution(parsed_question)
+                if deterministic is not None:
+                    logger.debug("physics.solution_agent_failed_used_deterministic=%s", deterministic.get("formula_ids"))
+                    return {"solution_output": deterministic}
+            except Exception as deterministic_exc:
+                logger.debug("physics.solution_agent_deterministic_fallback_failed=%s", deterministic_exc)
             raise WorkflowExecutionError(f"Physics SolutionAgent failed: {exc}") from exc
 
     def compute_sympy(self, state: WorkflowState) -> dict[str, Any]:
@@ -107,33 +126,41 @@ class PhysicsWorkflow:
         parsed_question = state.get("parsed_question", {})
         solution_output = state.get("solution_output", {})
         mode = solution_output.get("mode")
-        if mode == "direct":
-            return self.direct_answer_handler.handle(parsed_question, solution_output)
-        if mode != "computational":
-            raise WorkflowExecutionError("No valid physics solution specification was produced.")
+        try:
+            if mode == "direct":
+                return self.direct_answer_handler.handle(parsed_question, solution_output)
+            if mode != "computational":
+                raise WorkflowExecutionError("No valid physics solution specification was produced.")
 
-        solution_output, answer_type, context, steps = self.repair_controller.prepare_computational_solution(
-            state=state,
-            parsed_question=parsed_question,
-            solution_output=solution_output,
-        )
-        logger.debug("physics.normalized_knowns=%s", context.quantities)
-        computation = self.executor.solve(context)
-        if computation is None:
-            logger.debug("physics.verification_fail_reason=equations could not resolve the target")
-            solution_output, answer_type, context, steps, computation = self.repair_controller.repair_after_sympy_failure(
+            solution_output, answer_type, context, steps = self.repair_controller.prepare_computational_solution(
                 state=state,
                 parsed_question=parsed_question,
                 solution_output=solution_output,
             )
-        return self.answer_builder.build(
-            parsed_question=parsed_question,
-            solution_output=solution_output,
-            context=context,
-            computation=computation,
-            answer_type=answer_type,
-            steps=steps,
-        )
+            logger.debug("physics.normalized_knowns=%s", context.quantities)
+            computation = self.executor.solve(context)
+            if computation is None:
+                logger.debug("physics.verification_fail_reason=equations could not resolve the target")
+                try:
+                    solution_output, answer_type, context, steps, computation = self.repair_controller.repair_after_sympy_failure(
+                        state=state,
+                        parsed_question=parsed_question,
+                        solution_output=solution_output,
+                    )
+                except WorkflowExecutionError as exc:
+                    return self.rescue_solver.rescue(state, str(exc))
+            return self.answer_builder.build(
+                parsed_question=parsed_question,
+                solution_output=solution_output,
+                context=context,
+                computation=computation,
+                answer_type=answer_type,
+                steps=steps,
+            )
+        except WorkflowExecutionError as exc:
+            return self.rescue_solver.rescue(state, str(exc))
+        except ValueError as exc:
+            return self.rescue_solver.rescue(state, str(exc))
 
     def explain_answer(self, state: WorkflowState) -> dict[str, Any]:
         result = dict(state.get("result", {}))
@@ -151,6 +178,9 @@ class PhysicsWorkflow:
                     verified_output,
                 )
                 result["explanation"] = str(explanation["explanation"])
+                result["answer"] = str(explanation.get("answer") or result.get("answer") or "Unknown")
+                result["unit"] = ""
+                result["append_unit"] = False
                 result["cot"] = [str(step) for step in explanation.get("cot") or cot]
                 return {"result": result}
             except Exception as exc:
