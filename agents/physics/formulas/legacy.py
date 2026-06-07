@@ -146,7 +146,7 @@ def _canonical_formula_symbol(symbol: Any) -> str:
         return "C"
     if name in {"U0", "V0", "U_initial", "V_initial", "voltage"}:
         return "U"
-    if name in {"er", "eps_r", "relative_permittivity"}:
+    if name in {"epsilon_", "epsilon__r", "epsilon_r_r", "er", "eps_r", "relative_permittivity"}:
         return "epsilon_r"
     return name
 
