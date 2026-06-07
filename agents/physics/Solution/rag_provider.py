@@ -79,19 +79,16 @@ class RAGSolutionProvider(LLMSolutionProvider):
         return super()._deterministic_solution(semantic_output)
 
     def get_solution(self, question: str, semantic_output: dict[str, Any]) -> dict[str, Any]:
-        """Request a validated solution with parsed data, deterministic hints, and retrieved examples."""
+        """Request a solution with parsed data, deterministic hints, and retrieved examples."""
         deterministic = self._deterministic_solution(semantic_output)
-        if self._should_use_deterministic_direct(deterministic):
-            return self._validated_deterministic_fallback(semantic_output, deterministic) or deterministic
         examples = [self._compact_example(item) for item in self.retrieve(question)]
         prompt = self._build_prompt(
             semantic_output,
             retrieved_examples=examples,
             deterministic_solution=deterministic,
         )
-        llm_solution = self._request_solution(
+        return self._request_solution(
             prompt,
             semantic_output,
             deterministic_fallback=deterministic,
         )
-        return self._merge_deterministic_metadata(llm_solution, deterministic)

@@ -9,7 +9,7 @@ from typing import Any
 
 from agents.formatting import as_number, convert_si_to_requested, normalize_unit
 from agents.physics.domain.context import build_calculation_input
-from tools.calculator import PHYSICAL_CONSTANTS, solve_with_sympy_trace
+from tools.calculator import PHYSICAL_CONSTANTS, sanitize_sympy_equation, solve_with_sympy_trace
 
 logger = logging.getLogger(__name__)
 
@@ -296,7 +296,7 @@ def validated_context(
     """Validate the solve graph and return quantities, target, unit, and equations."""
     calculation = build_calculation_input(parsed_question)
     spec = solution_output.get("sympy_spec") or {}
-    equations = [str(item) for item in spec.get("equations") or []]
+    equations = [sanitize_sympy_equation(str(item)) for item in spec.get("equations") or []]
     target = str(spec.get("target_symbol") or calculation["target"])
     unit = str(spec.get("target_unit") or calculation["unit"])
     quantities = dict(calculation["quantities"])
@@ -354,7 +354,20 @@ def validated_context(
     unresolved = undefined_symbols(equations, quantities, target)
     logger.debug("physics.undefined_symbols_before_sympy=%s", unresolved)
     if unresolved:
-        raise ValueError(f"Undefined symbols before SymPy: {', '.join(unresolved)}.")
+        lhs_symbols = sorted(
+            equation.split("=", 1)[0].strip()
+            for equation in equations
+            if isinstance(equation, str)
+            and equation.count("=") == 1
+            and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", equation.split("=", 1)[0].strip())
+        )
+        raise ValueError(
+            "Undefined symbols before SymPy: "
+            f"{', '.join(unresolved)}. "
+            f"Known symbols: {', '.join(sorted(quantities)) or '(none)'}; "
+            f"defined_by_equation: {', '.join(lhs_symbols) or '(none)'}; "
+            f"target: {target or '(none)'}."
+        )
     consistency_error = target_consistency_error(str(calculation["target"]), target, unit)
     if consistency_error:
         raise ValueError(consistency_error)

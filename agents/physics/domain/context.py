@@ -21,6 +21,7 @@ def build_calculation_input(parsed_question: dict[str, Any]) -> dict[str, Any]:
                 value = quantity.get("si_value")
                 put_quantity(quantities, quantity.get("symbol"), quantity.get("value") if value is None else value)
 
+    generic_uncertainties: list[Any] = []
     for given in parsed_question.get("givens") or []:
         if not isinstance(given, dict):
             continue
@@ -33,8 +34,10 @@ def build_calculation_input(parsed_question: dict[str, Any]) -> dict[str, Any]:
                 uncertainty_value = uncertainty.get("value")
             symbol = str(given.get("symbol") or "").strip()
             put_quantity(quantities, f"delta_{symbol}", uncertainty_value)
-            put_quantity(quantities, "uncertainty", uncertainty_value)
-            put_quantity(quantities, "absolute_uncertainty", uncertainty_value)
+            generic_uncertainties.append(uncertainty_value)
+    if len(generic_uncertainties) == 1:
+        put_quantity(quantities, "uncertainty", generic_uncertainties[0])
+        put_quantity(quantities, "absolute_uncertainty", generic_uncertainties[0])
 
     geometry = parsed_question.get("geometry") or {}
     if isinstance(geometry, dict):

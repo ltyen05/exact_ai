@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 from .llm_provider import LLMClientBase
 
 
 class OpenRouterClient(LLMClientBase):
-    DEFAULT_MODEL = "qwen/qwen-2.5-7b-instruct"
+    DEFAULT_MODEL = "qwen/qwen3-8b"
     DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 
     def __init__(
@@ -50,3 +51,22 @@ class OpenRouterClient(LLMClientBase):
         if provider:
             return f"{model}:{provider}"
         return model
+
+    def chat(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float = 0.0,
+        max_tokens: int = 1024,
+        response_format: dict[str, Any] | None = None,
+        reasoning: dict[str, Any] | None = None,
+        stage: str = "llm.chat",
+    ) -> str:
+        del reasoning
+        return super().chat(
+            messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            response_format=response_format,
+            reasoning={"effort": "none"},
+            stage=stage,
+        )

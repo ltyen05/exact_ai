@@ -31,9 +31,9 @@ QUANTITY_ALIAS_GROUPS = (
     ("Q_max", "Qmax", "qmax", "q_max", "maximum_charge"),
     ("side", "side_length", "a", "AB", "triangle_side"),
     ("W_C", "electric_energy", "E_elec", "capacitor_energy"),
-    ("W_L", "magnetic_energy", "E_magn", "inductor_energy"),
+    ("W_L", "W_B", "U_B", "magnetic_energy", "magnetic_field_energy", "E_magn", "inductor_energy"),
     ("W_total", "E_total", "total_energy"),
-    ("epsilon_r", "er", "eps_r", "relative_permittivity"),
+    ("epsilon_r", "epsilon_", "epsilon__r", "er", "eps_r", "relative_permittivity"),
     ("C", "C0", "C_initial", "C_air", "capacitance"),
 )
 
@@ -48,6 +48,11 @@ def _normalize_text(value: str) -> str:
 def canonical_quantity_symbol(symbol: Any) -> str:
     """Map parser/LLM symbol aliases to the internal physics symbol name."""
     name = _normalize_text(str(symbol or "")).strip()
+    if name.startswith("delta_"):
+        inner = canonical_quantity_symbol(name[len("delta_"):])
+        if inner in {"V", "V_rms"}:
+            inner = "U"
+        return f"delta_{inner}" if inner else name
     if re.fullmatch(r"[Qq]_?\d+", name):
         return "q" + re.sub(r"\D", "", name)
     if re.fullmatch(r"charge_[Qq]_?\d+", name):
@@ -58,11 +63,11 @@ def canonical_quantity_symbol(symbol: Any) -> str:
         return "Q_max"
     if name in {"electric_energy", "E_elec", "capacitor_energy"}:
         return "W_C"
-    if name in {"magnetic_energy", "E_magn", "inductor_energy"}:
+    if name in {"W_B", "U_B", "magnetic_energy", "magnetic_field_energy", "E_magn", "inductor_energy"}:
         return "W_L"
-    if name in {"E_total", "total_energy"}:
+    if name in {"total_energy"}:
         return "W_total"
-    if name in {"er", "eps_r", "relative_permittivity"}:
+    if name in {"epsilon_", "epsilon__r", "epsilon_r_r", "er", "eps_r", "relative_permittivity"}:
         return "epsilon_r"
     if name in {"I_peak", "I_amplitude", "maximum_current", "peak_current", "current_amplitude"}:
         return "I_max"

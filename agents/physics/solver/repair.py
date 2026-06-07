@@ -5,9 +5,12 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from agents.physics.Solution.formula_lib import build_solution_cot_steps
+from agents.physics.Solution.formula_lib import build_solution_cot_steps, deterministic_solution
+from agents.physics.formulas.geometry import ElectrostaticVectorEngine, GeometryFailure
 from agents.workflows.state import WorkflowExecutionError, WorkflowState
 
+from .answer_builder import PhysicsAnswerBuilder
+from .direct_answer import DirectAnswerHandler
 from .executor import SympyExecutor
 from .validator import PhysicsSolutionValidator, ValidatedSolveContext
 
@@ -16,6 +19,18 @@ logger = logging.getLogger(__name__)
 
 def _llm_available(llm: Any) -> bool:
     return llm is not None and bool(getattr(llm, "enabled", True))
+
+
+def _should_replan(validation_error: str) -> bool:
+    text = validation_error.lower()
+    return any(
+        phrase in text
+        for phrase in (
+            "undefined symbols",
+            "unresolved symbols",
+            "could not resolve the target",
+        )
+    )
 
 
 class SolutionRepairController:
@@ -84,6 +99,15 @@ class SolutionRepairController:
         solution_output: dict[str, Any],
         validation_error: str,
     ) -> dict[str, Any]:
+        if _should_replan(validation_error):
+            fallback = deterministic_solution(state.get("parsed_question", {}))
+            if isinstance(fallback, dict) and fallback.get("mode") == "computational":
+                try:
+                    self.validator.validate(state.get("parsed_question", {}), fallback)
+                    logger.debug("physics.repair_used_deterministic_replan=%s", fallback.get("formula_ids"))
+                    return fallback
+                except ValueError as exc:
+                    logger.debug("physics.deterministic_replan_rejected=%s", exc)
         if self.solution_agent is None or not _llm_available(self.llm):
             raise WorkflowExecutionError(validation_error)
         try:
@@ -116,3 +140,79 @@ class SolutionRepairController:
         except ValueError as repair_exc:
             logger.debug("physics.verification_fail_reason=%s", repair_exc)
             raise WorkflowExecutionError(f"Physics computation validation failed after repair: {repair_exc}") from repair_exc
+
+
+class PhysicsRescueSolver:
+    """Try last-chance verified computations before surfacing workflow errors."""
+
+    def __init__(
+        self,
+        validator: PhysicsSolutionValidator | None = None,
+        executor: SympyExecutor | None = None,
+        answer_builder: PhysicsAnswerBuilder | None = None,
+        direct_handler: DirectAnswerHandler | None = None,
+        vector_engine: ElectrostaticVectorEngine | None = None,
+    ) -> None:
+        self.validator = validator or PhysicsSolutionValidator()
+        self.executor = executor or SympyExecutor()
+        self.answer_builder = answer_builder or PhysicsAnswerBuilder()
+        self.direct_handler = direct_handler or DirectAnswerHandler()
+        self.vector_engine = vector_engine or ElectrostaticVectorEngine()
+
+    def rescue(self, state: dict[str, Any], reason: str) -> dict[str, Any]:
+        """Try deterministic/vector rescue; otherwise raise the original failure."""
+        parsed_question = state.get("parsed_question") if isinstance(state.get("parsed_question"), dict) else {}
+        raw_question = str(state.get("question") or parsed_question.get("question") or "")
+
+        vector_result = self._try_vector_engine(parsed_question, raw_question)
+        if vector_result is not None:
+            return vector_result
+
+        deterministic_result = self._try_deterministic(parsed_question)
+        if deterministic_result is not None:
+            return deterministic_result
+
+        raise WorkflowExecutionError(str(reason or "Physics computation failed."))
+
+    def _try_deterministic(self, parsed_question: dict[str, Any]) -> dict[str, Any] | None:
+        if not parsed_question:
+            return None
+        try:
+            fallback_solution = deterministic_solution(parsed_question)
+            if not isinstance(fallback_solution, dict):
+                return None
+            if fallback_solution.get("mode") == "direct":
+                return self.direct_handler.handle(parsed_question, fallback_solution)
+            if fallback_solution.get("mode") != "computational":
+                return None
+            context = self.validator.validate(parsed_question, fallback_solution)
+            computation = self.executor.solve(context)
+            if computation is None:
+                return None
+            answer_type = str(fallback_solution.get("answer_type") or "")
+            steps = build_solution_cot_steps(
+                [str(step) for step in fallback_solution.get("solution_steps") or []],
+                context.equations,
+                context.target,
+            )
+            return self.answer_builder.build(
+                parsed_question=parsed_question,
+                solution_output=fallback_solution,
+                context=context,
+                computation=computation,
+                answer_type=answer_type,
+                steps=steps,
+            )
+        except Exception as exc:  # pragma: no cover - logged to avoid hiding the original failure.
+            logger.debug("physics.deterministic_rescue_failed=%s", exc)
+            return None
+
+    def _try_vector_engine(self, parsed_question: dict[str, Any], raw_question: str) -> dict[str, Any] | None:
+        try:
+            result = self.vector_engine.solve(parsed_question, raw_question)
+            if isinstance(result, GeometryFailure) or result is None:
+                return None
+            return result
+        except Exception as exc:  # pragma: no cover - rescue path must not create a new runtime failure.
+            logger.debug("physics.vector_rescue_failed=%s", exc)
+            return None

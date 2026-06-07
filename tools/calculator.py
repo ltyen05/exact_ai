@@ -32,6 +32,39 @@ SYMPY_VALUES = {
 }
 
 
+def sanitize_sympy_text(expression: str) -> str:
+    """Normalize common textbook math notation into conservative SymPy text."""
+    text = str(expression or "")
+    replacements = {
+        "−": "-",
+        "–": "-",
+        "×": "*",
+        "·": "*",
+        "π": "pi",
+        "Π": "pi",
+        "√": "sqrt",
+    }
+    for source, replacement in replacements.items():
+        text = text.replace(source, replacement)
+    text = re.sub(r"(?P<base>\b10)\s*\^\s*(?P<exp>[+-]?\d+)", r"\g<base>**\g<exp>", text)
+    text = text.replace("^", "**")
+    text = re.sub(r"\bsqrt\s*(?P<number>\d+(?:\.\d+)?)", r"sqrt(\g<number>)", text)
+    text = re.sub(r"(?<![A-Za-z_][0-9])(?<=\d)(?=(?:sqrt|sin|cos|tan|pi)\b)", "*", text)
+    text = re.sub(r"(?<![A-Za-z_][0-9])(?<=\d)(?=[A-DF-Za-df-z_])", "*", text)
+    text = re.sub(r"(?<=\))(?=(?:sqrt|sin|cos|tan|pi|[A-Za-z_])\b)", "*", text)
+    text = re.sub(r"\b(?P<func>sin|cos|tan|sqrt)\s*\(\s*", r"\g<func>(", text)
+    return text
+
+
+def sanitize_sympy_equation(equation: str) -> str:
+    """Normalize both sides of an equation without changing its dependency graph."""
+    text = str(equation or "")
+    if text.count("=") != 1:
+        return sanitize_sympy_text(text)
+    lhs, rhs = text.split("=", 1)
+    return f"{sanitize_sympy_text(lhs).strip()} = {sanitize_sympy_text(rhs).strip()}"
+
+
 @dataclass(frozen=True)
 class SympyComputation:
     """Numeric answer plus useful resolved intermediate equations."""
@@ -103,6 +136,7 @@ def solve_with_sympy_trace(
             )
 
         for formula in formulas:
+            formula = sanitize_sympy_equation(formula)
             if formula.count("=") != 1:
                 return None
             lhs, rhs = formula.split("=", 1)
