@@ -33,7 +33,7 @@ QUANTITY_ALIAS_GROUPS = (
     ("W_C", "electric_energy", "E_elec", "capacitor_energy"),
     ("W_L", "W_B", "U_B", "magnetic_energy", "magnetic_field_energy", "E_magn", "inductor_energy"),
     ("W_total", "E_total", "total_energy"),
-    ("epsilon_r", "er", "eps_r", "relative_permittivity"),
+    ("epsilon_r", "epsilon_", "epsilon__r", "er", "eps_r", "relative_permittivity"),
     ("C", "C0", "C_initial", "C_air", "capacitance"),
 )
 
@@ -67,7 +67,7 @@ def canonical_quantity_symbol(symbol: Any) -> str:
         return "W_L"
     if name in {"total_energy"}:
         return "W_total"
-    if name in {"er", "eps_r", "relative_permittivity"}:
+    if name in {"epsilon_", "epsilon__r", "epsilon_r_r", "er", "eps_r", "relative_permittivity"}:
         return "epsilon_r"
     if name in {"I_peak", "I_amplitude", "maximum_current", "peak_current", "current_amplitude"}:
         return "I_max"
