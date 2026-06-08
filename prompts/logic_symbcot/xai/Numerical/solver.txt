@@ -1,0 +1,22 @@
+The task is to determine the numerical answer that satisfies the conditions of the question based on the premises. The answer may be an integer, a float, a monetary value with "$", or multiple values in the question's order.
+
+Context:
+[[CONTEXT]]
+
+Question:
+[[QUESTION]]
+
+Reasoning plan to follow:
+[[PLAN]]
+
+Requirements:
+1. Use only the premises and basic arithmetic.
+2. Show necessary calculations explicitly.
+3. Reference premise numbers for each key value.
+4. For monetary values, include "$" in the final answer.
+5. Round decimal numbers to 2 places unless the question specifies otherwise.
+
+After your reasoning, provide the final answer in exactly this format:
+Final answer: numerical value(s)
+idx: [list of premise indices used]
+explanation: A brief summary of your reasoning in natural language.

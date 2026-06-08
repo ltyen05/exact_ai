@@ -4097,38 +4097,37 @@ class SolutionProviderRegressionTests(unittest.TestCase):
 
 
 class LogicWorkflowTests(unittest.TestCase):
-    def test_logic_prompt_builds_horn_kb_and_public_evidence(self) -> None:
+    def test_logic_xai_pipeline_returns_public_evidence(self) -> None:
         llm = RecordingLLM(
             {
-                "logic.formalize": json.dumps(
-                    {
-                        "facts": [{"pred": "p", "args": ["a"], "truth": True, "premise_id": 2}],
-                        "rules": [
-                            {
-                                "if": [{"pred": "p", "args": ["x"], "truth": True}],
-                                "then": {"pred": "q", "args": ["x"], "truth": True},
-                                "premise_id": 1,
-                            }
-                        ],
-                        "query": {"pred": "q", "args": ["a"], "truth": True},
-                        "choices": {},
-                    }
+                "logic.xai.classify": "YesNo",
+                "logic.xai.plan": "Check whether P holds for A, then apply the implication from P to Q.",
+                "logic.xai.execute": (
+                    "Step 1: Premise 2 states that P holds for A.\n"
+                    "Step 2: Premise 1 states that P implies Q.\n"
+                    "Final answer: Yes\n"
+                    "idx: [1, 2]\n"
+                    "explanation: Premise 2 states that P holds for A. Premise 1 states that P implies Q, so Q(A) follows."
                 ),
-                "logic.explanation": "Because P(a) holds and P implies Q, Q(a) follows.",
             }
         )
-        graph = ExactGraph(llm=llm, classifier=StaticClassifier("logic"))
+        graph = ExactGraph(llm=llm, classifier=StaticClassifier("logic"), use_rag=False)
         output = graph.predict(
             {"question": "Is Q(A) true?", "premises": ["P implies Q.", "P holds for A."]}
         )
-        self.assertEqual(set(output), {"answer", "explanation", "fol", "cot", "premises"})
+        self.assertEqual(set(output), {"answer", "explanation", "idx", "cot", "premises"})
         self.assertEqual(output["answer"], "Yes")
-        self.assertEqual(output["fol"], "q(a)")
+        self.assertEqual(output["idx"], [1, 2])
         self.assertTrue(output["cot"])
-        formalize_prompt = llm.calls[0]["messages"][0]["content"]
-        self.assertIn("P implies Q.", formalize_prompt)
+        self.assertEqual([call["stage"] for call in llm.calls], ["logic.xai.classify", "logic.xai.plan", "logic.xai.execute"])
+        classify_prompt = llm.calls[0]["messages"][1]["content"]
+        plan_prompt = llm.calls[1]["messages"][1]["content"]
+        solver_prompt = llm.calls[2]["messages"][1]["content"]
+        self.assertIn("Question: Is Q(A) true?", classify_prompt)
+        self.assertIn("P implies Q.", plan_prompt)
+        self.assertIn("Reasoning plan to follow", solver_prompt)
 
-    def test_logic_fallback_answers_without_llm(self) -> None:
+    def test_logic_without_llm_returns_unknown(self) -> None:
         graph = ExactGraph(llm=None, classifier=StaticClassifier("logic"), use_rag=False)
         output = graph.predict(
             {
@@ -4136,38 +4135,41 @@ class LogicWorkflowTests(unittest.TestCase):
                 "premises": ["All diligent are prepared."],
             }
         )
-        self.assertEqual(output["answer"], "Yes")
-        self.assertIn("prepared(entity)", output["fol"])
-        self.assertTrue(any("deterministic Horn-rule fallback" in step for step in output["cot"]))
+        self.assertEqual(output["answer"], "Unknown")
+        self.assertNotIn("fol", output)
+        self.assertTrue(any("requires a configured LLM" in step for step in output["cot"]))
 
-    def test_logic_agent_accepts_provided_fol_fallback(self) -> None:
-        agent = LogicAgent(llm=None, use_rag=False)
-        output = agent.solve(
-            question="Is prepared true?",
-            premises_nl=[],
-            premises_fol=["prepared(entity)"],
-        )
-        self.assertEqual(output["answer"], "Yes")
-        self.assertTrue(any("Provided FOL premises" in step for step in output["cot"]))
-
-    def test_logic_rag_examples_are_prompt_guidance_not_public_metadata(self) -> None:
+    def test_logic_agent_uses_symbcot_provider(self) -> None:
         llm = RecordingLLM(
             {
-                "logic.formalize": json.dumps(
-                    {
-                        "facts": [{"pred": "coder", "args": ["entity"], "truth": True, "premise_id": 1}],
-                        "rules": [
-                            {
-                                "if": [{"pred": "coder", "args": ["x"], "truth": True}],
-                                "then": {"pred": "careful", "args": ["x"], "truth": True},
-                                "premise_id": 1,
-                            }
-                        ],
-                        "query": {"pred": "careful", "args": ["entity"], "truth": True},
-                        "choices": {},
-                    }
+                "logic.xai.classify": "YesNo",
+                "logic.xai.plan": "Check the explicit negation.",
+                "logic.xai.execute": (
+                    "Final answer: No\n"
+                    "idx: [1]\n"
+                    "explanation: Premise 1 explicitly blocks the queried condition."
                 ),
-                "logic.explanation": "Careful follows from the supplied rule.",
+            }
+        )
+        agent = LogicAgent(llm=llm, use_rag=False)
+        output = agent.solve(
+            question="Is prepared true?",
+            premises_nl=["The student is not prepared."],
+        )
+        self.assertEqual(output["answer"], "No")
+        self.assertEqual(output["idx"], [1])
+        self.assertEqual([call["stage"] for call in llm.calls], ["logic.xai.classify", "logic.xai.plan", "logic.xai.execute"])
+
+    def test_logic_xai_pipeline_does_not_inject_rag_examples(self) -> None:
+        llm = RecordingLLM(
+            {
+                "logic.xai.classify": "YesNo",
+                "logic.xai.plan": "Use the rule in premise 1.",
+                "logic.xai.execute": (
+                    "Final answer: Yes\n"
+                    "idx: [1]\n"
+                    "explanation: Premise 1 supports the answer."
+                ),
             }
         )
         graph = ExactGraph(llm=llm, classifier=StaticClassifier("logic"))
@@ -4178,9 +4180,9 @@ class LogicWorkflowTests(unittest.TestCase):
             }
         )
 
-        prompt = llm.calls[0]["messages"][0]["content"]
-        self.assertIn("few-shot guidance", prompt)
-        self.assertIn("similar_premises_nl", prompt)
+        prompts = "\n".join(call["messages"][1]["content"] for call in llm.calls)
+        self.assertNotIn("few-shot", prompts.lower())
+        self.assertIn("All coders are careful.", prompts)
         self.assertEqual(output["answer"], "Yes")
         self.assertNotIn("rag_used", output)
         self.assertNotIn("confidence", output)

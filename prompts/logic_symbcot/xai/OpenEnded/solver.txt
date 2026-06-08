@@ -1,0 +1,20 @@
+The task is to answer an open-ended question using only the given premises. Provide a concise answer supported by the premises and include the premise indices used.
+
+Context:
+[[CONTEXT]]
+
+Question:
+[[QUESTION]]
+
+Reasoning plan to follow:
+[[PLAN]]
+
+Requirements:
+1. Use only the premises.
+2. Keep the answer concise and directly supported.
+3. Reference the relevant premise numbers.
+
+After your reasoning, provide the final answer in exactly this format:
+Final answer: concise answer
+idx: [list of premise indices used]
+explanation: A brief summary of your reasoning in natural language.

@@ -1,0 +1,12 @@
+Given the premises and a numerical question, derive a step-by-step plan that uses the premises and arithmetic reasoning to answer the question. Do not calculate the final answer during planning.
+
+The answer may be an integer, a float, a monetary value with "$", or multiple values in the question's order.
+
+Premises:
+[[CONTEXT]]
+
+Questions:
+[[QUESTION]]
+
+Plan:
+Create a concise natural-language plan. Mention which premise indices should be checked and which quantities/calculations are needed.

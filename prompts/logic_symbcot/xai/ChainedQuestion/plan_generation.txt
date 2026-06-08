@@ -1,0 +1,12 @@
+Given the premises and a chained question, derive a step-by-step plan that uses the premises and logical or arithmetic reasoning to answer both parts. Do not solve the question in the plan.
+
+A chained question has exactly two parts. Each part may require a numerical value or a Yes/No/Uncertain answer.
+
+Premises:
+[[CONTEXT]]
+
+Questions:
+[[QUESTION]]
+
+Plan:
+Create a concise natural-language plan for answering part 1, then part 2. Mention whether part 2 depends on part 1 and which premise indices should be checked.

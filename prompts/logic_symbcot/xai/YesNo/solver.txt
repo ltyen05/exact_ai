@@ -1,0 +1,28 @@
+The task is to determine whether the value of the conclusion/question is Yes, No, or Uncertain based on the premises.
+
+Please solve the question step by step, using natural-language logical inference. During each step, indicate which premise or prior step you used and explain the reasoning. Use only the premises; do not introduce external information.
+
+These are the Context (premises) and the question you need to solve:
+Context:
+[[CONTEXT]]
+
+Question:
+[[QUESTION]]
+
+Here is the detailed plan that helps you solve the question:
+Plan:
+[[PLAN]]
+
+Requirements:
+1. Indicate the answer as Yes, No, or Uncertain.
+   - Yes: the conclusion necessarily follows from the premises.
+   - No: the conclusion is contradicted by the premises or its negation is inferred.
+   - Uncertain: insufficient information to determine the conclusion's truth value.
+2. Use only the premises to infer the conclusion.
+3. Clearly indicate which premises or prior steps you use in each inference.
+4. Explain each step in natural language.
+
+After your reasoning, provide the final answer in exactly this format:
+Final answer: Yes/No/Uncertain
+idx: [list of premise indices used]
+explanation: A brief summary of your reasoning in natural language.

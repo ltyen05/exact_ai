@@ -1,0 +1,12 @@
+Given a set of premises and a multiple-choice question, derive a step-by-step plan that uses the premises and logical reasoning to infer new knowledge if needed, in order to determine the correct option.
+
+Your plan should guide a language model to systematically evaluate each option. The answer must be one of the provided options A, B, C, or D. Do not solve the question in the plan.
+
+Premises:
+[[CONTEXT]]
+
+Questions:
+[[QUESTION]]
+
+Plan:
+Create a concise natural-language plan for evaluating each option against the premises. Mention that the solver must return Final answer, idx, and explanation after solving.

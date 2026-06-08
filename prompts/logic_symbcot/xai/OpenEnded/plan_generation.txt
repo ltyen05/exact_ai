@@ -1,0 +1,10 @@
+Given the premises and an open-ended question, derive a step-by-step plan for answering using only the premises. Do not answer the question during planning.
+
+Premises:
+[[CONTEXT]]
+
+Question:
+[[QUESTION]]
+
+Plan:
+Create a concise natural-language plan that identifies the relevant premises and how they should be combined into a supported answer.

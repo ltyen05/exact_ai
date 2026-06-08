@@ -68,8 +68,8 @@ def info() -> dict[str, Any]:
             "base_url": llm.base_url,
         },
         "features": [
-            "Logic verification with Z3",
-            "Logic few-shot retrieval and deterministic fallback parsing",
+            "Logic XAI SymbCoT classification, planning, execution, and answer extraction",
+            "Logic premise-index explainability without RAG injection",
             "Physics formula generation and SymPy computation",
             "LangGraph workflow routing",
             "LangSmith step tracing",

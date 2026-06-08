@@ -7,7 +7,7 @@ from .llm_provider import LLMClientBase
 
 
 class OpenRouterClient(LLMClientBase):
-    DEFAULT_MODEL = "qwen/qwen3-8b"
+    DEFAULT_MODEL = "qwen/qwen-2.5-7b-instruct"
     DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 
     def __init__(

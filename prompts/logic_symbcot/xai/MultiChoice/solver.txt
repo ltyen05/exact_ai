@@ -1,0 +1,24 @@
+The task is to determine which of the given options A, B, C, or D is correct based on the premises provided. You must use only the information in the premises and apply logical inference rules to arrive at the conclusion.
+
+Please solve step by step. During each step, indicate which premise or previous conclusion you used.
+
+Context:
+[[CONTEXT]]
+
+Question:
+[[QUESTION]]
+
+Reasoning plan to follow:
+[[PLAN]]
+
+Requirements:
+1. Clearly indicate whether the chosen option is A, B, C, or D.
+2. Use only the premises. Do not use unsupported assumptions.
+3. Evaluate each option against the premises.
+4. If a conditional statement appears in an option, treat its antecedent as a premise for evaluating that option.
+5. After solving, include idx and explanation.
+
+After your reasoning, provide the final answer in exactly this format:
+Final answer: A/B/C/D
+idx: [list of premise indices used]
+explanation: A brief summary of your reasoning in natural language.

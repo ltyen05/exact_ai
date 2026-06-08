@@ -63,6 +63,9 @@ class FormatterNode:
         fol = str(result.get("fol") or "").strip()
         if fol:
             output["fol"] = fol
+        idx = result.get("idx")
+        if isinstance(idx, list):
+            output["idx"] = [int(item) for item in idx if isinstance(item, int)]
         cot_steps = self._format_cot(cot)
         if cot_steps:
             output["cot"] = cot_steps
