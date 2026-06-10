@@ -79,7 +79,7 @@ class RAGSolutionProvider(LLMSolutionProvider):
         return super()._deterministic_solution(semantic_output)
 
     def get_solution(self, question: str, semantic_output: dict[str, Any]) -> dict[str, Any]:
-        """Request a solution with parsed data, deterministic hints, and retrieved examples."""
+        """Request a solution with parsed data, deterministic hints, retrieved examples, and SymPy conversion."""
         deterministic = self._deterministic_solution(semantic_output)
         examples = [self._compact_example(item) for item in self.retrieve(question)]
         prompt = self._build_prompt(
@@ -87,8 +87,9 @@ class RAGSolutionProvider(LLMSolutionProvider):
             retrieved_examples=examples,
             deterministic_solution=deterministic,
         )
-        return self._request_solution(
+        solution_draft = self._request_solution(
             prompt,
             semantic_output,
             deterministic_fallback=deterministic,
         )
+        return self._convert_to_sympy(semantic_output, solution_draft)
