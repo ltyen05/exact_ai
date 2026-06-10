@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
+from typing import Any
 
 from agents.physics.Solution.llm_provider import DOMAIN_PROMPT_FILES, LLMSolutionProvider
 
@@ -14,6 +16,31 @@ class DummyLLM:
     enabled = True
     provider = "test"
     model = "test-model"
+
+
+class RecordingLLM(DummyLLM):
+    def __init__(self, responses: dict[str, dict[str, Any]]) -> None:
+        self.responses = responses
+        self.calls: list[dict[str, Any]] = []
+
+    def chat(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float = 0.0,
+        max_tokens: int = 1024,
+        response_format: dict[str, Any] | None = None,
+        stage: str = "llm.chat",
+    ) -> str:
+        self.calls.append(
+            {
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "response_format": response_format,
+                "stage": stage,
+            }
+        )
+        return json.dumps(self.responses[stage])
 
 
 class PhysicsDomainPromptTests(unittest.TestCase):
@@ -66,6 +93,68 @@ class PhysicsDomainPromptTests(unittest.TestCase):
         provider = LLMSolutionProvider(DummyLLM())
         provider._build_prompt({"domain": "Unknown Domain", "target": {"symbol": "x", "unit": ""}})
         self.assertEqual(provider.last_prompt_diagnostics["selected_rule_pack"], ["fallback", "solution_type2.md"])
+
+    def test_get_solution_runs_convert_to_sympy_before_returning(self) -> None:
+        solution_draft = {
+            "mode": "computational",
+            "answer_type": "numeric",
+            "sympy_spec": {
+                "target_symbol": "W_C",
+                "target_unit": "J",
+                "equations": ["W_C = 1/2 C U^2"],
+                "known_values": {"C": "100 uF", "U": "30 V"},
+            },
+        }
+        converted_solution = {
+            "mode": "computational",
+            "answer_type": "numeric",
+            "sympy_spec": {
+                "target_symbol": "W_C",
+                "target_unit": "J",
+                "equations": ["W_C = C*U**2/2"],
+                "known_values": {"C": 0.0001, "U": 30},
+            },
+            "solution_steps": ["Use parser-normalized values."],
+        }
+        llm = RecordingLLM(
+            {
+                "physics.solution": solution_draft,
+                "physics.solution.convert_to_sympy": converted_solution,
+            }
+        )
+        provider = LLMSolutionProvider(llm)
+        parsed = {
+            "domain": "Capacitance",
+            "target": {"symbol": "W_C", "unit": "J"},
+            "givens": [
+                {"symbol": "C", "si_value": 0.0001, "si_unit": "F"},
+                {"symbol": "U", "si_value": 30, "si_unit": "V"},
+            ],
+            "question_kind": "computational",
+        }
+
+        result = provider.get_solution("Find energy.", parsed)
+
+        self.assertEqual(result, converted_solution)
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution", "physics.solution.convert_to_sympy"])
+        self.assertTrue(provider.last_prompt_diagnostics["used_convert_to_sympy"])
+        self.assertTrue(provider.last_prompt_diagnostics["convert_prompt"].endswith("convert_to_sympy.md"))
+
+    def test_direct_solution_skips_convert_to_sympy(self) -> None:
+        direct_solution = {
+            "mode": "direct",
+            "answer_type": "conceptual",
+            "direct_answer": {"answer": "Electric field is a vector field.", "selected_option": None, "rationale_steps": []},
+        }
+        llm = RecordingLLM({"physics.solution": direct_solution})
+        provider = LLMSolutionProvider(llm)
+        parsed = {"domain": "Electric Charges and Fields", "target": {"symbol": "answer", "unit": ""}}
+
+        result = provider.get_solution("What is an electric field?", parsed)
+
+        self.assertEqual(result, direct_solution)
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution"])
+        self.assertEqual(provider.last_prompt_diagnostics["skipped_convert_to_sympy"], "direct_mode")
 
 
 if __name__ == "__main__":
