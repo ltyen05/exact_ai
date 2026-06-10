@@ -22,7 +22,7 @@ class DummyLLM:
 
 
 class RecordingLLM(DummyLLM):
-    def __init__(self, responses: dict[str, dict[str, Any]]) -> None:
+    def __init__(self, responses: dict[str, Any]) -> None:
         self.responses = responses
         self.calls: list[dict[str, Any]] = []
 
@@ -43,7 +43,10 @@ class RecordingLLM(DummyLLM):
                 "stage": stage,
             }
         )
-        return json.dumps(self.responses[stage])
+        payload = self.responses[stage]
+        if isinstance(payload, list):
+            payload = payload.pop(0)
+        return json.dumps(payload)
 
 
 class PhysicsDomainPromptTests(unittest.TestCase):
@@ -141,7 +144,63 @@ class PhysicsDomainPromptTests(unittest.TestCase):
         self.assertEqual(result, converted_solution)
         self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution", "physics.solution.convert_to_sympy"])
         self.assertTrue(provider.last_prompt_diagnostics["used_convert_to_sympy"])
+        self.assertFalse(provider.last_prompt_diagnostics["used_solution_parser_verifier"])
         self.assertTrue(provider.last_prompt_diagnostics["convert_prompt"].endswith("convert_to_sympy.md"))
+
+    def test_solution_provider_verifies_only_when_solution_disagrees_with_parser(self) -> None:
+        solution_draft = {
+            "mode": "computational",
+            "answer_type": "numeric",
+            "sympy_spec": {
+                "target_symbol": "W_R",
+                "target_unit": "J",
+                "equations": ["W_R = C*U**2/2"],
+                "known_values": {"C": 0.0001, "U": 30},
+            },
+        }
+        verified_solution = {
+            "mode": "computational",
+            "answer_type": "numeric",
+            "sympy_spec": {
+                "target_symbol": "W_C",
+                "target_unit": "J",
+                "equations": ["W_C = C*U**2/2"],
+                "known_values": {"C": 0.0001, "U": 30},
+            },
+            "solution_steps": ["Repair target mismatch with parsed_question."],
+        }
+        llm = RecordingLLM(
+            {
+                "physics.solution": solution_draft,
+                "physics.solution.convert_to_sympy": [solution_draft, verified_solution],
+                "physics.solution.verify_against_parser": verified_solution,
+            }
+        )
+        provider = LLMSolutionProvider(llm)
+        parsed = {
+            "domain": "Capacitance",
+            "target": {"symbol": "W_C", "unit": "J"},
+            "givens": [
+                {"symbol": "C", "si_value": 0.0001, "si_unit": "F"},
+                {"symbol": "U", "si_value": 30, "si_unit": "V"},
+            ],
+            "question_kind": "computational",
+        }
+
+        result = provider.get_solution("Find capacitor energy.", parsed)
+
+        self.assertEqual(result, verified_solution)
+        self.assertEqual(
+            [call["stage"] for call in llm.calls],
+            [
+                "physics.solution",
+                "physics.solution.convert_to_sympy",
+                "physics.solution.verify_against_parser",
+                "physics.solution.convert_to_sympy",
+            ],
+        )
+        self.assertTrue(provider.last_prompt_diagnostics["used_solution_parser_verifier"])
+        self.assertIn("target_symbol", " ".join(provider.last_prompt_diagnostics["solution_parser_mismatches"]))
 
     def test_rag_solution_provider_also_runs_convert_to_sympy(self) -> None:
         solution_draft = {
