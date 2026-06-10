@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
 
 from agents.physics.Solution.llm_provider import DOMAIN_PROMPT_FILES, LLMSolutionProvider
+from agents.physics.Solution.rag_provider import RAGSolutionProvider
+from tools.calculator import solve_with_sympy_trace
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -140,6 +143,49 @@ class PhysicsDomainPromptTests(unittest.TestCase):
         self.assertTrue(provider.last_prompt_diagnostics["used_convert_to_sympy"])
         self.assertTrue(provider.last_prompt_diagnostics["convert_prompt"].endswith("convert_to_sympy.md"))
 
+    def test_rag_solution_provider_also_runs_convert_to_sympy(self) -> None:
+        solution_draft = {
+            "mode": "computational",
+            "answer_type": "numeric",
+            "sympy_spec": {
+                "target_symbol": "I",
+                "target_unit": "A",
+                "equations": ["I = U/R"],
+                "known_values": {"U": 10, "R": 5},
+            },
+        }
+        converted_solution = {
+            "mode": "computational",
+            "answer_type": "numeric",
+            "sympy_spec": {
+                "target_symbol": "I",
+                "target_unit": "A",
+                "equations": ["I = U/R"],
+                "known_values": {"U": 10, "R": 5},
+            },
+            "solution_steps": ["Use Ohm's law."],
+        }
+        llm = RecordingLLM(
+            {
+                "physics.solution": solution_draft,
+                "physics.solution.convert_to_sympy": converted_solution,
+            }
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            kb_path = Path(directory) / "kb.json"
+            kb_path.write_text(json.dumps([{"question": "Find current through resistor.", "answer": "2 A"}]), encoding="utf-8")
+            provider = RAGSolutionProvider(llm, kb_path=kb_path, top_k=1)
+            parsed = {
+                "domain": "Direct-Current Circuits",
+                "target": {"symbol": "I", "unit": "A"},
+                "givens": [{"symbol": "U", "si_value": 10}, {"symbol": "R", "si_value": 5}],
+                "question_kind": "computational",
+            }
+            result = provider.get_solution("Find current through resistor.", parsed)
+
+        self.assertEqual(result, converted_solution)
+        self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution", "physics.solution.convert_to_sympy"])
+
     def test_direct_solution_skips_convert_to_sympy(self) -> None:
         direct_solution = {
             "mode": "direct",
@@ -155,6 +201,15 @@ class PhysicsDomainPromptTests(unittest.TestCase):
         self.assertEqual(result, direct_solution)
         self.assertEqual([call["stage"] for call in llm.calls], ["physics.solution"])
         self.assertEqual(provider.last_prompt_diagnostics["skipped_convert_to_sympy"], "direct_mode")
+
+    def test_sympy_executor_supports_converter_allowed_functions(self) -> None:
+        result = solve_with_sympy_trace(
+            {"Z_total": 5, "x": 0.5},
+            ["P = Im(conjugate(Z_total))", "angle = asin(x)"],
+            "angle",
+        )
+        self.assertIsNotNone(result)
+        self.assertAlmostEqual(result.value, 0.5235987755982989)
 
 
 if __name__ == "__main__":
