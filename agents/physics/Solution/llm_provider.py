@@ -9,6 +9,7 @@ from typing import Any
 
 from agents.formatting import extract_json
 from agents.llm import LLMClientBase
+from tools.calculator import PHYSICAL_CONSTANTS
 
 from .formula_lib import SYMBOL_REPLACEMENTS, deterministic_solution as formula_lib_solution
 from .solution_provider import SolutionProvider
@@ -19,6 +20,21 @@ RAG_HINT_ITEM_LIMIT = 2
 DETERMINISTIC_HINT_CHAR_LIMIT = 2600
 DOMAIN_PROMPT_DIR = _PROJECT_ROOT / "prompts" / "physics_solution_domains"
 CONVERT_TO_SYMPY_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "convert_to_sympy.md"
+VERIFY_SOLUTION_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "verify_solution_against_parser.md"
+IGNORED_PARSED_TARGETS = {"", "answer", "result", "each_energy"}
+TARGET_EQUIVALENCE_GROUPS = (
+    {"q", "Q", "Q_source", "q_source", "charge"},
+    {"E", "E_net", "E_total", "E_field", "E_M", "E_N", "E_net_magnitude"},
+    {"F", "F_net", "F_resultant", "force"},
+    {"I", "I_rms", "I_max", "current"},
+    {"U", "V", "U_new", "V_new", "epsilon", "emf", "E_ind"},
+    {"W", "E", "W_B", "W_C", "W_L", "W_max", "E_total", "W_total"},
+    {"f", "f_res", "frequency"},
+    {"omega", "omega_res", "angular_frequency"},
+    {"R", "R_total", "R_eq", "R2", "resistance"},
+    {"C", "C_eq", "capacitance"},
+    {"L", "L_self", "L_ind", "inductance"},
+)
 DOMAIN_PROMPT_FILES = {
     "Electric Charges and Fields": "electric_charges_and_fields.md",
     "Gauss's Law": "gausss_law.md",
@@ -61,6 +77,16 @@ def _slugify_domain(value: Any) -> str:
     return re.sub(r"[^a-z0-9]+", "_", text).strip("_")
 
 
+def _target_symbols_equivalent(left: str, right: str) -> bool:
+    if left == right:
+        return True
+    return any(left in group and right in group for group in TARGET_EQUIVALENCE_GROUPS)
+
+
+def _unit_key(unit: Any) -> str:
+    return str(unit or "").strip().replace("µ", "u").replace("μ", "u").lower()
+
+
 class LLMSolutionProvider(SolutionProvider):
     """Build solution prompts and return the LLM's JSON specification."""
 
@@ -83,6 +109,11 @@ class LLMSolutionProvider(SolutionProvider):
             self.config.get("convert_to_sympy_prompt_path", CONVERT_TO_SYMPY_PROMPT_PATH)
         )
         self.convert_to_sympy_prompt_template = self.convert_to_sympy_prompt_path.read_text(encoding="utf-8")
+        self.use_solution_parser_verifier = bool(self.config.get("use_solution_parser_verifier", True))
+        self.verify_solution_prompt_path = Path(
+            self.config.get("verify_solution_prompt_path", VERIFY_SOLUTION_PROMPT_PATH)
+        )
+        self.verify_solution_prompt_template = self.verify_solution_prompt_path.read_text(encoding="utf-8")
         self._domain_prompt_cache: dict[Path, str] = {}
         self.last_prompt_diagnostics: dict[str, Any] = {}
 
@@ -213,6 +244,8 @@ class LLMSolutionProvider(SolutionProvider):
             "used_json_mode": True,
             "used_repair": False,
             "used_convert_to_sympy": False,
+            "used_solution_parser_verifier": False,
+            "solution_parser_mismatches": [],
         }
         return prompt
 
@@ -237,6 +270,149 @@ class LLMSolutionProvider(SolutionProvider):
             }
         )
         return prompt
+
+    def _build_solution_parser_verifier_prompt(
+        self,
+        question: str,
+        semantic_output: dict[str, Any],
+        solution_output: dict[str, Any],
+        mismatches: list[str],
+    ) -> str:
+        prompt = (
+            self.verify_solution_prompt_template.replace("{{ORIGINAL_QUESTION}}", str(question or ""))
+            .replace("{{PARSED_QUESTION}}", json.dumps(semantic_output, ensure_ascii=False, default=str))
+            .replace("{{SOLUTION_OUTPUT}}", json.dumps(solution_output, ensure_ascii=False, default=str))
+            .replace("{{MISMATCHES}}", json.dumps(mismatches, ensure_ascii=False, default=str))
+        )
+        self.last_prompt_diagnostics.update(
+            {
+                "used_solution_parser_verifier": True,
+                "solution_parser_verify_prompt": str(self.verify_solution_prompt_path),
+                "solution_parser_verify_prompt_chars": len(prompt),
+            }
+        )
+        return prompt
+
+    @staticmethod
+    def _lhs_symbols(equations: list[Any]) -> set[str]:
+        symbols: set[str] = set()
+        for equation in equations:
+            if not isinstance(equation, str) or equation.count("=") != 1:
+                continue
+            lhs = equation.split("=", 1)[0].strip()
+            if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", lhs):
+                symbols.add(lhs)
+        return symbols
+
+    @staticmethod
+    def _parsed_symbols(semantic_output: dict[str, Any]) -> set[str]:
+        symbols: set[str] = set()
+
+        def add_symbol(value: Any) -> None:
+            text = str(value or "").strip()
+            if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", text):
+                symbols.add(text)
+
+        for key in ("givens", "quantities"):
+            raw = semantic_output.get(key) or []
+            if isinstance(raw, dict):
+                for symbol in raw:
+                    add_symbol(symbol)
+            elif isinstance(raw, list):
+                for item in raw:
+                    if isinstance(item, dict):
+                        add_symbol(item.get("symbol"))
+        geometry = semantic_output.get("geometry") or {}
+        if isinstance(geometry, dict):
+            for key in ("segments", "derived_distances"):
+                for item in geometry.get(key) or []:
+                    if isinstance(item, dict):
+                        add_symbol(item.get("symbol"))
+        comparison = semantic_output.get("comparison") or {}
+        if isinstance(comparison, dict):
+            add_symbol(comparison.get("given_quantity_symbol"))
+            add_symbol(comparison.get("computed_quantity_symbol"))
+        target = semantic_output.get("target") or {}
+        if isinstance(target, dict):
+            add_symbol(target.get("symbol"))
+        return symbols
+
+    def _solution_parser_mismatches(
+        self,
+        semantic_output: dict[str, Any],
+        solution_output: dict[str, Any],
+    ) -> list[str]:
+        if not self.use_solution_parser_verifier:
+            return []
+        mismatches: list[str] = []
+        question_kind = str(semantic_output.get("question_kind") or "").lower()
+        answer_format = semantic_output.get("answer_format") or {}
+        requested_form = str(answer_format.get("requested_form") or "").lower() if isinstance(answer_format, dict) else ""
+        mode = str(solution_output.get("mode") or "")
+        answer_type = str(solution_output.get("answer_type") or "")
+
+        if mode == "direct":
+            if question_kind in {"computational", "yes_no_computational"} and semantic_output.get("givens"):
+                mismatches.append("Parsed question is computational with givens, but solution returned direct mode.")
+            return mismatches
+
+        if mode != "computational":
+            mismatches.append(f"Solution mode is {mode or '(missing)'}, expected computational or direct.")
+            return mismatches
+
+        spec = solution_output.get("sympy_spec") or {}
+        if not isinstance(spec, dict):
+            return ["Computational solution is missing sympy_spec object."]
+        equations = spec.get("equations") or []
+        lhs_symbols = self._lhs_symbols(equations if isinstance(equations, list) else [])
+        target_symbol = str(spec.get("target_symbol") or "").strip()
+        target_unit = str(spec.get("target_unit") or "").strip()
+        parsed_target = semantic_output.get("target") or {}
+        parsed_symbol = str(parsed_target.get("symbol") or "").strip() if isinstance(parsed_target, dict) else str(parsed_target or "").strip()
+        parsed_unit = str(parsed_target.get("unit") or "").strip() if isinstance(parsed_target, dict) else ""
+
+        if question_kind == "yes_no_computational" and answer_type != "yes_no":
+            mismatches.append("Parsed question is yes_no_computational, but solution answer_type is not yes_no.")
+        if answer_type == "yes_no" and question_kind != "yes_no_computational" and requested_form != "yes_no":
+            mismatches.append("Solution answer_type is yes_no, but parsed question did not request a yes/no computational answer.")
+        if parsed_symbol not in IGNORED_PARSED_TARGETS and target_symbol and not _target_symbols_equivalent(parsed_symbol, target_symbol):
+            mismatches.append(f"Parsed target symbol is {parsed_symbol}, but solution target_symbol is {target_symbol}.")
+        if parsed_unit and target_unit and _unit_key(parsed_unit) != _unit_key(target_unit):
+            mismatches.append(f"Parsed target unit is {parsed_unit}, but solution target_unit is {target_unit}.")
+        if target_symbol and target_symbol not in lhs_symbols:
+            mismatches.append(f"Solution target_symbol {target_symbol} is not defined by any equation lhs.")
+
+        known_values = spec.get("known_values") or {}
+        if isinstance(known_values, dict):
+            parsed_symbols = self._parsed_symbols(semantic_output)
+            fixed_symbols = set(PHYSICAL_CONSTANTS)
+            unsupported = sorted(
+                str(symbol)
+                for symbol in known_values
+                if str(symbol) not in parsed_symbols
+                and str(symbol) not in fixed_symbols
+                and str(symbol) not in lhs_symbols
+            )
+            if unsupported:
+                mismatches.append(
+                    "Solution known_values contains symbols not present in parsed_question and not defined by equations: "
+                    + ", ".join(unsupported)
+                    + "."
+                )
+
+        comparison = semantic_output.get("comparison") or {}
+        decision = solution_output.get("decision_spec") or {}
+        if question_kind == "yes_no_computational":
+            if not isinstance(decision, dict) or not decision.get("expected_symbol"):
+                mismatches.append("Parsed question is yes/no computational, but solution is missing decision_spec.expected_symbol.")
+            elif isinstance(comparison, dict) and comparison.get("given_quantity_symbol"):
+                expected = str(decision.get("expected_symbol") or "")
+                parsed_expected = str(comparison.get("given_quantity_symbol") or "")
+                if expected != parsed_expected:
+                    mismatches.append(
+                        f"Solution decision expected_symbol is {expected}, but parsed comparison symbol is {parsed_expected}."
+                    )
+        return mismatches
 
     def _chat_json(self, prompt: str, *, stage: str, max_tokens_key: str = "max_tokens") -> dict[str, Any]:
         response = self.llm_provider.chat(
@@ -275,6 +451,34 @@ class LLMSolutionProvider(SolutionProvider):
         prompt = self._build_convert_to_sympy_prompt(semantic_output, solution_draft, validation_error)
         return self._chat_json(prompt, stage="physics.solution.convert_to_sympy", max_tokens_key="convert_max_tokens")
 
+    def _verify_solution_against_parser(
+        self,
+        question: str,
+        semantic_output: dict[str, Any],
+        solution_output: dict[str, Any],
+    ) -> dict[str, Any]:
+        mismatches = self._solution_parser_mismatches(semantic_output, solution_output)
+        self.last_prompt_diagnostics["solution_parser_mismatches"] = mismatches
+        if not mismatches:
+            return solution_output
+        prompt = self._build_solution_parser_verifier_prompt(question, semantic_output, solution_output, mismatches)
+        verified = self._chat_json(
+            prompt,
+            stage="physics.solution.verify_against_parser",
+            max_tokens_key="verify_solution_max_tokens",
+        )
+        return self._convert_to_sympy(semantic_output, verified)
+
+    def _finalize_solution(
+        self,
+        question: str,
+        semantic_output: dict[str, Any],
+        solution_draft: dict[str, Any],
+        validation_error: str = "",
+    ) -> dict[str, Any]:
+        converted = self._convert_to_sympy(semantic_output, solution_draft, validation_error)
+        return self._verify_solution_against_parser(question, semantic_output, converted)
+
     @classmethod
     def deterministic_solution(cls, semantic_output: dict[str, Any]) -> dict[str, Any] | None:
         """Return the deterministic formula-library result when the workflow has no LLM."""
@@ -282,11 +486,10 @@ class LLMSolutionProvider(SolutionProvider):
 
     def get_solution(self, question: str, semantic_output: dict[str, Any]) -> dict[str, Any]:
         """Request one structured solution and normalize it into a SymPy-safe spec."""
-        del question
         deterministic = self._deterministic_solution(semantic_output)
         prompt = self._build_prompt(semantic_output, deterministic_solution=deterministic)
         solution_draft = self._request_solution(prompt, semantic_output, deterministic)
-        return self._convert_to_sympy(semantic_output, solution_draft)
+        return self._finalize_solution(question, semantic_output, solution_draft)
 
     def repair_solution(
         self,
@@ -296,7 +499,6 @@ class LLMSolutionProvider(SolutionProvider):
         validation_error: str,
     ) -> dict[str, Any]:
         """Ask the LLM to revise a solution after executor-side validation fails."""
-        del question
         self.last_prompt_diagnostics["used_repair"] = True
         prompt = (
             "Repair the physics solution JSON so it can be executed by SymPy. "
@@ -307,4 +509,4 @@ class LLMSolutionProvider(SolutionProvider):
             "JSON:"
         )
         repaired_draft = self._chat_json(prompt, stage="physics.solution.repair", max_tokens_key="repair_max_tokens")
-        return self._convert_to_sympy(semantic_output, repaired_draft, validation_error)
+        return self._finalize_solution(question, semantic_output, repaired_draft, validation_error)
