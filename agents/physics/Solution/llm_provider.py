@@ -17,6 +17,25 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 RAG_HINT_CHAR_LIMIT = 2100
 RAG_HINT_ITEM_LIMIT = 2
 DETERMINISTIC_HINT_CHAR_LIMIT = 2600
+DOMAIN_PROMPT_DIR = _PROJECT_ROOT / "prompts" / "physics_solution_domains"
+DOMAIN_PROMPT_FILES = {
+    "Electric Charges and Fields": "electric_charges_and_fields.md",
+    "Gauss's Law": "gausss_law.md",
+    "Gauss Law": "gausss_law.md",
+    "Electric Potential": "electric_potential.md",
+    "Capacitance": "capacitance.md",
+    "Current and Resistance": "current_and_resistance.md",
+    "Direct-Current Circuits": "direct_current_circuits.md",
+    "Direct Current Circuits": "direct_current_circuits.md",
+    "Magnetic Forces and Fields": "magnetic_forces_and_fields.md",
+    "Sources of Magnetic Fields": "sources_of_magnetic_fields.md",
+    "Electromagnetic Induction": "electromagnetic_induction.md",
+    "Inductance": "inductance.md",
+    "Alternating-Current Circuits": "alternating_current_circuits.md",
+    "Alternating Current Circuits": "alternating_current_circuits.md",
+    "Electromagnetic Waves": "electromagnetic_waves.md",
+    "Measurement and Uncertainty": "measurement_and_uncertainty.md",
+}
 
 
 def _normalize_text(value: Any) -> str:
@@ -36,6 +55,11 @@ def _json_preview(value: Any, max_chars: int = 1600) -> str:
     return f"{text[: max_chars - 3].rstrip()}..."
 
 
+def _slugify_domain(value: Any) -> str:
+    text = str(value or "").strip().lower().replace("'", "")
+    return re.sub(r"[^a-z0-9]+", "_", text).strip("_")
+
+
 class LLMSolutionProvider(SolutionProvider):
     """Build solution prompts and return the LLM's JSON specification."""
 
@@ -51,6 +75,9 @@ class LLMSolutionProvider(SolutionProvider):
         self.prompt_path = Path(prompt_path) if prompt_path else self.DEFAULT_PROMPT_PATH
         self.config = config or {}
         self.prompt_template = self.prompt_path.read_text(encoding="utf-8")
+        self.use_domain_prompts = bool(self.config.get("use_domain_prompts", prompt_path is None))
+        self.domain_prompt_dir = Path(self.config.get("domain_prompt_dir", DOMAIN_PROMPT_DIR))
+        self._domain_prompt_cache: dict[Path, str] = {}
         self.last_prompt_diagnostics: dict[str, Any] = {}
 
     @staticmethod
@@ -134,6 +161,27 @@ class LLMSolutionProvider(SolutionProvider):
     def _deterministic_solution(semantic_output: dict[str, Any]) -> dict[str, Any] | None:
         return formula_lib_solution(semantic_output)
 
+    def _domain_prompt_path(self, semantic_output: dict[str, Any]) -> Path | None:
+        if not self.use_domain_prompts:
+            return None
+        domain = str(semantic_output.get("domain") or "").strip()
+        file_name = DOMAIN_PROMPT_FILES.get(domain)
+        if file_name is None:
+            slug = _slugify_domain(domain)
+            file_name = f"{slug}.md" if slug else None
+        if not file_name:
+            return None
+        path = self.domain_prompt_dir / file_name
+        return path if path.exists() else None
+
+    def _select_prompt_template(self, semantic_output: dict[str, Any]) -> tuple[str, Path, str]:
+        path = self._domain_prompt_path(semantic_output)
+        if path is None:
+            return self.prompt_template, self.prompt_path, "fallback"
+        if path not in self._domain_prompt_cache:
+            self._domain_prompt_cache[path] = path.read_text(encoding="utf-8")
+        return self._domain_prompt_cache[path], path, "domain"
+
     def _build_prompt(
         self,
         semantic_output: dict[str, Any],
@@ -143,8 +191,9 @@ class LLMSolutionProvider(SolutionProvider):
         rag_hints = self._format_rag_hints(retrieved_examples)
         deterministic_hints = self._format_deterministic_hints(deterministic_solution)
         parsed_question = json.dumps(semantic_output, ensure_ascii=False, default=str)
+        prompt_template, prompt_path, prompt_kind = self._select_prompt_template(semantic_output)
         prompt = (
-            self.prompt_template.replace("{{RAG_HINTS}}", rag_hints)
+            prompt_template.replace("{{RAG_HINTS}}", rag_hints)
             .replace("{{DETERMINISTIC_HINTS}}", deterministic_hints)
             .replace("{{PARSED_QUESTION}}", parsed_question)
         )
@@ -152,7 +201,9 @@ class LLMSolutionProvider(SolutionProvider):
             "prompt_chars": len(prompt),
             "rag_chars": 0 if rag_hints == "None." else len(rag_hints),
             "deterministic_chars": 0 if deterministic_hints == "None." else len(deterministic_hints),
-            "selected_rule_pack": ["prompt"],
+            "selected_rule_pack": [prompt_kind, prompt_path.name],
+            "selected_prompt": str(prompt_path),
+            "selected_domain": str(semantic_output.get("domain") or ""),
             "used_json_mode": True,
             "used_repair": False,
         }
