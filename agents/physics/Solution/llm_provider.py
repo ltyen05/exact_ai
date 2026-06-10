@@ -18,6 +18,7 @@ RAG_HINT_CHAR_LIMIT = 2100
 RAG_HINT_ITEM_LIMIT = 2
 DETERMINISTIC_HINT_CHAR_LIMIT = 2600
 DOMAIN_PROMPT_DIR = _PROJECT_ROOT / "prompts" / "physics_solution_domains"
+CONVERT_TO_SYMPY_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "convert_to_sympy.md"
 DOMAIN_PROMPT_FILES = {
     "Electric Charges and Fields": "electric_charges_and_fields.md",
     "Gauss's Law": "gausss_law.md",
@@ -77,6 +78,11 @@ class LLMSolutionProvider(SolutionProvider):
         self.prompt_template = self.prompt_path.read_text(encoding="utf-8")
         self.use_domain_prompts = bool(self.config.get("use_domain_prompts", prompt_path is None))
         self.domain_prompt_dir = Path(self.config.get("domain_prompt_dir", DOMAIN_PROMPT_DIR))
+        self.use_convert_to_sympy = bool(self.config.get("use_convert_to_sympy", True))
+        self.convert_to_sympy_prompt_path = Path(
+            self.config.get("convert_to_sympy_prompt_path", CONVERT_TO_SYMPY_PROMPT_PATH)
+        )
+        self.convert_to_sympy_prompt_template = self.convert_to_sympy_prompt_path.read_text(encoding="utf-8")
         self._domain_prompt_cache: dict[Path, str] = {}
         self.last_prompt_diagnostics: dict[str, Any] = {}
 
@@ -206,7 +212,30 @@ class LLMSolutionProvider(SolutionProvider):
             "selected_domain": str(semantic_output.get("domain") or ""),
             "used_json_mode": True,
             "used_repair": False,
+            "used_convert_to_sympy": False,
         }
+        return prompt
+
+    def _build_convert_to_sympy_prompt(
+        self,
+        semantic_output: dict[str, Any],
+        solution_draft: dict[str, Any],
+        validation_error: str = "",
+    ) -> str:
+        parsed_question = json.dumps(semantic_output, ensure_ascii=False, default=str)
+        draft = json.dumps(solution_draft, ensure_ascii=False, default=str)
+        prompt = (
+            self.convert_to_sympy_prompt_template.replace("{{PARSED_QUESTION}}", parsed_question)
+            .replace("{{SOLUTION_DRAFT}}", draft)
+            .replace("{{VALIDATION_ERROR}}", validation_error or "None.")
+        )
+        self.last_prompt_diagnostics.update(
+            {
+                "used_convert_to_sympy": True,
+                "convert_prompt": str(self.convert_to_sympy_prompt_path),
+                "convert_prompt_chars": len(prompt),
+            }
+        )
         return prompt
 
     def _chat_json(self, prompt: str, *, stage: str, max_tokens_key: str = "max_tokens") -> dict[str, Any]:
@@ -232,17 +261,32 @@ class LLMSolutionProvider(SolutionProvider):
         del semantic_output, deterministic_fallback
         return self._chat_json(prompt, stage="physics.solution")
 
+    def _convert_to_sympy(
+        self,
+        semantic_output: dict[str, Any],
+        solution_draft: dict[str, Any],
+        validation_error: str = "",
+    ) -> dict[str, Any]:
+        if not self.use_convert_to_sympy:
+            return solution_draft
+        if solution_draft.get("mode") == "direct":
+            self.last_prompt_diagnostics.update({"used_convert_to_sympy": False, "skipped_convert_to_sympy": "direct_mode"})
+            return solution_draft
+        prompt = self._build_convert_to_sympy_prompt(semantic_output, solution_draft, validation_error)
+        return self._chat_json(prompt, stage="physics.solution.convert_to_sympy", max_tokens_key="convert_max_tokens")
+
     @classmethod
     def deterministic_solution(cls, semantic_output: dict[str, Any]) -> dict[str, Any] | None:
         """Return the deterministic formula-library result when the workflow has no LLM."""
         return cls._deterministic_solution(semantic_output)
 
     def get_solution(self, question: str, semantic_output: dict[str, Any]) -> dict[str, Any]:
-        """Request one structured solution for the parsed question."""
+        """Request one structured solution and normalize it into a SymPy-safe spec."""
         del question
         deterministic = self._deterministic_solution(semantic_output)
         prompt = self._build_prompt(semantic_output, deterministic_solution=deterministic)
-        return self._request_solution(prompt, semantic_output, deterministic)
+        solution_draft = self._request_solution(prompt, semantic_output, deterministic)
+        return self._convert_to_sympy(semantic_output, solution_draft)
 
     def repair_solution(
         self,
@@ -262,4 +306,5 @@ class LLMSolutionProvider(SolutionProvider):
             f"Invalid solution:\n{_json_preview(invalid_solution)}\n\n"
             "JSON:"
         )
-        return self._chat_json(prompt, stage="physics.solution.repair", max_tokens_key="repair_max_tokens")
+        repaired_draft = self._chat_json(prompt, stage="physics.solution.repair", max_tokens_key="repair_max_tokens")
+        return self._convert_to_sympy(semantic_output, repaired_draft, validation_error)
