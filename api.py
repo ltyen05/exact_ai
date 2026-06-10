@@ -2,27 +2,42 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict
 import uvicorn
 
-from agents.llm import OpenRouterClient
+from agents.llm import OpenRouterClient, VLLMClient
 from agents.workflows import ExactGraph, WorkflowExecutionError
 
 
 load_dotenv()
+TRUE_VALUES = {"1", "true", "yes", "on"}
+if os.getenv("EXACT_ENABLE_LANGSMITH", "").strip().lower() not in TRUE_VALUES:
+    os.environ["LANGSMITH_TRACING"] = "false"
+    os.environ["LANGCHAIN_TRACING_V2"] = "false"
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_PHYSICS_KB = ROOT / "data" / "Physics_Problems_Text_Only_removeQA.json"
 DEFAULT_LOGIC_KB = ROOT / "data" / "Logic_Based_Educational_Queries.json"
 
 OPENROUTER_API_KEY_ENV = "OR_TOKEN"
+LLM_PROVIDER_ENV = "EXACT_LLM_PROVIDER"
 
-llm = OpenRouterClient(api_key_env=OPENROUTER_API_KEY_ENV)
+
+def build_llm() -> Any:
+    """Use vLLM for submission, while keeping OpenRouter available for demos."""
+    provider = os.getenv(LLM_PROVIDER_ENV, "vllm").strip().lower()
+    if provider in {"openrouter", "or"}:
+        return OpenRouterClient(api_key_env=OPENROUTER_API_KEY_ENV)
+    return VLLMClient()
+
+
+llm = build_llm()
 graph = ExactGraph(
     llm=llm,
     physics_kb_path=str(DEFAULT_PHYSICS_KB),
@@ -33,12 +48,15 @@ app = FastAPI(title="EXACT 2026 Multi-Agent QA", version="2.0-langgraph")
 
 
 class QueryPayload(BaseModel):
-    """Accept the question and optional natural-language premises."""
+    """Accept the unified EXACT 2026 competition payload."""
 
     model_config = ConfigDict(extra="forbid")
 
-    question: str
-    premises: list[str] | None = None
+    query_id: str
+    type: Literal["type1", "type2"]
+    query: str
+    premises: list[str]
+    options: list[str]
 
 
 def get_graph() -> ExactGraph:
@@ -51,6 +69,7 @@ def health() -> dict[str, Any]:
     """Report whether the API and configured LLM are available."""
     return {
         "status": "ok",
+        "llm_provider": llm.provider,
         "llm_enabled": llm.enabled,
     }
 
@@ -81,15 +100,15 @@ def info() -> dict[str, Any]:
 def predict(
     payload: QueryPayload,
     workflow: ExactGraph = Depends(get_graph),
-) -> dict[str, Any]:
-    """Route one input question through the graph and return its formatted answer."""
+) -> list[dict[str, Any]]:
+    """Route one competition query and return the required one-item result list."""
     data = payload.model_dump(exclude_none=True)
-    question = data["question"].strip()
+    question = data["query"].strip()
     if not question:
-        raise HTTPException(status_code=422, detail="A non-empty question is required.")
-    data["question"] = question
+        raise HTTPException(status_code=422, detail="A non-empty query is required.")
+    data["query"] = question
     try:
-        return workflow.predict(data)
+        return [workflow.predict(data)]
     except WorkflowExecutionError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except ValueError as exc:

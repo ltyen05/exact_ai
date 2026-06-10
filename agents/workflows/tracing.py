@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from typing import Any, TypeVar
 
@@ -10,6 +11,12 @@ import langsmith as ls
 F = TypeVar("F", bound=Callable[..., Any])
 
 _BLOCKED_KEYS = {"confidence", "metadata", "raw_type", "source", "tracing"}
+_TRUE_VALUES = {"1", "true", "yes", "on"}
+
+
+def _tracing_enabled() -> bool:
+    """Keep submission runs free of tracing network calls unless explicitly enabled."""
+    return os.getenv("EXACT_ENABLE_LANGSMITH", "").strip().lower() in _TRUE_VALUES
 
 
 def _clean(value: Any) -> Any:
@@ -122,6 +129,8 @@ def trace_step(name: str) -> Callable[[F], F]:
     """Decorate one workflow step while storing only compact business data."""
 
     def decorate(function: F) -> F:
+        if not _tracing_enabled():
+            return function
         return ls.traceable(
             name=name,
             process_inputs=_process_step_inputs,
@@ -133,6 +142,8 @@ def trace_step(name: str) -> Callable[[F], F]:
 
 def trace_llm_attempt(function: F) -> F:
     """Decorate one HTTP LLM attempt without persisting prompt content."""
+    if not _tracing_enabled():
+        return function
     return ls.traceable(
         name="llm.http_attempt",
         run_type="llm",

@@ -25,3 +25,22 @@ Chạy cả hai phần:
 ```bash
 python demo_p1.py --logic-samples 2 --physics-samples 2 --output outputs/demo_p1_output.json
 ```
+
+## API submission contract
+
+`POST /predict` uses the EXACT 2026 unified payload:
+
+```json
+{
+  "query_id": "T1_0001",
+  "type": "type1",
+  "query": "Is John eligible?",
+  "premises": ["If a student qualifies, the student is eligible.", "John qualifies."],
+  "options": ["Yes", "No", "Uncertain"]
+}
+```
+
+The response is always a JSON list with one result object containing
+`query_id`, `answer`, `unit`, `explanation`, `premises_used`, and `reasoning`.
+The API defaults to vLLM; set `EXACT_LLM_PROVIDER=openrouter` and `OR_TOKEN` for
+local OpenRouter demo runs.

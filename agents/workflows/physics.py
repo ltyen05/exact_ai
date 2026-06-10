@@ -178,9 +178,6 @@ class PhysicsWorkflow:
                     verified_output,
                 )
                 result["explanation"] = str(explanation["explanation"])
-                result["answer"] = str(explanation.get("answer") or result.get("answer") or "Unknown")
-                result["unit"] = ""
-                result["append_unit"] = False
                 result["cot"] = [str(step) for step in explanation.get("cot") or cot]
                 return {"result": result}
             except Exception as exc:
