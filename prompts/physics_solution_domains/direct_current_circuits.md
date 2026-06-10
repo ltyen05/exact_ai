@@ -6,26 +6,39 @@ Output schemas:
 - Numeric: {"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"...","target_unit":"...","equations":["..."],"known_values":{}},"solution_steps":["..."]}
 - Direct: {"mode":"direct","answer_type":"yes_no | multiple_choice | conceptual","direct_answer":{"answer":"...","selected_option":null,"rationale_steps":["..."]}}
 
+Coverage ladder, easy to hard:
+1. Single resistor: I = U/R, U = I*R, P = U*I.
+2. Series resistors: R_eq = R1 + R2 + ...; same current; voltage divides.
+3. Parallel resistors: branch currents add; same voltage; 1/R_eq = sum(1/Ri).
+4. Mixed circuit: reduce simple sub-networks step by step, then compute branch quantities.
+5. Source with internal resistance or Kirchhoff branches: define loop/branch equations explicitly.
+
 Domain rules:
 - Series resistors: R_eq = R1 + R2 + ...; same current.
 - Parallel resistors: 1/R_eq = 1/R1 + 1/R2 + ...; same voltage.
-- For a source with internal resistance r: I = emf/(R_external + r), terminal voltage U = emf - I*r.
-- Use Kirchhoff equations only when circuit topology requires branches/loops. Define branch currents explicitly.
-- For multiple requested currents/voltages, define each target equation and use a final target_symbol that matches parsed_question.target.symbol when possible.
+- For a source with internal resistance r: I = emf/(R_external + r), terminal voltage U_terminal = emf - I*r.
+- Use Kirchhoff equations only when topology requires branches/loops; define branch currents explicitly.
+- For multiple requested currents/voltages, define helper symbols I1, I2, U1, U2, then choose final target_symbol from parsed_question.target.
 
-Example 1:
+Example 1 — single resistor:
+Input parsed_question:
+{"domain":"Direct-Current Circuits","target":{"symbol":"I","unit":"A"},"givens":[{"symbol":"U","si_value":10,"si_unit":"V"},{"symbol":"R","si_value":20,"si_unit":"Ohm"}],"question_kind":"computational"}
+Output:
+{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"I","target_unit":"A","equations":["I = U/R"],"known_values":{"U":10,"R":20}},"solution_steps":["Use Ohm's law for a single resistor."]}
+
+Example 2 — series resistors:
 Input parsed_question:
 {"domain":"Direct-Current Circuits","target":{"symbol":"I","unit":"A"},"givens":[{"symbol":"U","si_value":10,"si_unit":"V"},{"symbol":"R1","si_value":20,"si_unit":"Ohm"},{"symbol":"R2","si_value":30,"si_unit":"Ohm"}],"relations":["R1 and R2 are connected in series"],"question_kind":"computational"}
 Output:
 {"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"I","target_unit":"A","equations":["R_eq = R1 + R2","I = U/R_eq"],"known_values":{"U":10,"R1":20,"R2":30}},"solution_steps":["Use the series equivalent resistance.","Apply Ohm's law to the whole circuit."]}
 
-Example 2:
+Example 3 — parallel resistors:
 Input parsed_question:
 {"domain":"Direct-Current Circuits","target":{"symbol":"I_total","unit":"A"},"givens":[{"symbol":"U","si_value":12,"si_unit":"V"},{"symbol":"R1","si_value":6,"si_unit":"Ohm"},{"symbol":"R2","si_value":3,"si_unit":"Ohm"}],"relations":["R1 and R2 are connected in parallel"],"question_kind":"computational"}
 Output:
 {"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"I_total","target_unit":"A","equations":["I1 = U/R1","I2 = U/R2","I_total = I1 + I2"],"known_values":{"U":12,"R1":6,"R2":3}},"solution_steps":["In parallel, each resistor has the same voltage.","Compute branch currents and add them for total current."]}
 
-Example 3:
+Example 4 — source with internal resistance:
 Input parsed_question:
 {"domain":"Direct-Current Circuits","target":{"symbol":"U_terminal","unit":"V"},"givens":[{"symbol":"emf","si_value":12,"si_unit":"V"},{"symbol":"R","si_value":5,"si_unit":"Ohm"},{"symbol":"r","si_value":1,"si_unit":"Ohm"}],"relations":["source has internal resistance"],"question_kind":"computational"}
 Output:
