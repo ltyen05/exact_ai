@@ -43,24 +43,25 @@ Required output schema for non-computable conceptual/multiple-choice problems:
 Hard SymPy contract. The output is invalid if any rule is violated:
 1. Every equation must be ASCII text in the exact form `lhs = rhs` with exactly one equals sign.
 2. `lhs` must be a plain ASCII identifier matching `[A-Za-z_][A-Za-z0-9_]*`.
-3. Use explicit multiplication: `2*x`, `k*q1*q2/r**2`, never `2x`, `kq`, `LC`, or `R_total I`.
+3. Use explicit multiplication: `2*x`, `k_e*q1*q2/r**2`, never `2x`, `kq`, `LC`, or `R_total I`.
 4. Use Python/SymPy power syntax: `x**2`, never `x^2`, `x²`, or LaTeX superscripts.
 5. No units inside equations. Never write `10 V`, `5 Ohm`, `30 cm`, `100 uF`, `N/C`, `m^2` in equations.
 6. `known_values` may contain only JSON numbers, booleans, or numeric strings already parseable by Python/SymPy. Prefer JSON numbers.
 7. Every RHS symbol must be one of: a key in `known_values`, an earlier equation lhs, the current equation lhs for derivative equations, or an allowed function/constant.
-8. Allowed functions/constants: `Abs`, `sqrt`, `sin`, `cos`, `tan`, `atan`, `asin`, `acos`, `exp`, `log`, `diff`, `pi`, `E`, `I`, `re`, `im`, `conjugate`.
-9. Do not use Unicode identifiers. Normalize symbols before output:
+8. Allowed functions/constants: `Abs`, `sqrt`, `sin`, `cos`, `tan`, `atan`, `asin`, `acos`, `exp`, `log`, `diff`, `pi`, `re`, `im`, `Re`, `Im`, `conjugate`.
+9. Treat `E` and `I` as normal physics variable names, not as Euler's number or imaginary unit.
+10. Do not use Unicode identifiers. Normalize symbols before output:
    - `ω` -> `omega`, `θ` -> `theta`, `φ`/`Φ` -> `phi` or `Phi`, `λ` -> `lambda_`, `μ` -> `mu`, `ε` -> `epsilon`, `π` -> `pi`.
    - `R₁` -> `R1`, `q₀` -> `q0`, `I_max` stays `I_max`.
-10. Do not use reserved Python/SymPy names as variables: `lambda`, `for`, `if`, `sum`, `list`, `dict`, `set`, `int`, `float`, `abs`, `min`, `max`.
-11. Do not use `k` as a symbolic unknown if it means a multiplier/factor. Use `k_e` for Coulomb constant and `k_factor` for scale factors.
-12. Do not use Coulomb constant `k_e` in magnetic induction, inductance, solenoid, or RLC equations.
-13. Define helper symbols before using them. Example: define `X_L` before `Z` if `Z` uses `X_L`.
-14. `sympy_spec.target_symbol` must be defined as an equation lhs. For yes/no, `decision_spec.computed_symbol` must equal the target symbol.
-15. If requested answer is magnitude, the final target equation must use `Abs(...)` or `sqrt(component_x**2 + component_y**2)`.
-16. If the draft is conceptual, keep direct mode. Do not fabricate numeric equations.
-17. If the draft contains a formula impossible to normalize safely, repair it using parsed_question and standard physics relations. Still return a computable JSON object when parsed_question contains enough data.
-18. If parsed_question lacks enough numeric data for a computational answer, return direct mode explaining the missing data; do not output broken SymPy.
+11. Do not use reserved Python/SymPy names as variables: `lambda`, `for`, `if`, `sum`, `list`, `dict`, `set`, `int`, `float`, `abs`, `min`, `max`.
+12. Do not use `k` as a symbolic unknown if it means a multiplier/factor. Use `k_e` for Coulomb constant and `k_factor` for scale factors.
+13. Do not use Coulomb constant `k_e` in magnetic induction, inductance, solenoid, or RLC equations.
+14. Define helper symbols before using them. Example: define `X_L` before `Z` if `Z` uses `X_L`.
+15. `sympy_spec.target_symbol` must be defined as an equation lhs. For yes/no, `decision_spec.computed_symbol` must equal the target symbol.
+16. If requested answer is magnitude, the final target equation must use `Abs(...)` or `sqrt(component_x**2 + component_y**2)`.
+17. If the draft is conceptual, keep direct mode. Do not fabricate numeric equations.
+18. If the draft contains a formula impossible to normalize safely, repair it using parsed_question and standard physics relations. Still return a computable JSON object when parsed_question contains enough data.
+19. If parsed_question lacks enough numeric data for a computational answer, return direct mode explaining the missing data; do not output broken SymPy.
 
 Variable normalization examples:
 - `C = 100 μF` from parsed_question must appear as `"C": 0.0001` in known_values, not inside equations.
