@@ -18,7 +18,7 @@
   {
     "query_id": "TD402",
     "answer": "100",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: the charge Q = 3 mC and the voltage U = 30 V.\nStep 2: Recall the formula for capacitance, which is C = Q / U.\nStep 3: Convert the charge to the standard unit (Coulombs): Q = 3 mC = 3 \\u00d7 10\\u207b\\u00b3 C.\nStep 4: Substitute the values into the formula: C = (3 \\u00d7 10\\u207b\\u00b3 C) / (30 V).",
     "premises_used": [],
     "reasoning": {
@@ -242,7 +242,7 @@
   {
     "query_id": "LD014",
     "answer": "3.46",
-    "unit": "\\u03bcC",
+    "unit": "uC",
     "explanation": "Step 1: Identify the given values from the question: The force (F) between the charges is 4.8 N, the separation distance (r) is 15 cm, and the magnitudes of the charges are equal (q1 = q2 = q).\nStep 2: State Coulomb's Law, which describes the magnitude of the electrostatic force between two point charges: F = k * |q1 * q2| / r^2, where k is Coulomb's constant (approximately 9 x 10^9 N m^2/C^2).\nStep 3: Convert the separation distance from centimeters to meters: r = 15 cm = 0.15 m.\nStep 4: Substitute the given values (F = 4.8 N, r = 0.15 m, k = 9 x 10^9 N m^2/C^2) and the condition q1 = q2 = q into Coulomb's Law: 4.8 = (9 x 10^9) * q^2 / (0.15)^2.",
     "premises_used": [],
     "reasoning": {
@@ -338,7 +338,7 @@
   {
     "query_id": "LD020",
     "answer": "120",
-    "unit": "\\u0110\\u1ed9",
+    "unit": "deg",
     "explanation": "Step 1: Identify the magnitudes of the two forces (F1, F2) and the resultant force (R).\nStep 2: F1 = 10 N, F2 = 10 N, R = 10 N.\nStep 3: Use the formula for the resultant of two forces: R\\u00b2 = F\\u2081\\u00b2 + F\\u2082\\u00b2 + 2F\\u2081F\\u2082cos\\u03b8.\nStep 4: Substitute the given values into the formula: 10\\u00b2 = 10\\u00b2 + 10\\u00b2 + 2(10)(10)cos\\u03b8.",
     "premises_used": [],
     "reasoning": {
@@ -1765,7 +1765,7 @@
   {
     "query_id": "TD003",
     "answer": "11.25",
-    "unit": "\\u03bcJ",
+    "unit": "uJ",
     "explanation": "Step 1: Identify the initial capacitance (C) and initial voltage (U) of the air-filled capacitor.\nStep 2: Calculate the initial charge (Q) stored on the capacitor plates using the formula Q = C * U.\nStep 3: Recognize that since the capacitor is disconnected from the source, the charge (Q) on its plates remains constant when immersed in the dielectric.\nStep 4: Calculate the new capacitance (C_new) after the capacitor is immersed in the dielectric, using the formula C_new = \\u03b5_r * C, where \\u03b5_r is the relative permittivity (dielectric constant).\nStep 5: Calculate the new electric field energy (W_new) using the constant charge (Q) and new capacitance (C_new): W_new = Q^2 / (2 * C_new).\nStep 6: The electric field energy stored between the plates of the capacitor is 11.25 \\u03bcJ.",
     "premises_used": [],
     "reasoning": {
@@ -1783,7 +1783,7 @@
   {
     "query_id": "TD004",
     "answer": "45",
-    "unit": "\\u03bcJ",
+    "unit": "uJ",
     "explanation": "Step 1: Identify the initial capacitance of the air-filled capacitor, C_air = 500 pF, and the voltage it is charged to, U = 300 V.\nStep 2: Note that the capacitor remains connected to the voltage source, meaning the voltage across its plates will stay constant at U = 300 V even after immersion.\nStep 3: Identify the dielectric constant of the liquid, \\u03b5 = 2.\nStep 4: Calculate the new capacitance (C_liquid) after the capacitor is immersed in the liquid dielectric. The capacitance increases by a factor of the dielectric constant: C_liquid = \\u03b5 * C_air = 2 * 500 pF = 1000 pF.\nStep 5: Calculate the new electric field energy (W_new) using the constant voltage (U): W_new = 1 / 2 * C_liquid * U^2.\nStep 7: The electric field energy stored between the plates of the capacitor is 45 \\u03bcJ.",
     "premises_used": [],
     "reasoning": {
@@ -1920,7 +1920,7 @@
   {
     "query_id": "TD012",
     "answer": "3",
-    "unit": "\\u03bcC",
+    "unit": "uC",
     "explanation": "Step 1: Convert the given dimensions to SI units.\nStep 2: Calculate the area of the circular plates.\nStep 3: Determine the maximum potential difference (voltage) that can be applied across the plates before dielectric breakdown.\nStep 4: State the formula relating maximum charge, capacitance, and maximum voltage.\nStep 5: The maximum charge that can be stored on the capacitor without dielectric breakdown is approximately 3 \\u03bcC.",
     "premises_used": [],
     "reasoning": {
@@ -3194,7 +3194,7 @@
   {
     "query_id": "TD091",
     "answer": "2.085",
-    "unit": "\\u03bcC",
+    "unit": "uC",
     "explanation": "Step 1: Convert all given values to SI units.\nStep 2: Calculate the area (A) of the circular capacitor plates using the given radius R = 0.50 m.\nStep 3: Calculate the maximum voltage (V_max) the capacitor can withstand using the maximum electric field strength (E_max) and the distance between plates (d = 1.5 \\u00d7 10\\u207b\\u00b3 m).\nStep 4: Calculate the capacitance (C) of the parallel-plate capacitor using the permittivity of free space (\\u03b5\\u2080 \\u2248 8.854 \\u00d7 10\\u207b\\u00b9\\u00b2 F / m), the calculated area (A), and the distance (d).\nStep 5: Calculate the maximum charge (Q_max) using the formula Q_max = C * V_max.\nStep 6: Step 6: The maximum charge stored is 2.085 \\u03bcC.",
     "premises_used": [],
     "reasoning": {
@@ -3212,7 +3212,7 @@
   {
     "query_id": "TD092",
     "answer": "1.69",
-    "unit": "\\u03bcC",
+    "unit": "uC",
     "explanation": "Step 1: Identify the given values and convert them to SI units.\nStep 2: Calculate the area (A) of one circular plate using the radius (r).\nStep 3: Calculate the maximum voltage (V_max) the capacitor can withstand, using the maximum electric field (E_max) and the plate separation (d).\nStep 4: Calculate the capacitance (C) of the parallel-plate capacitor, using the plate area (A), plate separation (d), and the permittivity of free space (\\u03b5\\u2080 \\u2248 8.854 \\u00d7 10\\u207b\\u00b9\\u00b2 F/m) for air.\nStep 5: Calculate the maximum charge (Q_max) using the formula Q_max = C * V_max.\nStep 6: The maximum charge stored is 1.69 \\u03bcC.",
     "premises_used": [],
     "reasoning": {
@@ -3230,7 +3230,7 @@
   {
     "query_id": "TD093",
     "answer": "5.73",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The given values are capacitance C = 5.2 nF, plate area A = 12.3 cm\\u00b2, and plate separation d = 1.2\\u00d710\\u207b\\u2075 m.\nStep 2: The formula for the capacitance of a parallel-plate capacitor with a dielectric is C = \\u03ba * \\u03b5\\u2080 * A / d, where \\u03ba is the dielectric constant and \\u03b5\\u2080 is the permittivity of free space.\nStep 3: To find the dielectric constant \\u03ba, the formula can be rearranged to \\u03ba = (C * d) / (\\u03b5\\u2080 * A), where \\u03b5\\u2080 is the permittivity of free space (approximately 8.854 \\u00d7 10\\u207b\\u00b9\\u00b2 F / m for air).\nStep 4: The dielectric constant of the dielectric material inside the capacitor is 5.73.",
     "premises_used": [],
     "reasoning": {
@@ -3246,7 +3246,7 @@
   {
     "query_id": "TD094",
     "answer": "11.04",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Identify the given quantities: Capacitance (C) = 8.8 nF, Plate Area (A) = 9 cm\\u00b2, Plate Separation (d) = 1.0 \\u00d7 10\\u207b\\u2075 m. The constant permittivity of free space (\\u03b5\\u2080) is approximately 8.854 \\u00d7 10\\u207b\\u00b9\\u00b2 F/m.\nStep 2: Convert the given quantities to SI units: C = 8.8 \\u00d7 10\\u207b\\u2079 F, A = 9 \\u00d7 (10\\u207b\\u00b2 m)\\u00b2 = 9 \\u00d7 10\\u207b\\u2074 m\\u00b2, and d = 1.0 \\u00d7 10\\u207b\\u2075 m.\nStep 3: The formula for the capacitance of a parallel-plate capacitor with a dielectric material is C = \\u03ba * \\u03b5\\u2080 * (A / d), where \\u03ba is the dielectric constant.\nStep 4: Rearrange the formula to solve for the dielectric constant (\\u03ba): \\u03ba = (C * d) / (\\u03b5\\u2080 * A).\nStep 5: The dielectric constant of the dielectric material inside the capacitor is 11.04.",
     "premises_used": [],
     "reasoning": {
@@ -3299,7 +3299,7 @@
   {
     "query_id": "TD097",
     "answer": "2.52",
-    "unit": "\\u03bcC",
+    "unit": "uC",
     "explanation": "Step 1: Convert the given radius and separation distance to SI units (meters).\nStep 2: Calculate the area of one circular capacitor plate using the formula A = \\u03c0r\\u00b2.\nStep 3: Calculate the capacitance of the parallel plate capacitor using the formula C = \\u03b5\\u2080A/d, where \\u03b5\\u2080 is the permittivity of free space (8.854 \\u00d7 10\\u207b\\u00b9\\u00b2 F/m).\nStep 4: Calculate the maximum voltage the capacitor can withstand using the formula V_max = E_max \\u00d7 d.\nStep 5: Calculate the maximum charge (Q_max) using Q_max = C * V_max.\nStep 6: The maximum charge the capacitor can store without dielectric breakdown is 2.52 \\u03bcC.",
     "premises_used": [],
     "reasoning": {
@@ -3317,7 +3317,7 @@
   {
     "query_id": "TD098",
     "answer": "4.57",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Identify the given values from the question: Capacitance (C) = 6.3 nF, Plate area (A) = 14 cm\\u00b2, Plate separation (d) = 9.0\\u00d710\\u207b\\u2076 m.\nStep 2: Convert the given values to SI units: C = 6.3 \\u00d7 10\\u207b\\u2079 F, A = 14 \\u00d7 10\\u207b\\u2074 m\\u00b2.\nStep 3: Recall the formula for the capacitance of a parallel plate capacitor with a dielectric: C = \\u03ba * \\u03b5\\u2080 * A / d, where \\u03ba is the dielectric constant and \\u03b5\\u2080 is the permittivity of free space (\\u03b5\\u2080 \\u2248 8.854 \\u00d7 10\\u207b\\u00b9\\u00b2 F/m).\nStep 4: Rearrange the formula to solve for the dielectric constant (\\u03ba): \\u03ba = (C * d) / (\\u03b5\\u2080 * A).\nStep 5: The dielectric constant of the dielectric material in the capacitor is 4.57.",
     "premises_used": [],
     "reasoning": {
@@ -3352,7 +3352,7 @@
   {
     "query_id": "TD100",
     "answer": "10.89",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Identify the given values from the question.\nStep 2: Convert the given values to SI units.\nStep 3: Recall the formula for the capacitance of a parallel plate capacitor with a dielectric material.\nStep 4: Rearrange the formula to solve for the dielectric constant \\u03ba.\nStep 5: The dielectric constant of the dielectric material inside the capacitor is 10.89.",
     "premises_used": [],
     "reasoning": {
@@ -8939,9 +8939,7 @@
     "premises_used": [],
     "reasoning": {
       "type": "cot",
-      "steps": [
-        ""
-      ]
+      "steps": []
     }
   },
   {
@@ -8979,9 +8977,7 @@
     "premises_used": [],
     "reasoning": {
       "type": "cot",
-      "steps": [
-        ""
-      ]
+      "steps": []
     }
   },
   {
@@ -10612,7 +10608,7 @@
   {
     "query_id": "TD357",
     "answer": "50",
-    "unit": "\\u03bcC",
+    "unit": "uC",
     "explanation": "Step 1: Identify the given parameters: C = 5 \\u03bcF and V = 10 V.\nStep 2: Use the formula Q = C * V.\nStep 3: Calculate: Q = 5 * 10 = 50 \\u03bcC.",
     "premises_used": [],
     "reasoning": {
@@ -10627,7 +10623,7 @@
   {
     "query_id": "TD358",
     "answer": "5",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given charge Q = 60 \\u03bcC and voltage V = 12 V.\nStep 2: Use the rearranged formula for capacitance: C = Q / V.\nStep 3: Calculate: C = 60 / 12 = 5 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -10642,7 +10638,7 @@
   {
     "query_id": "TD359",
     "answer": "72",
-    "unit": "\\u03bcJ",
+    "unit": "uJ",
     "explanation": "Step 1: Identify C = 4 \\u03bcF and V = 6 V.\nStep 2: Use the energy formula: W = (1/2) * C * V\\u00b2.\nStep 3: Calculate: W = 0.5 * 4 * 6\\u00b2 = 0.5 * 4 * 36 = 72 \\u03bcJ",
     "premises_used": [],
     "reasoning": {
@@ -10657,7 +10653,7 @@
   {
     "query_id": "TD360",
     "answer": "100",
-    "unit": "\\u03bcJ",
+    "unit": "uJ",
     "explanation": "Step 1: Identify the given capacitance C = 2 \\u03bcF and voltage V = 10 V.\nStep 2: Convert the capacitance to farads: C = 2 \\u00d7 10\\u207b\\u2076 F.\nStep 3: Use the formula for energy stored in a capacitor: W = 0.5 * C * V\\u00b2.\nStep 4: Calculate the energy: W = 0.5 * (2 \\u00d7 10\\u207b\\u2076) * 10\\u00b2 = 100 \\u00d7 10\\u207b\\u2076 J = 100 \\u03bcJ.",
     "premises_used": [],
     "reasoning": {
@@ -10673,7 +10669,7 @@
   {
     "query_id": "TD361",
     "answer": "160",
-    "unit": "\\u03bcJ",
+    "unit": "uJ",
     "explanation": "Step 1: Identify the given charge Q = 40 \\u03bcC and voltage V = 8 V.\nStep 2: State the formula for the energy stored in a capacitor using charge and voltage: W = 0.5 * Q * V.\nStep 3: Substitute the values: W = 0.5 * (40 \\u00d7 10\\u207b\\u2076) * 8.\nStep 4: Calculate the final energy: W = 160 \\u00d7 10\\u207b\\u2076 J = 160 \\u03bcJ.",
     "premises_used": [],
     "reasoning": {
@@ -10689,7 +10685,7 @@
   {
     "query_id": "TD362",
     "answer": "4",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values: energy W = 200 \\u03bcJ and voltage V = 10 V.\nStep 2: Rearrange the energy formula W = 0.5 * C * V\\u00b2 to solve for capacitance: C = 2W / V\\u00b2.\nStep 3: Substitute the values: C = (2 * 200 \\u00d7 10\\u207b\\u2076) / 10\\u00b2.\nStep 4: Calculate: C = 400 \\u00d7 10\\u207b\\u2076 / 100 = 4 \\u00d7 10\\u207b\\u2076 F = 4 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -10737,7 +10733,7 @@
   {
     "query_id": "TD365",
     "answer": "45",
-    "unit": "\\u03bcC",
+    "unit": "uC",
     "explanation": "Step 1: Identify the given capacitance C = 3 \\u03bcF and voltage V = 15 V.\nStep 2: Use the formula for charge: Q = C * V.\nStep 3: Substitute the values: Q = 3 \\u03bcF * 15 V.\nStep 4: Calculate: Q = 45 \\u03bcC.",
     "premises_used": [],
     "reasoning": {
@@ -10769,7 +10765,7 @@
   {
     "query_id": "TD367",
     "answer": "4",
-    "unit": "l\\u1ea7n",
+    "unit": "times",
     "explanation": "Step 1: State the energy formula: W = 0.5 * C * V\\u00b2.\nStep 2: Note that energy is proportional to the square of the voltage (W \\u221d V\\u00b2).\nStep 3: If the voltage is doubled (V_new = 2V), the energy increases by a factor of 2\\u00b2.\nStep 4: Conclude that the energy increases by 4 times.",
     "premises_used": [],
     "reasoning": {
@@ -10785,7 +10781,7 @@
   {
     "query_id": "TD368",
     "answer": "100",
-    "unit": "\\u03bcC",
+    "unit": "uC",
     "explanation": "Step 1: Identify C = 5 \\u03bcF and V = 20 V.\nStep 2: Calculate the charge using Q = C * V.\nStep 3: Substitute the values: Q = 5 \\u03bcF * 20 V = 100 \\u03bcC.",
     "premises_used": [],
     "reasoning": {
@@ -10816,7 +10812,7 @@
   {
     "query_id": "TD370",
     "answer": "10",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given energy W = 180 \\u03bcJ and voltage U = 6 V.\nStep 2: Use the rearranged formula for capacitance: C = 2W / U\\u00b2.\nStep 3: Substitute the values: C = (2 * 180 \\u00d7 10\\u207b\\u2076) / 6\\u00b2.\nStep 4: Calculate: C = 360 \\u00d7 10\\u207b\\u2076 / 36 = 10 \\u00d7 10\\u207b\\u2076 F = 10 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -10832,7 +10828,7 @@
   {
     "query_id": "TD371",
     "answer": "9",
-    "unit": "l\\u1ea7n",
+    "unit": "times",
     "explanation": "Step 1: Use the formula W = 0.5 * C * V\\u00b2.\nStep 2: Identify that the capacitance C is constant.\nStep 3: If the voltage V increases by 3 times, the energy increases by the square of that factor (3\\u00b2).\nStep 4: Calculate the factor: 3\\u00b2 = 9. The energy increases by 9 times.",
     "premises_used": [],
     "reasoning": {
@@ -10880,7 +10876,7 @@
   {
     "query_id": "TD374",
     "answer": "0; 0",
-    "unit": "\\u03bcC; \\u03bcJ",
+    "unit": "uC; uJ",
     "explanation": "Step 1: Recognize that short-circuiting a capacitor provides a path for the plates to neutralize.\nStep 2: The stored charge flows until the potential difference is zero.\nStep 3: Determine the final charge: Q = 0 C.\nStep 4: Determine the final energy: W = 0 J.",
     "premises_used": [],
     "reasoning": {
@@ -10912,7 +10908,7 @@
   {
     "query_id": "TD376",
     "answer": "36;12",
-    "unit": "\\u03bcJ; \\u03bcC",
+    "unit": "uJ; uC",
     "explanation": "Step 1: Identify the given values from the problem: capacitance C = 2 \\u03bcF and voltage V = 6 V.\nStep 2: Use the formula for charge Q = C * V.\nStep 3: Substitute the values to calculate the charge: Q = 2 \\u03bcF * 6 V = 12 \\u03bcC.\nStep 4: Recall the formula for the energy (W) stored in a capacitor: W = 0.5 * C * V\\u00b2.\nStep 5: Substitute the values into the energy formula: W = 0.5 * (2 * 10\\u207b\\u2076 F) * (6 V)\\u00b2.\nStep 6: Calculate the final result: W = 1 * 36 * 10\\u207b\\u2076 = 36 \\u03bcJ.\n\nThe charge is 12 \\u03bcC and the stored energy is 36 \\u03bcJ.",
     "premises_used": [],
     "reasoning": {
@@ -10965,7 +10961,7 @@
   {
     "query_id": "TD379",
     "answer": "8",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify energy W = 0.1 mJ = 100 \\u03bcJ and voltage V = 5 V.\nStep 2: Use the formula C = 2W / V\\u00b2.\nStep 3: Substitute the values: C = (2 * 100 \\u00d7 10\\u207b\\u2076) / 5\\u00b2.\nStep 4: Calculate: C = 200 \\u00d7 10\\u207b\\u2076 / 25 = 8 \\u00d7 10\\u207b\\u2076 F = 8 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -10997,7 +10993,7 @@
   {
     "query_id": "TD381",
     "answer": "125",
-    "unit": "\\u03bcJ",
+    "unit": "uJ",
     "explanation": "Step 1: Calculate initial charge Q = C1 * V = 5 \\u03bcF * 10 V = 50 \\u03bcC.\nStep 2: When connected to an identical uncharged capacitor C2 in parallel, the total capacitance is C_total = C1 + C2 = 10 \\u03bcF.\nStep 3: The charge Q is shared equally: Q1 = Q2 = 25 \\u03bcC.\nStep 4: Calculate the final energy of the system: W_total = Q\\u00b2 / (2 * C_total) = 50\\u00b2 / (2 * 10) = 2500 / 20 = 125 \\u03bcJ",
     "premises_used": [],
     "reasoning": {
@@ -11065,7 +11061,7 @@
   {
     "query_id": "TD385",
     "answer": "4.000",
-    "unit": "\\u03bcJ",
+    "unit": "uJ",
     "explanation": "Step 1: Identify initial values: C_initial = 100 pF, V_initial = 200 V.\nStep 2: Calculate initial charge: Q = C_initial * V_initial = 100 pF * 200 V = 20,000 pC = 20 nC.\nStep 3: Since the source is disconnected, charge Q remains constant at 20 nC.\nStep 4: Doubling the distance (d) halves the capacitance: C_final = 100 pF / 2 = 50 pF.\nStep 5: Calculate final energy using W = Q\\u00b2 / (2 * C_final).\nStep 6: W = (20 * 10\\u207b\\u2079)\\u00b2 / (2 * 50 * 10\\u207b\\u00b9\\u00b2) = (400 * 10\\u207b\\u00b9\\u2078) / (100 * 10\\u207b\\u00b9\\u00b2) = 4 * 10\\u207b\\u2076 J = 4 \\u03bcJ.",
     "premises_used": [],
     "reasoning": {
@@ -11100,7 +11096,7 @@
   {
     "query_id": "TD387",
     "answer": "2.140",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the final charge on C as Q = 30 \\u03bcC.\nStep 2: Calculate the final voltage across C: V_C = Q / C = 30 \\u03bcC / 5 \\u03bcF = 6 V.\nStep 3: Use the series rule for voltage: V_total = V_C + V_C'.\nStep 4: Solve for the voltage across C': V_C' = 20 V - 6 V = 14 V.\nStep 5: Since capacitors in series have the same charge, Q_C' = 30 \\u03bcC.\nStep 6: Calculate C': C' = Q_C' / V_C' = 30 \\u03bcC / 14 V \\u2248 2.14 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -11118,7 +11114,7 @@
   {
     "query_id": "TD388",
     "answer": "72",
-    "unit": "\\u03bcJ",
+    "unit": "uJ",
     "explanation": "Step 1: Calculate the initial charge: Q = 2 \\u03bcF * 12 V = 24 \\u03bcC.\nStep 2: Calculate the initial energy: W_initial = 0.5 * 2 \\u03bcF * (12 V)\\u00b2 = 144 \\u03bcJ.\nStep 3: The charge is shared among two identical capacitors (the original 2 \\u03bcF and another 2 \\u03bcF).\nStep 4: The total capacitance in parallel is C_total = 2 + 2 = 4 \\u03bcF.\nStep 5: Calculate the final total energy: W_final = Q\\u00b2 / (2 * C_total) = (24)\\u00b2 / (2 * 4) = 576 / 8 = 72 \\u03bcJ.",
     "premises_used": [],
     "reasoning": {
@@ -11169,7 +11165,7 @@
   {
     "query_id": "TD391",
     "answer": "-1.77",
-    "unit": "\\u03bcJ",
+    "unit": "uJ",
     "explanation": "Step 1: Convert units to SI: d = 0.001 m, S = 0.01 m\\u00b2, and U = 200 V.\nStep 2: Calculate initial capacitance: Ci = \\u03b5\\u2080 * S / d = (8.854 \\u00d7 10\\u207b\\u00b9\\u00b2 * 0.01) / 0.001 = 8.854 \\u00d7 10\\u207b\\u00b9\\u00b9 F.\nStep 3: When distance doubles while connected to the source, the new capacitance is Cf = Ci / 2.\nStep 4: The work supplied by the source is W = \\u0394Q * U = (Cf - Ci) * U\\u00b2 = -0.5 * Ci * U\\u00b2.\nStep 5: Calculate: W = -0.5 * 8.854 \\u00d7 10\\u207b\\u00b9\\u00b9 * 200\\u00b2 \\u2248 -1.77 \\u03bcJ.",
     "premises_used": [],
     "reasoning": {
@@ -11186,7 +11182,7 @@
   {
     "query_id": "TD392",
     "answer": "0.354",
-    "unit": "J/m\\u00b3",
+    "unit": "J/m^3",
     "explanation": "Step 1: Identify the given values: \\u03b5r = 2, d = 0.0005 m, and U = 100 V.\nStep 2: Calculate the electric field strength: E = U / d = 100 / 0.0005 = 200,000 V/m.\nStep 3: Use the formula for energy density: u = 0.5 * \\u03b5\\u2080 * \\u03b5r * E\\u00b2.\nStep 4: Substitute values: u = 0.5 * 8.854 \\u00d7 10\\u207b\\u00b9\\u00b2 * 2 * (200,000)\\u00b2 \\u2248 0.354 J/m\\u00b3.",
     "premises_used": [],
     "reasoning": {
@@ -11202,7 +11198,7 @@
   {
     "query_id": "TD393",
     "answer": "5.000",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Recall the capacitance formula: C = \\u03b5\\u2080 * S / d.\nStep 2: Note that the capacitance is directly proportional to the area of the plates.\nStep 3: Since the plates are split in half, the effective area S is halved.\nStep 4: Calculate the new capacitance: C_new = 10 \\u03bcF / 2 = 5 \\u03bcF",
     "premises_used": [],
     "reasoning": {
@@ -11298,7 +11294,7 @@
   {
     "query_id": "TD399",
     "answer": "0.33",
-    "unit": "\\u03bcJ",
+    "unit": "uJ",
     "explanation": "Step 1: Note that the capacitor is disconnected, so charge Q is constant.\nStep 2: The capacitance is proportional to permittivity: C \\u221d \\u03b5.\nStep 3: Since \\u03b5 increases by 3, the new capacitance C' = 3 * C.\nStep 4: Energy W = Q\\u00b2 / (2C), so if C triples, energy becomes 1/3 of the initial value.\nStep 5: Calculate: W_new = 1 \\u03bcJ / 3 \\u2248 0.33 \\u03bcJ.",
     "premises_used": [],
     "reasoning": {
@@ -11367,7 +11363,7 @@
   {
     "query_id": "THCB003",
     "answer": "1.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify given values: U = 6.0 V, \\u0394U = 0.1 V, I = 0.3 A, and \\u0394I = 0.01 A.\nStep 2: Calculate the nominal resistance: R = U / I = 6.0 / 0.3 = 20 \\u03a9.\nStep 3: Calculate the total relative error for a quotient (R = U/I): \\u03b4R = \\u03b4U + \\u03b4I = (\\u0394U / U) + (\\u0394I / I).\nStep 4: Substitute values: \\u03b4R = (0.1 / 6.0) + (0.01 / 0.3) \\u2248 0.0167 + 0.0333 = 0.05.\nStep 5: Calculate absolute error of R: \\u0394R = R \\u22c5 \\u03b4R = 20 \\u22c5 0.05 = 1.0 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -11417,7 +11413,7 @@
   {
     "query_id": "THCB006",
     "answer": "0.4",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify Actual Value = 10.2 \\u03a9 and Measured Value = 9.8 \\u03a9.\nStep 2: Use the formula for absolute error: \\u0394R = |Actual Value - Measured Value|.\nStep 3: Substitute the values: \\u0394R = |10.2 - 9.8|.\nStep 4: Final calculation: \\u0394R = 0.4 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -11466,7 +11462,7 @@
   {
     "query_id": "THCB009",
     "answer": "1.5",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify resistances and errors: R1 = 10 \\u03a9, \\u0394R1 = 0.5 \\u03a9; R2 = 20 \\u03a9, \\u0394R2 = 1 \\u03a9.\nStep 2: For a sum (R_total = R1 + R2), the absolute error is the sum of the individual absolute errors.\nStep 3: Apply the formula: \\u0394R_total = \\u0394R1 + \\u0394R2.\nStep 4: Calculate the total: \\u0394R_total = 0.5 + 1 = 1.5 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -11577,7 +11573,7 @@
   {
     "query_id": "THCB071",
     "answer": "Resistance decreases \\u2192 current increases.",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: According to Ohm's Law (I = V / R), current is inversely proportional to resistance.\nStep 2: As the resistance of branch D2 decreases, the current flowing through that branch (A2) will increase.\nStep 3: This will also lead to an increase in the total current measured at A1.",
     "premises_used": [],
     "reasoning": {
@@ -11607,7 +11603,7 @@
   {
     "query_id": "THCB073",
     "answer": "The lamp shines brighter because the current through it increases.",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Total current increases when the series variable resistor's resistance is decreased.\nStep 2: This reduces the voltage drop across the variable resistor, leaving more voltage for the parallel lamps.\nStep 3: Since more voltage is applied to the lamps, the current through each branch increases.\nStep 4: Conclusion: The light bulbs will shine brighter.",
     "premises_used": [],
     "reasoning": {
@@ -11623,7 +11619,7 @@
   {
     "query_id": "THCB074",
     "answer": "Rtd = 7.5",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Apply the parallel resistance formula: (R1 * R2) / (R1 + R2).\nStep 2: Calculation: (10 * 30) / (10 + 30) = 300 / 40.\nStep 3: Result: 7.5 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -11682,7 +11678,7 @@
   {
     "query_id": "THCB078",
     "answer": "Rtd = 20.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Apply the parallel formula: (30 * 60) / (30 + 60) = 1800 / 90.\nStep 2: Result: 20 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -11728,7 +11724,7 @@
   {
     "query_id": "THCB081",
     "answer": "Total current increases.",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: In a parallel circuit, total current (A1) is the sum of all branch currents.\nStep 2: If the current through one branch increases while others stay constant, the sum must increase.\nStep 3: This typically happens if the resistance of a branch decreases or the source voltage increases.\nStep 4: Conclusion: The total current will increase.",
     "premises_used": [],
     "reasoning": {
@@ -11760,7 +11756,7 @@
   {
     "query_id": "THCB083",
     "answer": "Brighter because the current is higher.",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: In parallel, both bulbs share the same voltage (V).\nStep 2: Power (brightness) is calculated as P = V^2 / R.\nStep 3: Because voltage is constant, a lower resistance (R) results in a higher power (P).\nStep 4: Conclusion: The bulb with lower resistance will be brighter.",
     "premises_used": [],
     "reasoning": {
@@ -12144,7 +12140,7 @@
   {
     "query_id": "THCB107",
     "answer": "1.5; 1.5",
-    "unit": "\\u00b0C; %",
+    "unit": "degC; %",
     "explanation": "Step 1: Calculate absolute error: |98.5 - 100| = 1.5 \\u00b0C.\nStep 2: Calculate relative error: 1.5 / 100.\nStep 3: Convert to percentage: (1.5 / 100) * 100%.\nStep 4: Final calculation: 1.5%.",
     "premises_used": [],
     "reasoning": {
@@ -12320,7 +12316,7 @@
   {
     "query_id": "THCB118",
     "answer": "36.7; 0.067",
-    "unit": "\\u00b0C; \\u00b0C",
+    "unit": "degC; degC",
     "explanation": "Step 1: Calculate the mean temperature: (36.6 + 36.8 + 36.7) / 3 = 36.7 \\u00b0C.\nStep 2: Calculate individual deviations: |36.6 - 36.7| = 0.1; |36.8 - 36.7| = 0.1; |36.7 - 36.7| = 0.\nStep 3: Calculate the mean absolute error: (0.1 + 0.1 + 0) / 3.\nStep 4: Final calculation: \\u2248 0.067 \\u00b0C.",
     "premises_used": [],
     "reasoning": {
@@ -12560,7 +12556,7 @@
   {
     "query_id": "THCB133",
     "answer": "20.0; 0.067",
-    "unit": "\\u00b0C; \\u00b0C",
+    "unit": "degC; degC",
     "explanation": "Step 1: Calculate average temperature: (20.1 + 20.0 + 19.9) / 3 = 20.0 \\u00b0C.\nStep 2: Calculate individual deviations: |20.1 - 20.0| = 0.1; |20.0 - 20.0| = 0.0; |19.9 - 20.0| = 0.1.\nStep 3: Calculate the average absolute error: (0.1 + 0.0 + 0.1) / 3.\nStep 4: Final calculation: \\u2248 0.067 \\u00b0C.",
     "premises_used": [],
     "reasoning": {
@@ -12736,7 +12732,7 @@
   {
     "query_id": "NL009",
     "answer": "0.10",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given voltage U = 200 V of the capacitor from the question.\nStep 2: Identify the given stored electric field energy W = 2 mJ = 2 * 10^-3 J.\nStep 3: State the formula for the energy stored in a capacitor: W = (1/2) * C * U\\u00b2.\nStep 4: Rearrange the formula to solve for capacitance (C): C = 2 * W / U\\u00b2 = 0.10 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -12784,7 +12780,7 @@
   {
     "query_id": "NL012",
     "answer": "0.40",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: the voltage U = 80 V and the stored electrical energy E = 1.28 mJ.\nStep 2: Convert the energy to SI units: E = 1.28 \\u00d7 10\\u207b\\u00b3 J.\nStep 3: Recall the formula for the electrical energy stored in a capacitor, which is E = (1/2)CU\\u00b2.\nStep 4: Rearrange the formula to solve for capacitance C: C = 2E / U\\u00b2 = 0.40 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -12880,7 +12876,7 @@
   {
     "query_id": "NL018",
     "answer": "0.07",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given energy stored in the capacitor E = 0.75 mJ and the voltage across it U = 150 V.\nStep 2: Convert the energy from millijoules (mJ) to joules (J): E = 0.75 mJ = 0.75 * 10^-3 J.\nStep 3: Use the formula for energy stored in a capacitor: E = (1/2) * C * U^2.\nStep 4: Rearrange the formula to solve for capacitance (C): C = 2 * E / U^2 \\u2248 0.07 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -12992,7 +12988,7 @@
   {
     "query_id": "NL025",
     "answer": "all energy is entirely stored in the magnetic field of the inductor",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The total electromagnetic energy in an ideal LC oscillating circuit is conserved and continuously transitions between the capacitor and the inductor, mathematically defined by the equation E = E_C + E_L.\nStep 2: The instantaneous energy stored within the inductor is governed by the relationship E_L = 0.5 * L * I^2, where L represents the inductance and I represents the instantaneous current.\nStep 3: When the instantaneous current reaches its maximum amplitude I = I_0, the magnetic field energy maximizes at E_L = 0.5 * L * I_0^2, which mathematically equates to the total available electromagnetic energy E.\nStep 4: Because the total energy is completely conserved and E_L = E at this instant, the remaining electric field energy E_C must mathematically evaluate to zero. The final calculated result establishes that all energy is entirely stored in the magnetic field of the inductor.",
     "premises_used": [],
     "reasoning": {
@@ -13008,7 +13004,7 @@
   {
     "query_id": "NL026",
     "answer": "all energy is entirely stored in the electric field of the capacitor",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: In an ideal LC circuit, energy oscillates between the inductor (magnetic energy) and the capacitor (electric energy).\nStep 2: The energy stored in an inductor is given by E_L = (1/2)LI^2, where L is inductance and I is current.\nStep 3: The question states that the current (I) is zero.\nStep 4: If I = 0, then the energy stored in the inductor (E_L) is zero. Therefore, all energy is entirely stored in the electric field of the capacitor.",
     "premises_used": [],
     "reasoning": {
@@ -13136,7 +13132,7 @@
   {
     "query_id": "NL034",
     "answer": "0.20",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given energy stored in the capacitor E = 1 mJ and the voltage across it U = 100 V.\nStep 2: Convert the energy from millijoules (mJ) to joules (J). E = 1 mJ = 1 * 10^-3 J.\nStep 3: Recall the formula for the energy stored in a capacitor: E = (1/2) * C * U^2.\nStep 4: Rearrange the formula to solve for capacitance (C): C = 2E / U^2 = 2 * 10^-7 F = 0.20 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -13200,7 +13196,7 @@
   {
     "query_id": "NL038",
     "answer": "1.33",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Energy (E) = 0.6 mJ = 0.6 * 10^-3 J and Voltage (U) = 30 V.\nStep 2: Recall the formula for the energy stored in a capacitor: E = (1/2)CU^2.\nStep 3: Rearrange the formula to solve for capacitance (C): C = 2E / U^2.\nStep 4: Substitute the given values into the formula: C = 2 * 0.6 * 10^-3 / 30^2 \\u2248 1.33 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -13280,7 +13276,7 @@
   {
     "query_id": "NL083",
     "answer": "4.00",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given electrical energy (E) as 1.25 mJ and the voltage (V) as 25 V.\nStep 2: Convert the energy from millijoules (mJ) to joules (J): 1.25 mJ = 1.25 \\u00d7 10\\u207b\\u00b3 J.\nStep 3: Recall the formula for the energy stored in a capacitor: E = (1/2)CV\\u00b2.\nStep 4: Rearrange the formula to solve for capacitance (C): C = 2E / V\\u00b2 = 4.00 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -13376,7 +13372,7 @@
   {
     "query_id": "NL089",
     "answer": "0.25",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values: energy stored (E) = 0.8 mJ and voltage (U) = 80 V.\nStep 2: Convert the energy from millijoules to joules: E = 0.8 \\u00d7 10\\u207b\\u00b3 J.\nStep 3: Recall the formula for the energy stored in a capacitor: E = (1/2)CU\\u00b2, where C is the capacitance.\nStep 4: Rearrange the formula to solve for capacitance (C): C = 2E / U\\u00b2 = 0.25 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -13472,7 +13468,7 @@
   {
     "query_id": "NL095",
     "answer": "all the energy is stored in the electric field of the capacitor.",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: In an LC circuit, energy is continuously exchanged between the inductor and the capacitor.\nStep 2: The energy stored in the inductor is in its magnetic field and is given by E_L = \\u00bdLI\\u00b2, where I is the current.\nStep 3: The energy stored in the capacitor is in its electric field and is given by E_C = Q\\u00b2/(2C), where Q is the charge on the capacitor.\nStep 4: The problem states that the current i = 0. The substitution of i = 0 into the formula of E_L yields E_L = 0. Therefore, all the energy is stored in the electric field of the capacitor.",
     "premises_used": [],
     "reasoning": {
@@ -13536,7 +13532,7 @@
   {
     "query_id": "NL099",
     "answer": "0.50",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: energy stored (E) = 3.6 mJ and voltage (U) = 120 V.\nStep 2: Convert the energy from millijoules (mJ) to joules (J): E = 3.6 \\u00d7 10\\u207b\\u00b3 J.\nStep 3: Recall the formula for the electrical energy stored in a capacitor: E = \\u00bd C U\\u00b2.\nStep 4: Rearrange the formula to solve for capacitance (C): C = 2E / U\\u00b2 = 0.50 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -13552,7 +13548,7 @@
   {
     "query_id": "NL100",
     "answer": "maximum (WC = \\u00bdLI\\u2080\\u00b2)",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The total electromagnetic energy W in an ideal oscillating LC circuit is mathematically defined by the conservation of energy equation W = W_C + W_L, where W_C represents the instantaneous electric field energy and W_L represents the instantaneous magnetic field energy.\nStep 2: The established physical conditions explicitly define the total circuit energy W as a constant mathematical magnitude of 1/2 * L * I_0^2 and specify the instantaneous magnetic field energy at the temporal coordinate t = T/4 as equating strictly to W_L = 0.\nStep 3: Substituting the specified zero mathematical magnitude of the magnetic field energy and the constant total energy into the conservation of energy equation yields the algebraic expression 1/2 * L * I_0^2 = W_C + 0.\nStep 4: Evaluating this algebraic expression mathematically simplifies the relationship to W_C = 1/2 * L * I_0^2. Therefore, the value of WC is maximum (WC = 1/2 * L * I_0^2).",
     "premises_used": [],
     "reasoning": {
@@ -13632,7 +13628,7 @@
   {
     "query_id": "NL105",
     "answer": "the magnetic energy stored in the inductor will also be at its maximum",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The question describes an ideal LC circuit, which means energy oscillates between the inductor and the capacitor without loss.\nStep 2: In an LC circuit, energy is stored as electric energy in the capacitor E_C = (1/2) * C * U^2 and as magnetic energy in the inductor E_L = (1/2) * L * I^2.\nStep 3: The magnetic energy stored in the inductor is directly proportional to the square of the current I^2.\nStep 4: Therefore, when the current reaches its maximum value, the magnetic energy stored in the inductor will also be at its maximum.",
     "premises_used": [],
     "reasoning": {
@@ -13648,7 +13644,7 @@
   {
     "query_id": "NL106",
     "answer": "0.90",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values: voltage (U) = 90 V and stored energy (E) = 3.645 mJ.\nStep 2: Convert the stored energy from millijoules (mJ) to joules (J): E = 3.645 x 10\\u207b\\u00b3 J.\nStep 3: Use the formula for energy stored in a capacitor, E = (1/2)CU\\u00b2, and rearrange it to solve for capacitance (C): C = 2E / U\\u00b2.\nStep 4: Substitute the given values into the formula: C = (2 * 3.645 x 10\\u207b\\u00b3 J) / (90 V)\\u00b2, which calculates to C = 9 x 10\\u207b\\u2077 F = 0.90 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -13696,7 +13692,7 @@
   {
     "query_id": "NL109",
     "answer": "5.00",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values: voltage (U) = 20 V and stored energy (E) = 1 mJ.\nStep 2: Convert the stored energy from millijoules (mJ) to joules (J): E = 1 x 10\\u207b\\u00b3 J.\nStep 3: Use the formula for energy stored in a capacitor, E = (1/2)CU\\u00b2, and rearrange it to solve for capacitance (C): C = 2E / U\\u00b2.\nStep 4: Substitute the given values into the formula: C = (2 * 1 x 10\\u207b\\u00b3 J) / (20 V)\\u00b2, which calculates to C = 5 x 10\\u207b\\u2076 F = 5.00 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -13792,7 +13788,7 @@
   {
     "query_id": "NL115",
     "answer": "0.20",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question. The voltage (U) across the capacitor is 100 V, and the energy (E) stored is 1 mJ.\nStep 2: Convert the stored energy from millijoules (mJ) to joules (J). 1 mJ = 0.001 J.\nStep 3: Recall the formula for the energy stored in a capacitor, which is E = 1/2 * C * U^2, where C is the capacitance.\nStep 4: Rearrange the formula to solve for capacitance (C): C = 2 * E / U^2 = 2 * 10^-7 F = 0.20 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -13856,7 +13852,7 @@
   {
     "query_id": "NL119",
     "answer": "all the energy is stored in the electric field of the capacitor",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The problem describes an oscillating LC circuit where the current is zero.\nStep 2: The energy stored in the inductor (magnetic energy) is given by (1/2) * L * I^2, where I is the current.\nStep 3: Since the current (I) is zero at this moment, the magnetic energy stored in the inductor is also zero (1/2) * L * 0^2 = 0.\nStep 4: In an ideal LC circuit, the total energy is conserved and oscillates between the inductor and the capacitor. Since the magnetic energy is 0, all the energy is stored in the electric field of the capacitor.",
     "premises_used": [],
     "reasoning": {
@@ -13872,7 +13868,7 @@
   {
     "query_id": "NL120",
     "answer": "maximum",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The total electromagnetic energy W in an ideal oscillating LC circuit is mathematically defined by the conservation of energy equation E = E_C + E_L, where E_C represents the instantaneous electric field energy and E_L represents the instantaneous magnetic field energy.\nStep 2: The established physical conditions explicitly define the instantaneous electric field energy as equating strictly to zero, E_C = 0, mathematically yielding the relationship E_L = E.\nStep 3: The instantaneous magnetic field energy E_L is defined by the equation E_L = 1/2 * L * i^2, and the constant total energy E is defined by the maximum magnetic field energy E = 1/2 * L * I_0^2, where L represents inductance, i represents instantaneous current, and I_0 represents maximum current amplitude.\nStep 4: Substituting the mathematical definitions into the energy relationship yields the algebraic equation 1/2 * L * i^2 = 1/2 * L * I_0^2, which mathematically simplifies to i^2 = I_0^2. The final determined result establishes that the instantaneous current is maximum.",
     "premises_used": [],
     "reasoning": {
@@ -13920,7 +13916,7 @@
   {
     "query_id": "NL123",
     "answer": "0.67",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given electric field energy (E) as 2.7 mJ and the voltage (U) as 90 V.\nStep 2: The formula for the energy stored in a capacitor is E = (1/2)CU\\u00b2, where C is the capacitance.\nStep 3: Convert the energy from millijoules to joules: E = 2.7 \\u00d7 10\\u207b\\u00b3 J.\nStep 4: Rearrange the formula to solve for capacitance (C): C = 2E / U\\u00b2 \\u2248 0.67 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -13984,7 +13980,7 @@
   {
     "query_id": "NL127",
     "answer": "4",
-    "unit": "l\\u1ea7n",
+    "unit": "times",
     "explanation": "Step 1: The energy stored in a capacitor is given by the formula E = (1/2) * C * U^2, where C is capacitance and U is voltage.\nStep 2: Let the initial voltage be U1. The initial energy E1 is (1/2) * C * U1^2.\nStep 3: The question states the voltage doubles, so the new voltage U2 = 2 * U1.\nStep 4: The new energy E2 is (1/2) * C * (U2)^2 = (1/2) * C * (2 * U1)^2 = (1/2) * C * (4 * U1^2) = 4 * (1/2) * C * U1^2 = 4 * E1. Therefore, the energy increases 4 times.",
     "premises_used": [],
     "reasoning": {
@@ -14338,7 +14334,7 @@
   {
     "query_id": "NL319",
     "answer": "40",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Energy stored (W_C) = 0.2 J and Voltage (U) = 100 V.\nStep 2: Recall the formula for the energy stored in a capacitor: W_C = (1/2) * C * U^2.\nStep 3: Rearrange the formula to solve for capacitance (C): C = 2W_C / U^2.\nStep 4: Substitute the given values into the rearranged formula: C = (2 * 0.2 J) / (100 V)^2 = 4 * 10^-5 F = 40 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -14516,7 +14512,7 @@
   {
     "query_id": "NL330",
     "answer": "1 / (\\u03c9C)",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: The ratio of the instantaneous voltage V across the capacitor to the instantaneous current I in the inductor when the electric field energy precisely equals the magnetic field energy is mathematically defined by the algebraic equation V / I = sqrt(L / C), where L represents the constant circuit inductance and C represents the constant circuit capacitance.\nStep 2: The fundamental resonant angular frequency omega of an ideal harmonically oscillating LC circuit is mathematically defined by the algebraic equation omega = 1 / sqrt(L * C).\nStep 3: Squaring the resonant angular frequency equation and algebraically isolating the inductance parameter mathematically yields the algebraic expression L = 1 / (\\u03c9^2 * C).\nStep 4: Substituting the derived inductance expression into the established voltage-to-current ratio mathematically yields V / I = sqrt((1 / (\\u03c9^2 * C)) / C), which simplifies algebraically strictly to V / I = sqrt(1 / (\\u03c9^2 * C^2)). Evaluating the principal square root mathematically yields 1 / (\\u03c9 * C). The final calculated ratio of the voltage across the capacitor to the current in the inductor evaluates strictly to 1 / (\\u03c9 * C).",
     "premises_used": [],
     "reasoning": {
@@ -14564,7 +14560,7 @@
   {
     "query_id": "NL333",
     "answer": "50",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given stored energy (W_C) of the capacitor as 0.36 J.\nStep 2: Identify the given voltage (U) across the capacitor as 120 V.\nStep 3: Recall the formula for the energy stored in a capacitor: W_C = (1/2) * C * U^2, where C is the capacitance.\nStep 4: Rearrange the formula to solve for capacitance (C): C = 2 * W_C / U^2 = 2 * 0.36 / 120^2 = 5 * 10^-5 J = 50 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -14740,7 +14736,7 @@
   {
     "query_id": "NL344",
     "answer": "6.4",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values: Voltage (U) = 250 V, Energy (W_C) = 0.2 J.\nStep 2: Recall the formula for the energy stored in a capacitor: W_C = (1/2) * C * U^2.\nStep 3: Rearrange the formula to solve for capacitance (C): C = (2 * W_C) / U^2.\nStep 4: Substitute the given values into the formula: C = (2 * 0.2 J) / (250 V)^2 = 6.4 * 10^-6 F = 6.4 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -14884,7 +14880,7 @@
   {
     "query_id": "NL353",
     "answer": "100",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given energy stored in the capacitor (W_C) as 0.72 J.\nStep 2: Identify the given voltage across the capacitor (U) as 120 V.\nStep 3: Recall the formula for the energy stored in a capacitor: W_C = (1/2) * C * U\\u00b2.\nStep 4: Rearrange the formula to solve for capacitance (C): C = 2W_C / U\\u00b2 = 2 * 0.72 / 120\\u00b2 = 1 * 10^-4 F = 100 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -15201,7 +15197,7 @@
   {
     "query_id": "NL370",
     "answer": "16.67",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given parameters from the problem: electric field energy W = 0.48 J and voltage V = 240 V.\nStep 2: State the formula for the energy stored in the electric field of a capacitor: W = (1/2) * C * V\\u00b2.\nStep 3: Rearrange the formula to solve for the capacitance (C): C = (2 * W) / V\\u00b2.\nStep 4: Substitute the given values into the rearranged formula: C = (2 * 0.48) / 240\\u00b2.\nStep 5: Calculate the numerator: 2 * 0.48 = 0.96.\nStep 6: Calculate the denominator (square of the voltage): 240\\u00b2 = 57600.\nStep 7: Perform the division to find the capacitance in Farads: C = 0.96 / 57600 \\u2248 0.000016667 F.\nStep 8: Convert the capacitance from Farads to microfarads (\\u00b5F) by multiplying by 10\\u2076: C \\u2248 0.000016667 * 10\\u2076 = 16.667 \\u00b5F.\nStep 9: Round to two decimal places to get the final answer: C = 16.67 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -15687,7 +15683,7 @@
   {
     "query_id": "NL395",
     "answer": "25",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "CoT:\nStep 1: Identify the given values: Electrical energy (U_E) = 0.32 J and potential difference (V) = 160 V.\nStep 2: State the formula for the energy stored in a capacitor: U_E = (1/2) \\u00b7 C \\u00b7 V\\u00b2\nStep 3: Rearrange the formula to solve for capacitance (C): C = (2 \\u00b7 U_E) / V\\u00b2\nStep 4: Substitute the values into the formula: C = (2 \\u00b7 0.32) / 160\\u00b2\nStep 5: Calculate the value of C in Farads: C = 0.64 / 25600 = 0.000025 F.\nStep 6: Convert the result to microfarads (\\u00b5F): C = 0.000025 \\u00b7 10\\u2076 = 25 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -15892,7 +15888,7 @@
   {
     "query_id": "DDT136",
     "answer": "Number of turns density and current intensity",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The formula for the magnetic field (B) inside a solenoid is B = \\u03bc\\u2080 * n * I.\nStep 2: In this formula, \\u03bc\\u2080 is the permeability of free space (a constant), n is the number of turns per unit length, and I is the current flowing through the solenoid.\nStep 3: The magnetic field (B) is directly proportional to the quantities that multiply it in the formula, excluding constants.\nStep 4: Therefore, the magnetic field inside a solenoid is directly proportional to the number of turns per unit length (n) and the current (I).\nStep 5: Additionally, since n = N / L, the magnetic field is also directly proportional to the total number of turns (N) and inversely proportional to the length of the solenoid (L).\nStep 6: Conclude that the key quantities for direct proportionality are the current (I) and the number of turns per unit length (n).",
     "premises_used": [],
     "reasoning": {
@@ -15910,7 +15906,7 @@
   {
     "query_id": "DDT137",
     "answer": "Doubled",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The magnetic field (B) inside a solenoid is given by the formula B = \\u03bc\\u2080 * (N/L) * I, where \\u03bc\\u2080 is the permeability of free space, N is the number of turns, L is the length of the solenoid, and I is the current.\nStep 2: Initially, let the number of turns be N\\u2081, the length be L\\u2081, and the current be I\\u2081. The initial magnetic field is B\\u2081 = \\u03bc\\u2080 * (N\\u2081/L\\u2081) * I\\u2081.\nStep 3: The question states that the number of turns is doubled (N\\u2082 = 2 * N\\u2081), while the length (L\\u2082 = L\\u2081) and current (I\\u2082 = I\\u2081) are kept the same.\nStep 4: The new magnetic field B\\u2082 can be calculated using the formula with the new values: B\\u2082 = \\u03bc\\u2080 * (N\\u2082/L\\u2082) * I\\u2082 = \\u03bc\\u2080 * (2 * N\\u2081 / L\\u2081) * I\\u2081.\nStep 5: Compare the new magnetic field to the initial one: B\\u2082 = 2 * (\\u03bc\\u2080 * (N\\u2081 / L\\u2081) * I\\u2081) = 2 * B\\u2081.\nStep 6: Conclude that when the number of turns is doubled while maintaining the same length and current, the magnetic field also doubles.",
     "premises_used": [],
     "reasoning": {
@@ -15947,7 +15943,7 @@
   {
     "query_id": "DDT139",
     "answer": "2.51",
-    "unit": "J/m\\u00b3",
+    "unit": "J/m^3",
     "explanation": "Step 1: Identify the given values for the solenoid: turn density (n) = 1000 turns/m and current (I) = 2 A.\nStep 2: State the formula for the magnetic field (B) inside a solenoid: B = \\u03bc\\u2080 * n * I, where \\u03bc\\u2080 is the permeability of free space (4\\u03c0 \\u00d7 10\\u207b\\u2077 T\\u00b7m/A).\nStep 3: Calculate the magnetic field (B): B = (4\\u03c0 \\u00d7 10\\u207b\\u2077 T\\u00b7m/A) * (1000 turns/m) * (2 A) = 8\\u03c0 \\u00d7 10\\u207b\\u2074 T.\nStep 4: State the formula for the magnetic field energy density (u_B) inside a solenoid: u_B = B\\u00b2 / (2\\u03bc\\u2080).\nStep 5: Substitute the expression for B into the energy density formula: u_B = (\\u03bc\\u2080 * n * I)\\u00b2 / (2\\u03bc\\u2080) = (1/2) * \\u03bc\\u2080 * n\\u00b2 * I\\u00b2.\nStep 6: Substitute the numerical values: u_B = 0.5 * (4 * \\u03c0 * 10\\u207b\\u2077) * (1000)\\u00b2 * (2)\\u00b2.\nStep 7: Perform the calculation: u_B = 0.5 * (12.566 * 10\\u207b\\u2077) * 1,000,000 * 4 = 2.51 J/m\\u00b3.",
     "premises_used": [],
     "reasoning": {
@@ -15966,7 +15962,7 @@
   {
     "query_id": "DDT140",
     "answer": "Approximately zero",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The question asks about the external magnetic field of an ideal solenoid.\nStep 2: An ideal solenoid is a theoretical construct often assumed to be infinitely long.\nStep 3: For an infinitely long ideal solenoid, the magnetic field is confined entirely to its interior.\nStep 4: Therefore, the magnetic field outside an ideal solenoid is considered to be zero.\nStep 5: This occurs because the magnetic field lines produced by each loop of the solenoid cancel each other out completely in the region outside the coils.\nStep 6: Conclude that for a perfect, infinitely long solenoid, the external magnetic field is zero (B_ext = 0).",
     "premises_used": [],
     "reasoning": {
@@ -16022,7 +16018,7 @@
   {
     "query_id": "DDT143",
     "answer": "An induced electromotive force (EMF) in the opposite direction appears",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Initially, current flows through the ideal solenoid, creating a magnetic field and storing magnetic energy within it.\nStep 2: When the current is suddenly disconnected, the electrical circuit path is abruptly broken.\nStep 3: Due to its inductance, the solenoid opposes this rapid change in current.\nStep 4: To oppose the sudden drop in current, the solenoid induces a very large electromotive force (EMF) across its terminals.\nStep 5: According to the formula E = -L * (di/dt), as the time interval dt approaches zero during an abrupt disconnection, the induced EMF becomes extremely large (theoretically approaching infinity in a perfectly ideal case).\nStep 6: This high voltage can lead to an electrical spark or arc across the switch or the point of disconnection as the stored magnetic energy seeks to dissipate.\nStep 7: Conclude that a large self-induced electromotive force is generated, often resulting in a spark.",
     "premises_used": [],
     "reasoning": {
@@ -16059,7 +16055,7 @@
   {
     "query_id": "DDT145",
     "answer": "Current intensity",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The self-inductance of a solenoid (L) is a physical property determined by its geometry and the material of its core.\nStep 2: The formula for the self-inductance of a solenoid is L = (\\u03bc * N\\u00b2 * A) / l, where \\u03bc is the permeability of the core, N is the number of turns, A is the cross-sectional area, and l is the length.\nStep 3: This formula shows that L depends on the number of turns, the length, the cross-sectional area, and the permeability of the core material.\nStep 4: The self-inductance, L, is defined as the ratio of magnetic flux (\\u03a6) to the current (I) producing it (L = \\u03a6/I).\nStep 5: Although L is defined as \\u03a6/I, it is a constant of proportionality that remains unchanged when \\u03a6 or I changes (similar to how electrical resistance R = V/I does not depend on V or I).\nStep 6: Therefore, the self-inductance of a solenoid does not depend on the current (I) flowing through it or the magnetic flux (\\u03a6) passing through it.",
     "premises_used": [],
     "reasoning": {
@@ -16077,7 +16073,7 @@
   {
     "query_id": "DDT146",
     "answer": "electromagnet, and relay",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: A solenoid is a coil of wire that produces a magnetic field when electric current flows through it.\nStep 2: This magnetic field can be used to attract ferromagnetic materials or to induce an electromotive force.\nStep 3: A direct application of a solenoid is its use as an electromagnet.\nStep 4: Other applications directly related to solenoids include relays, solenoid valves, and inductors.\nStep 5: In an electric relay, a solenoid is used to create a magnetic force that pulls a switch to close or open a circuit.\nStep 6: In a solenoid valve, the magnetic field moves a plunger to control the flow of liquids or gases.\nStep 7: Conclude that devices utilizing controlled magnetic force or inductance are direct applications of solenoids: Electromagnets, relays, solenoid valves, and inductors.",
     "premises_used": [],
     "reasoning": {
@@ -16134,7 +16130,7 @@
   {
     "query_id": "DDT149",
     "answer": "Increase and the opposite current direction cause it",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The question asks about the induced electromotive force (EMF) when the current through a solenoid increases rapidly.\nStep 2: According to Faraday's Law of Induction, an induced EMF is generated when there is a change in magnetic flux (\\u03a6) through a coil or solenoid over time. The magnitude of the induced EMF is directly proportional to the rate of change of magnetic flux (\\u03b5 \\u221d d\\u03a6/dt).\nStep 3: A current flowing through a solenoid creates a magnetic field and thus a magnetic flux through the solenoid.\nStep 4: If the current through the solenoid increases, the magnetic field it produces also increases, leading to an increase in the magnetic flux through the solenoid.\nStep 5: The self-induced EMF is specifically given by the formula \\u03b5 = -L * (di/dt), where di/dt is the rate of change of current.\nStep 6: When the current increases \"rapidly,\" the time interval (dt) is very small, making the rate of change (di/dt) very large.\nStep 7: Since the induced EMF is directly proportional to the rate of change of current, a rapid increase in current results in a very large induced electromotive force.\nStep 8: According to Lenz's Law, the magnitude of the induced electromotive force increases significantly (becomes very large) and acts to oppose the increase in current.",
     "premises_used": [],
     "reasoning": {
@@ -16193,7 +16189,7 @@
   {
     "query_id": "DDT152",
     "answer": "Current through the solenoid",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The magnetic field inside a solenoid can be described by the formula B = \\u03bc\\u2080 * n * I.\nStep 2: In this formula, B represents the magnetic field strength.\nStep 3: \\u03bc\\u2080 is the permeability of free space, which is a constant.\nStep 4: n represents the number of turns per unit length of the solenoid.\nStep 5: Since B is directly proportional to I (B \\u221d I), it depends linearly on the current. Therefore, the current flowing through the solenoid.",
     "premises_used": [],
     "reasoning": {
@@ -16210,7 +16206,7 @@
   {
     "query_id": "DDT153",
     "answer": "Induced electromotive force (EMF)",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The question states that the magnetic flux through a solenoid changes uniformly with time.\nStep 2: According to Faraday's Law of Electromagnetic Induction, a changing magnetic flux through a closed circuit induces an electromotive force (EMF).\nStep 3: If an electromotive force is induced in a closed circuit, it will drive an electric current through that circuit.\nStep 4: Therefore, an induced electric current appears in the closed circuit.",
     "premises_used": [],
     "reasoning": {
@@ -16259,7 +16255,7 @@
   {
     "query_id": "DDT156",
     "answer": "Henry (H)",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The question asks for the unit of inductance.\nStep 2: Inductance is a physical quantity that describes a conductor's opposition to a change in current.\nStep 3: The SI unit of inductance is the henry.\nStep 4: The unit of inductance is the henry (H).",
     "premises_used": [],
     "reasoning": {
@@ -16275,7 +16271,7 @@
   {
     "query_id": "DDT157",
     "answer": "Magnetic field in the coil core",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: A solenoid creates a magnetic field when current flows through it.\nStep 2: Energy is stored within this magnetic field.\nStep 3: The magnetic field energy in a solenoid is stored in the form of a magnetic field.",
     "premises_used": [],
     "reasoning": {
@@ -16290,7 +16286,7 @@
   {
     "query_id": "DDT158",
     "answer": "8",
-    "unit": "\\u03bcWb",
+    "unit": "uWb",
     "explanation": "Step 1: Identify the given magnetic flux density (B) as 0.01 T and the cross-sectional area (A) as 8 cm\\u00b2.\nStep 2: The quantity to be calculated is the magnetic flux (\\u03a6) through one turn of the wire.\nStep 3: Convert the cross-sectional area from square centimeters to square meters: A = 8 cm\\u00b2 = 8 \\u00d7 (10\\u207b\\u00b2 m)\\u00b2 = 8 \\u00d7 10\\u207b\\u2074 m\\u00b2.\nStep 4: Use the formula for magnetic flux, \\u03a6 = B \\u00d7 A, assuming the magnetic field is perpendicular to the area.\nStep 5: Substitute the values into the formula: Phi = 0.01 T * 8 * 10\\u207b\\u2074 m\\u00b2 = 8 * 10\\u207b\\u2076 Wb = 8 \\u03bcWb.",
     "premises_used": [],
     "reasoning": {
@@ -16414,7 +16410,7 @@
   {
     "query_id": "DDT205",
     "answer": "Number of turns, length, cross-sectional area",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The question asks about the factors affecting the self-inductance of a solenoid.\nStep 2: The self-inductance of a solenoid is described by the formula L = \\u03bc \\u00d7 N\\u00b2 \\u00d7 A / l.\nStep 3: From the formula, L depends on N, which is the number of turns in the solenoid.\nStep 4: L depends on l, which is the length of the solenoid.\nStep 5: L depends on A, which is the cross-sectional area of the solenoid.\nStep 6: L also depends on \\u03bc, which is the permeability of the core material.",
     "premises_used": [],
     "reasoning": {
@@ -16432,7 +16428,7 @@
   {
     "query_id": "DDT206",
     "answer": "Volt (V)",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The question asks for the unit of induced electromotive force (EMF).\nStep 2: Electromotive force (EMF) is a measure of the energy provided per unit charge.\nStep 3: The standard international (SI) unit for electromotive force (EMF), whether induced or not, is the Volt.\nStep 4: The unit of induced electromotive force is the Volt (V).",
     "premises_used": [],
     "reasoning": {
@@ -16448,7 +16444,7 @@
   {
     "query_id": "DDT207",
     "answer": "increases in direct proportion",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The self-inductance (L) of a solenoid is given by the formula L = (\\u03bc \\u00d7 N^2 \\u00d7 A) / l, where \\u03bc is the permeability, N is the number of turns, A is the cross-sectional area, and l is the length of the solenoid.\nStep 2: From the formula, self-inductance (L) is directly proportional to the cross-sectional area (A), assuming all other factors (\\u03bc, N, l) remain constant.\nStep 3: If the cross-sectional area of a solenoid is increased, its self-inductance will also increase.\nStep 4: Therefore, the self-inductance increases proportionally.",
     "premises_used": [],
     "reasoning": {
@@ -16482,7 +16478,7 @@
   {
     "query_id": "DDT209",
     "answer": "Magnetic induction $B$",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The magnetic field energy density (u_B) in a solenoid is given by the formula u_B = B\\u00b2 / (2\\u03bc\\u2080).\nStep 2: In this formula, B represents the magnetic field strength (or magnetic flux density) inside the solenoid, and \\u03bc\\u2080 is the permeability of free space, which is a constant.\nStep 3: From the formula, it is evident that the magnetic field energy density (u_B) is directly proportional to the square of the magnetic field strength (B).\nStep 4: The magnetic field energy density in a solenoid is proportional to the square of the magnetic field strength.",
     "premises_used": [],
     "reasoning": {
@@ -16498,7 +16494,7 @@
   {
     "query_id": "DDT210",
     "answer": "inside the solenoid",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The question asks about the concentration of the magnetic field in an ideal solenoid.\nStep 2: In an ideal solenoid, the magnetic field lines are closely packed inside the coil.\nStep 3: Outside an ideal solenoid, the magnetic field is considered negligible.\nStep 4: Therefore, the magnetic field is concentrated inside the coil of an ideal solenoid.",
     "premises_used": [],
     "reasoning": {
@@ -16549,7 +16545,7 @@
   {
     "query_id": "DDT213",
     "answer": "3.77",
-    "unit": "\\u03bcWb",
+    "unit": "uWb",
     "explanation": "Step 1: Convert the cross-sectional area from cm\\u00b2 to m\\u00b2.\nStep 2: Calculate the magnetic field (B) inside the solenoid using the formula B = \\u03bc\\u2080 \\u00d7 n \\u00d7 I, where \\u03bc\\u2080 = 4\\u03c0 \\u00d7 10^-7 T\\u00b7m/A, n = 2000 turns/m, and I = 1.5 A.\nStep 3: Calculate the magnetic flux (\\u03a6) through one turn using the formula \\u03a6 = B \\u00d7 A. The magnetic flux through 1 turn is approximately 3.77 \\u00d7 10^-6 Wb.\nStep 4: Therefore, the magnetic flux through 1 turn is 3.77 \\u03bcWb",
     "premises_used": [],
     "reasoning": {
@@ -16600,7 +16596,7 @@
   {
     "query_id": "DDT216",
     "answer": "Increases in proportion to the square of the number of turns",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The inductance (L) of a solenoid is directly proportional to the square of the number of turns (N\\u00b2) and inversely proportional to its length (l).\nStep 2: The formula for the inductance of a solenoid is L = (\\u03bc \\u00d7 N^2 \\u00d7 A) / l, where \\u03bc is the permeability of the core material and A is the cross-sectional area.\nStep 3: The question states that the number of turns (N) is increased, and the length (l) is kept constant. The permeability (\\u03bc) and cross-sectional area (A) are not mentioned as changing, so they are assumed to be constant.\nStep 4: Since L is directly proportional to N\\u00b2 (L \\u221d N\\u00b2), if N increases while other parameters remain constant, L will increase.\nStep 5: Therefore, the inductance increases proportionally to the square of the number of turns.",
     "premises_used": [],
     "reasoning": {
@@ -16617,7 +16613,7 @@
   {
     "query_id": "DDT217",
     "answer": "cross-sectional area (S)",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The magnetic field (B) inside an ideal solenoid is given by the formula B = \\u03bc\\u2080nI.\nStep 2: In this formula, \\u03bc\\u2080 is the permeability of free space (a constant).\nStep 3: The variable 'n' represents the number of turns per unit length, and 'I' represents the current flowing through the solenoid.\nStep 4: The formula shows that the magnetic field strength depends on the current and the number of turns per unit length.\nStep 5: Therefore, the magnetic field in a solenoid does not depend on the cross-sectional area (S).",
     "premises_used": [],
     "reasoning": {
@@ -16634,7 +16630,7 @@
   {
     "query_id": "DDT218",
     "answer": "1",
-    "unit": "\\u03bcWb",
+    "unit": "uWb",
     "explanation": "Step 1: Identify the given magnetic field strength (B) and cross-sectional area (A).\nStep 2: Convert the cross-sectional area from cm\\u00b2 to m\\u00b2.\nStep 3: Use the formula for magnetic flux, \\u03a6 = B \\u00d7 A, assuming the magnetic field is perpendicular to the area.\nStep 4: Substitute the converted area and the magnetic field strength into the formula.\nStep 5: Convert the area: 5 cm\\u00b2 = 5 \\u00d7 10^-4 m\\u00b2.\nStep 6: Calculate \\u03a6 = 0.002 \\u00d7 5 \\u00d7 10^-4 = 1 \\u00d7 10^-6 Wb.\nStep 7: Therefore, the magnetic flux through each turn is 1 \\u03bcWb.",
     "premises_used": [],
     "reasoning": {
@@ -16653,7 +16649,7 @@
   {
     "query_id": "DDT219",
     "answer": "the magnetic field energy increases proportionally to B\\u00b2",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: The energy stored in a magnetic field, such as inside a solenoid, depends on the strength of the magnetic field.\nStep 2: The magnetic field energy density (energy per unit volume) is given by the formula u = (1/2) \\u00d7 B^2 / \\u03bc, where B is the magnetic field strength and \\u03bc is the permeability of the material inside the solenoid.\nStep 3: The total magnetic field energy (E) in the solenoid is the energy density multiplied by the volume (V) of the solenoid, so E = u \\u00d7 V = (1/2) \\u00d7 (V/\\u03bc) \\u00d7 B^2.\nStep 4: From this formula, it is evident that the magnetic field energy (E) is directly proportional to the square of the magnetic field strength (B).\nStep 5: Therefore, the magnetic field energy increases proportionally to B\\u00b2.",
     "premises_used": [],
     "reasoning": {
@@ -16670,7 +16666,7 @@
   {
     "query_id": "DDT220",
     "answer": "the current changes with time",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: An induced electromotive force (EMF) appears in a solenoid when there is a change in the magnetic flux passing through its coils.\nStep 2: Magnetic flux is a measure of the total magnetic field passing through a given area.\nStep 3: This change in magnetic flux can be caused by a change in the strength or direction of the magnetic field passing through the solenoid.\nStep 4: One common cause is a change in the current flowing through the solenoid itself, which alters its own magnetic field and thus the magnetic flux (self-induction).\nStep 5: Therefore, an induced electromotive force appears when the current changes with time.",
     "premises_used": [],
     "reasoning": {
@@ -16687,7 +16683,7 @@
   {
     "query_id": "DDT321",
     "answer": "126.86",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the problem. The circuit parameters are resistance R = 20 \\u03a9, inductance L = 0.5 H, capacitance C = 100 \\u03bcF, and frequency f = 50 Hz. The objective is to calculate the total impedance Z of the RLC circuit.\nStep 2: Convert the capacitance from microfarads to farads so that all quantities are in SI units. C = 100 \\u03bcF = 100 \\u00d7 10\\u207b\\u2076 F = 1 \\u00d7 10\\u207b\\u2074 F.\nStep 3: Calculate the inductive reactance XL using the formula XL = 2\\u03c0fL. Substitute the values f = 50 Hz and L = 0.5 H into the formula. XL = 2\\u03c0 \\u00d7 50 \\u00d7 0.5 = 2\\u03c0 \\u00d7 25 = 50\\u03c0 \\u2248 157.08 \\u03a9.\nStep 4: Calculate the capacitive reactance XC using the formula XC = 1 / (2\\u03c0fC). Substitute the values f = 50 Hz and C = 1 \\u00d7 10\\u207b\\u2074 F. XC = 1 / (2\\u03c0 \\u00d7 50 \\u00d7 1 \\u00d7 10\\u207b\\u2074). First calculate the denominator: 2\\u03c0 \\u00d7 50 = 314.16 and 314.16 \\u00d7 10\\u207b\\u2074 = 0.031416. Therefore XC = 1 / 0.031416 \\u2248 31.83 \\u03a9.\nStep 5: Determine the net reactance of the circuit. For a series RLC circuit, the total reactance X is the difference between inductive and capacitive reactance. X = XL \\u2212 XC = 157.08 \\u2212 31.83 = 125.25 \\u03a9.\nStep 6: Calculate the total impedance of the circuit using the formula Z = \\u221a(R\\u00b2 + X\\u00b2). Substitute R = 20 \\u03a9 and X = 125.25 \\u03a9. Z = \\u221a(20\\u00b2 + 125.25\\u00b2) = \\u221a(400 + 15687.56) = \\u221a16087.56 \\u2248 126.86 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -16742,7 +16738,7 @@
   {
     "query_id": "DDT324",
     "answer": "75.40",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question: inductance L = 0.2 H and frequency f = 60 Hz.\nStep 2: State the formula for inductive reactance: Z_L = 2*pi*f*L.\nStep 3: Substitute the given values into the formula: Z_L = 2*pi*60 Hz*0.2 H.\nStep 4: Calculate step by step with units:\n2*pi \\u2248 6.2832 (dimensionless constant)\n6.2832 \\u00d7 60 Hz = 376.992 s\\u207b\\u00b9\n376.992 s\\u207b\\u00b9 \\u00d7 0.2 H = 75.3984 \\u03a9\nStep 5: State the final conclusion: the inductive reactance is Z_L = 75.40 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -16762,7 +16758,7 @@
   {
     "query_id": "DDT325",
     "answer": "53.05",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question: capacitance C = 50 \\u03bcF and frequency f = 60 Hz.\nStep 2: State the formula for capacitive reactance: Z_C = 1 / (2*pi*f*C).\nStep 3: Convert the capacitance to farads: C = 50 \\u03bcF = 50 \\u00d7 10\\u207b\\u2076 F = 0.000050 F.\nStep 4: Substitute the given values into the formula: Z_C = 1 / (2*pi*60 Hz*0.000050 F).\nStep 5: Calculate the denominator step by step with units:\n2*pi \\u2248 6.2832 (dimensionless constant)\n6.2832 \\u00d7 60 Hz = 376.992 s\\u207b\\u00b9\n376.992 s\\u207b\\u00b9 \\u00d7 0.000050 F = 0.0188496\nStep 6: Calculate the capacitive reactance:\nZ_C = 1 / 0.0188496 = 53.05 \\u03a9.\nStep 7: State the final conclusion: the capacitive reactance is Z_C = 53.05 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -16858,7 +16854,7 @@
   {
     "query_id": "DDT330",
     "answer": "the circuit exhibits an inductive characteristic",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Identify the given values from the problem: the inductive reactance is Z_L = 70 \\u03a9 and the capacitive reactance is Z_C = 50 \\u03a9.\nStep 2: Recall the rule used to determine the characteristic of an RLC circuit: if Z_L > Z_C the circuit is inductive, if Z_L < Z_C the circuit is capacitive, and if Z_L = Z_C the circuit is at resonance.\nStep 3: Compare the given reactances: Z_L = 70 \\u03a9 and Z_C = 50 \\u03a9, therefore 70 \\u03a9 > 50 \\u03a9 and Z_L > Z_C.\nStep 4: Determine the dominant reactance in the circuit: since the inductive reactance is greater than the capacitive reactance, the inductive effect dominates.\nStep 5: State the final conclusion: the circuit exhibits an inductive characteristic.",
     "premises_used": [],
     "reasoning": {
@@ -16875,7 +16871,7 @@
   {
     "query_id": "DDT331",
     "answer": "10.03",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question: resistance R = 10 \\u03a9, inductance L = 0.2 H, capacitance C = 50 \\u03bcF, and frequency f = 50 Hz.\nStep 2: Convert the capacitance to farads: C = 50 \\u03bcF = 50 \\u00d7 10\\u207b\\u2076 F = 0.000050 F.\nStep 3: Calculate the angular frequency using the relation between angular frequency and frequency: \\u03c9=2*pi*f\nStep 4: Substitute the given value of frequency: \\u03c9 = 2*pi*50 Hz.\nStep 5: Perform the calculation: 2*pi \\u2248 6.2832, therefore 6.2832 \\u00d7 50 Hz = 314.16 rad/s.\nStep 6: Calculate the inductive reactance using Z_L = \\u03c9L: Z_L = 314.16 rad/s \\u00d7 0.2 H = 62.832 \\u03a9.\nStep 7: Calculate the capacitive reactance using Z_C = 1 / (\\u03c9C): Z_C = 1 / (314.16 rad/s \\u00d7 0.000050 F) = 1 / 0.015708 = 63.66 \\u03a9.\nStep 8: Calculate the impedance of the series RLC circuit using Z = sqrt(R\\u00b2 + (Z_L \\u2212 Z_C)\\u00b2): Z = sqrt((10 \\u03a9)\\u00b2 + (62.832 \\u03a9 \\u2212 63.66 \\u03a9)\\u00b2).\nStep 9: Perform the calculation step by step: (10 \\u03a9)\\u00b2 = 100 \\u03a9\\u00b2, (62.832 \\u03a9 \\u2212 63.66 \\u03a9) = \\u22120.828 \\u03a9, (\\u22120.828 \\u03a9)\\u00b2 = 0.686 \\u03a9\\u00b2.\nStep 10: Calculate the final impedance: Z = sqrt(100 \\u03a9\\u00b2 + 0.686 \\u03a9\\u00b2) = sqrt(100.686) = 10.03 \\u03a9.\nStep 11: State the final conclusion: the impedance of the circuit is Z = 10.03 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -16934,7 +16930,7 @@
   {
     "query_id": "DDT334",
     "answer": "37.70",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question: inductance L = 0.1 H and frequency f = 60 Hz.\nStep 2: Recall the formula for inductive reactance in an AC circuit: X_L = 2*pi*f*L.\nStep 3: Substitute the given values into the formula: X_L = 2*pi*60 Hz*0.1 H.\nStep 4: Perform the calculation step by step with units:\n2*pi \\u2248 6.2832 (dimensionless constant)\n6.2832 \\u00d7 60 Hz = 376.992 s\\u207b\\u00b9\n376.992 s\\u207b\\u00b9 \\u00d7 0.1 H = 37.6992 \\u03a9\nStep 5: State the final conclusion: the inductive reactance is X_L = 37.70 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -16954,7 +16950,7 @@
   {
     "query_id": "DDT335",
     "answer": "31.83",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question: capacitance C = 100 \\u03bcF and frequency f = 50 Hz.\nStep 2: Convert the capacitance to farads: C = 100 \\u03bcF = 100 \\u00d7 10\\u207b\\u2076 F = 0.000100 F.\nStep 3: Recall the formula for capacitive reactance in an AC circuit: X_C = 1 / (2*pi*f*C).\nStep 4: Substitute the given values into the formula: X_C = 1 / (2*pi*50 Hz*0.000100 F).\nStep 5: Calculate the denominator step by step with units:\n2*pi \\u2248 6.2832 (dimensionless constant)\n6.2832 \\u00d7 50 Hz = 314.16 s\\u207b\\u00b9\n314.16 s\\u207b\\u00b9 \\u00d7 0.000100 F = 0.031416\nStep 6: Calculate the capacitive reactance:\nX_C = 1 / 0.031416 = 31.83 \\u03a9.\nStep 7: State the final conclusion: the capacitive reactance is X_C = 31.83 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -16977,7 +16973,7 @@
   {
     "query_id": "DDT336",
     "answer": "25.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question. The applied voltage of the AC source is U = 100 V and the current flowing through the series RLC circuit is I = 4 A. The objective of the problem is to determine the total impedance Z of the circuit.\nStep 2: Recall the relationship between voltage, current, and impedance in an AC circuit. Similar to Ohm\\u2019s Law in DC circuits, the impedance in an AC circuit is defined as the ratio of the applied voltage to the current flowing through the circuit. The mathematical relation is Z = U / I.\nStep 3: Substitute the given values into the impedance formula. Using the provided voltage and current, the expression becomes Z = 100 V / 4 A.\nStep 4: Perform the calculation with units. Dividing the voltage by the current gives 100 V / 4 A = 25.0 \\u03a9.\nStep 5: Interpret the result. The impedance represents the total opposition to the alternating current in the circuit, including the effects of resistance, inductive reactance, and capacitive reactance.\nStep 6: State the final conclusion. The total impedance of the series RLC circuit is Z = 25.0 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -17064,7 +17060,7 @@
   {
     "query_id": "DDT340",
     "answer": "38.16 \\u03a9 and 0.30",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Identify the given values from the question: resistance R = 12 \\u03a9, capacitance C = 80 \\u03bcF, frequency f = 60 Hz, and total impedance Z = 40 \\u03a9. The objective is to determine the capacitive reactance X_C and the power factor cos\\u03c6 of the circuit.\nStep 2: Recall the relationship between impedance, resistance, and capacitive reactance in a series RC circuit: Z\\u00b2 = R\\u00b2 + X_C\\u00b2.\nStep 3: Rearrange the formula to determine the capacitive reactance: X_C = sqrt(Z\\u00b2 \\u2212 R\\u00b2).\nStep 4: Substitute the given values into the formula: X_C = sqrt((40 \\u03a9)\\u00b2 \\u2212 (12 \\u03a9)\\u00b2).\nStep 5: Perform the calculation step by step with units:\n(40 \\u03a9)\\u00b2 = 1600 \\u03a9\\u00b2\n(12 \\u03a9)\\u00b2 = 144 \\u03a9\\u00b2\n1600 \\u03a9\\u00b2 \\u2212 144 \\u03a9\\u00b2 = 1456 \\u03a9\\u00b2\nX_C = sqrt(1456 \\u03a9\\u00b2) = 38.16 \\u03a9.\nStep 6: Recall the formula for the power factor in a series AC circuit: cos\\u03c6 = R / Z.\nStep 7: Substitute the given values into the power factor formula: cos\\u03c6 = 12 \\u03a9 / 40 \\u03a9.\nStep 8: Perform the calculation with units: 12 \\u03a9 / 40 \\u03a9 = 0.30.\nStep 9: State the final conclusion: the capacitive reactance is X_C = 38.16 \\u03a9 and the power factor of the circuit is cos\\u03c6 = 0.30.",
     "premises_used": [],
     "reasoning": {
@@ -17089,7 +17085,7 @@
   {
     "query_id": "DDT341",
     "answer": "45.79",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question: resistance R = 20 \\u03a9, inductance L = 0.3 H, capacitance C = 60 \\u03bcF, and frequency f = 50 Hz.\nStep 2: Convert the capacitance to farads: C = 60 \\u03bcF = 60 \\u00d7 10\\u207b\\u2076 F = 0.000060 F.\nStep 3: Calculate the angular frequency using the relation between angular frequency and frequency: \\u03c9=2*pi*f\nStep 4: Substitute the given value of frequency: \\u03c9 = 2*pi*50 Hz.\nStep 5: Perform the calculation: 2*pi \\u2248 6.2832, therefore 6.2832 \\u00d7 50 Hz = 314.16 rad/s.\nStep 6: Calculate the inductive reactance using the formula X_L = \\u03c9L: X_L = 314.16 rad/s \\u00d7 0.3 H = 94.25 \\u03a9.\nStep 7: Calculate the capacitive reactance using the formula X_C = 1 / (\\u03c9C): X_C = 1 / (314.16 rad/s \\u00d7 0.000060 F).\nStep 8: Perform the calculation step by step:\n314.16 rad/s \\u00d7 0.000060 F = 0.0188496\nX_C = 1 / 0.0188496 = 53.05 \\u03a9.\nStep 9: Calculate the total impedance of the series RLC circuit using the formula Z = sqrt(R\\u00b2 + (X_L \\u2212 X_C)\\u00b2):\nZ = sqrt((20 \\u03a9)\\u00b2 + (94.25 \\u03a9 \\u2212 53.05 \\u03a9)\\u00b2).\nStep 10: Perform the calculation step by step:\n(20 \\u03a9)\\u00b2 = 400 \\u03a9\\u00b2\n94.25 \\u03a9 \\u2212 53.05 \\u03a9 = 41.20 \\u03a9\n(41.20 \\u03a9)\\u00b2 = 1697.44 \\u03a9\\u00b2\n400 \\u03a9\\u00b2 + 1697.44 \\u03a9\\u00b2 = 2097.44 \\u03a9\\u00b2.\nStep 11: Calculate the final impedance:\nZ = sqrt(2097.44 \\u03a9\\u00b2) = 45.79 \\u03a9.\nStep 12: State the final conclusion: the total impedance of the circuit is Z = 45.79 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -17158,7 +17154,7 @@
   {
     "query_id": "DDT344",
     "answer": "94.25",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question: inductance L = 0.25 H and frequency f = 60 Hz. The objective is to calculate the inductive reactance Z_L of the inductor.\nStep 2: Recall the formula used to calculate inductive reactance in an AC circuit: Z_L = 2*pi*f*L.\nStep 3: Substitute the given values into the formula: Z_L = 2*pi*60 Hz*0.25 H.\nStep 4: Perform the calculation step by step with units. First calculate the constant term: 2*pi \\u2248 6.2832 (dimensionless constant).\nStep 5: Multiply by the frequency: 6.2832 \\u00d7 60 Hz = 376.992 s\\u207b\\u00b9.\nStep 6: Multiply by the inductance: 376.992 s\\u207b\\u00b9 \\u00d7 0.25 H = 94.248 \\u03a9.\nStep 7: Round the result to two decimal places for clarity: Z_L = 94.25 \\u03a9.\nStep 8: State the final conclusion: the inductive reactance of the inductor is Z_L = 94.25 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -17178,7 +17174,7 @@
   {
     "query_id": "DDT345",
     "answer": "35.37",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question. The capacitance of the capacitor is C = 75 \\u03bcF and the operating frequency of the AC source is f = 60 Hz. The objective is to determine the capacitive reactance Z_C of the capacitor in the circuit.\nStep 2: Recall the formula used to calculate capacitive reactance in an AC circuit. Capacitive reactance represents the opposition of a capacitor to alternating current and depends on both the capacitance and the frequency of the AC source. The formula is Z_C = 1 / (2*pi*f*C).\nStep 3: Convert the capacitance from microfarads to farads so that it is in standard SI units. Since 1 \\u03bcF = 10\\u207b\\u2076 F, the capacitance becomes C = 75 \\u03bcF = 75 \\u00d7 10\\u207b\\u2076 F = 0.000075 F.\nStep 4: Substitute the given values into the capacitive reactance formula. The expression becomes Z_C = 1 / (2*pi*60 Hz*0.000075 F).\nStep 5: Calculate the denominator step by step. First calculate the constant term: 2*pi \\u2248 6.2832.\nStep 6: Multiply by the frequency: 6.2832 \\u00d7 60 Hz = 376.992 s\\u207b\\u00b9.\nStep 7: Multiply the result by the capacitance: 376.992 s\\u207b\\u00b9 \\u00d7 0.000075 F = 0.0282744.\nStep 8: Calculate the capacitive reactance by taking the reciprocal of the denominator: Z_C = 1 / 0.0282744 = 35.37 \\u03a9.\nStep 9: Interpret the result. The capacitive reactance represents the opposition offered by the capacitor to the alternating current at the given frequency.\nStep 10: State the final conclusion. The capacitive reactance of the capacitor is Z_C = 35.37 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -17221,7 +17217,7 @@
   {
     "query_id": "DDT347",
     "answer": "12.03",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question: resistance R = 12 \\u03a9, inductance L = 0.2 H, capacitance C = 50 \\u03bcF, and frequency f = 50 Hz.\nStep 2: Convert the capacitance to farads so that it is in SI units: C = 50 \\u03bcF = 50 \\u00d7 10\\u207b\\u2076 F = 0.000050 F.\nStep 3: Calculate the angular frequency using the relation between angular frequency and frequency: \\u03c9 = 2*pi*f\nStep 4: Substitute the value of frequency into the formula: \\u03c9 = 2*pi*50 Hz.\nStep 5: Perform the calculation: 2*pi \\u2248 6.2832, therefore 6.2832 \\u00d7 50 Hz = 314.16 rad/s.\nStep 6: Calculate the inductive reactance using the formula X_L = \\u03c9L: X_L = 314.16 rad/s \\u00d7 0.2 H = 62.83 \\u03a9.\nStep 7: Calculate the capacitive reactance using the formula X_C = 1 / (\\u03c9C): X_C = 1 / (314.16 rad/s \\u00d7 0.000050 F).\nStep 8: Perform the calculation step by step:\n314.16 \\u00d7 0.000050 = 0.015708\nX_C = 1 / 0.015708 = 63.66 \\u03a9.\nStep 9: Calculate the total impedance of the series RLC circuit using the formula Z = sqrt(R\\u00b2 + (X_L \\u2212 X_C)\\u00b2).\nStep 10: Substitute the values into the impedance formula: Z = sqrt((12 \\u03a9)\\u00b2 + (62.83 \\u03a9 \\u2212 63.66 \\u03a9)\\u00b2).\nStep 11: Perform the calculation step by step:\n(12 \\u03a9)\\u00b2 = 144 \\u03a9\\u00b2\n62.83 \\u03a9 \\u2212 63.66 \\u03a9 = \\u22120.83 \\u03a9\n(\\u22120.83 \\u03a9)\\u00b2 = 0.69 \\u03a9\\u00b2\n144 \\u03a9\\u00b2 + 0.69 \\u03a9\\u00b2 = 144.69 \\u03a9\\u00b2.\nStep 12: Calculate the final impedance: Z = sqrt(144.69) = 12.03 \\u03a9.\nStep 13: State the final conclusion: the total impedance of the circuit is Z = 12.03 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -17273,7 +17269,7 @@
   {
     "query_id": "DDT349",
     "answer": "50.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values from the question. The applied voltage in the circuit is U = 100 V and the current flowing through the circuit is I = 2 A. The objective is to determine the total impedance Z of the circuit.\nStep 2: Recall Ohm\\u2019s Law for AC circuits, which relates voltage, current, and impedance. In an AC circuit, the impedance represents the total opposition to current flow and is calculated using the relation Z = U / I.\nStep 3: Substitute the given numerical values into the impedance formula. The expression becomes Z = 100 V / 2 A.\nStep 4: Perform the calculation with units. Dividing the voltage by the current gives 100 V / 2 A = 50.0 \\u03a9.\nStep 5: Interpret the result. The impedance represents the total opposition of the circuit to the alternating current, which may include resistance, inductive reactance, and capacitive reactance.\nStep 6: State the final conclusion. The total impedance of the circuit is Z = 50.0 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -17291,7 +17287,7 @@
   {
     "query_id": "DDT350",
     "answer": "The circuit exhibits an inductive characteristic.",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Identify the given values from the question. The inductive reactance of the circuit is Z_L = 100 \\u03a9 and the capacitive reactance is Z_C = 80 \\u03a9. The objective is to determine the electrical characteristic of the circuit.\nStep 2: Recall the rule used to determine the behavior of an RLC circuit. The characteristic of the circuit depends on the comparison between the inductive reactance and the capacitive reactance. If Z_L > Z_C the circuit behaves as an inductive circuit, if Z_L < Z_C the circuit behaves as a capacitive circuit, and if Z_L = Z_C the circuit is at resonance.\nStep 3: Compare the magnitudes of the given reactances. In this case Z_L = 100 \\u03a9 and Z_C = 80 \\u03a9.\nStep 4: Perform the comparison. Since 100 \\u03a9 > 80 \\u03a9, it follows that Z_L > Z_C.\nStep 5: Interpret the result. Because the inductive reactance is greater than the capacitive reactance, the inductive effect dominates the circuit behavior.\nStep 6: State the final conclusion. The circuit exhibits an inductive characteristic.",
     "premises_used": [],
     "reasoning": {
@@ -17327,7 +17323,7 @@
   {
     "query_id": "DDT352",
     "answer": "the charge Q reaches its maximum value",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Recall the behavior of an ideal LC circuit. In an LC circuit, energy oscillates back and forth between the electric field of the capacitor and the magnetic field of the inductor.\nStep 2: Identify where the electric field energy is stored. The electric field energy is stored in the capacitor and depends on the amount of charge accumulated on the capacitor plates.\nStep 3: Recall the formula for the electric field energy stored in a capacitor: U_E = 0.5*Q\\u00b2/C, where Q is the charge on the capacitor and C is the capacitance.\nStep 4: From this relation, the electric energy increases as the square of the charge on the capacitor. Therefore, the electric field energy becomes largest when the charge Q reaches its maximum value.",
     "premises_used": [],
     "reasoning": {
@@ -17364,7 +17360,7 @@
   {
     "query_id": "DDT354",
     "answer": "No",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Identify the condition given in the question. The circuit is described as an ideal LC circuit, meaning it contains only an inductor (L) and a capacitor (C) with no resistance in the circuit.\nStep 2: Recall the assumption for ideal electrical components. In an ideal circuit, the inductor and capacitor are assumed to have no internal resistance, and therefore there is no mechanism for electrical energy to be converted into heat.\nStep 3: Recall how energy behaves in an LC circuit. The total electromagnetic energy continuously oscillates between two forms: electric field energy stored in the capacitor and magnetic field energy stored in the inductor.\nStep 4: Understand the consequence of having no resistance in the circuit. Since there is no resistance, no Joule heating occurs and therefore no energy is dissipated from the system.\nStep 5: Interpret the physical behavior of the circuit. The energy simply transfers back and forth between the capacitor and the inductor indefinitely while the total energy remains constant.\nStep 6: State the final conclusion. In an ideal LC circuit, the total electromagnetic energy is not lost; it remains constant and oscillates between the capacitor and the inductor.",
     "premises_used": [],
     "reasoning": {
@@ -17438,7 +17434,7 @@
   {
     "query_id": "DDT358",
     "answer": "Simple Harmonic Motion (SHM)",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Identify the components of the circuit. An LC circuit consists of a capacitor with capacitance C and an inductor with inductance L connected together.\nStep 2: Recall the energy behavior in the circuit. In this circuit, energy alternates between the electric field stored in the capacitor and the magnetic field stored in the inductor.\nStep 3: Describe the process of energy exchange. When the capacitor discharges, current flows through the inductor and energy is stored in the magnetic field of the inductor. When the current decreases, the magnetic field collapses and charges the capacitor again with opposite polarity.\nStep 4: Recognize the nature of this repeated process. This continuous transfer of energy between the capacitor and the inductor produces an electrical oscillation in the circuit.\nStep 5: Consider the condition of an ideal LC circuit. In an ideal circuit there is no resistance, so no energy is lost as heat and the oscillations continue indefinitely.\nStep 6: State the final conclusion. The oscillation occurring in an ideal LC circuit is an undamped free oscillation.",
     "premises_used": [],
     "reasoning": {
@@ -17473,7 +17469,7 @@
   {
     "query_id": "DDT360",
     "answer": "Sinusoidal waves with a phase shift of \\u03c0/2",
-    "unit": "\\u2014",
+    "unit": "-",
     "explanation": "Step 1: Recall the behavior of an ideal LC circuit. In an LC circuit, electrical energy oscillates between the electric field energy stored in the capacitor and the magnetic field energy stored in the inductor.\nStep 2: Recall the expressions for the two types of energy in the circuit. The electric field energy stored in the capacitor is U_E = Q\\u00b2/(2C), and the magnetic field energy stored in the inductor is U_B = (1/2)LI\\u00b2.\nStep 3: Recall the behavior of charge and current in the circuit. In an LC circuit, the charge on the capacitor and the current through the inductor vary sinusoidally with time.\nStep 4: Determine the shape of the energy graphs. Since the energies depend on the square of the charge and the square of the current, the electric and magnetic energies vary as the square of sinusoidal functions.\nStep 5: Interpret the resulting waveform. Squaring a sinusoidal or cosine function produces a periodic curve that always remains positive and has the shape of a squared sine or squared cosine wave.\nStep 6: Describe the relationship between the two energies. The electric energy and magnetic energy oscillate out of phase with each other; when one reaches its maximum value, the other becomes zero.\nStep 7: State the final conclusion. The graphs representing electric field energy and magnetic field energy in an LC circuit have the shape of sinusoidal-squared curves (sin\\u00b2 or cos\\u00b2 functions).",
     "premises_used": [],
     "reasoning": {
@@ -17873,7 +17869,7 @@
   {
     "query_id": "DDT379",
     "answer": "0.63",
-    "unit": "J/m\\u00b3",
+    "unit": "J/m^3",
     "explanation": "Step 1: Identify the given value from the question: the magnetic field strength is B = 1.26 \\u00d7 10\\u207b\\u00b3 T. The objective is to calculate the magnetic field energy density u_B. The cross-sectional area is given as 10 cm\\u00b2, but it is not required because energy density depends only on the magnetic field strength.\nStep 2: Recall the formula for magnetic field energy density: u_B = B\\u00b2 / (2*\\u03bc\\u2080), where \\u03bc\\u2080 = 4*pi \\u00d7 10\\u207b\\u2077 T\\u00b7m/A.\nStep 3: Substitute the given value into the formula:\nu_B = (1.26 \\u00d7 10\\u207b\\u00b3 T)\\u00b2 / (2*(4*pi \\u00d7 10\\u207b\\u2077)).\nStep 4: Calculate the numerator by squaring the magnetic field:\n(1.26 \\u00d7 10\\u207b\\u00b3)\\u00b2 = 1.5876 \\u00d7 10\\u207b\\u2076.\nStep 5: Calculate the denominator:\n2*(4*pi \\u00d7 10\\u207b\\u2077) = 8*pi \\u00d7 10\\u207b\\u2077 \\u2248 2.513 \\u00d7 10\\u207b\\u2076.\nStep 6: Divide the numerator by the denominator:\nu_B = (1.5876 \\u00d7 10\\u207b\\u2076) / (2.513 \\u00d7 10\\u207b\\u2076) \\u2248 0.63.\nStep 7: Final conclusion: the magnetic field energy density is u_B \\u2248 0.63 J/m\\u00b3.",
     "premises_used": [],
     "reasoning": {
@@ -18011,7 +18007,7 @@
   {
     "query_id": "DDT386",
     "answer": "0.895",
-    "unit": "J/m\\u00b3",
+    "unit": "J/m^3",
     "explanation": "Step 1: Identify the given values from the question: the magnetic field strength is B = 1.5 \\u00d7 10\\u207b\\u00b3 T. The cross-sectional area A = 8 cm\\u00b2 is also given but it is not required because magnetic energy density depends only on the magnetic field strength.\nStep 2: Recall the formula for magnetic energy density: u_B = B\\u00b2 / (2*\\u03bc\\u2080), where \\u03bc\\u2080 = 4*pi \\u00d7 10\\u207b\\u2077 T\\u00b7m/A\nStep 3: Substitute the given value into the formula: u_B = (1.5 \\u00d7 10\\u207b\\u00b3 T)\\u00b2 / (2*(4*pi \\u00d7 10\\u207b\\u2077 T\\u00b7m/A)).\nStep 4: Calculate the square of the magnetic field with units: (1.5 \\u00d7 10\\u207b\\u00b3 T)\\u00b2 = 2.25 \\u00d7 10\\u207b\\u2076 T\\u00b2.\nStep 5: Calculate the denominator: 2*(4*pi \\u00d7 10\\u207b\\u2077 T\\u00b7m/A) = 8*pi \\u00d7 10\\u207b\\u2077 T\\u00b7m/A \\u2248 2.513 \\u00d7 10\\u207b\\u2076.\nStep 6: Divide the numerator by the denominator: u_B = (2.25 \\u00d7 10\\u207b\\u2076 T\\u00b2) / (2.513 \\u00d7 10\\u207b\\u2076) \\u2248 0.895.\nStep 7: Final conclusion: the magnetic energy density is u_B \\u2248 0.895 J/m\\u00b3.",
     "premises_used": [],
     "reasoning": {
@@ -18713,7 +18709,7 @@
   {
     "query_id": "CH001",
     "answer": "40",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given condition and value from the problem: the circuit operates at resonance and the measured impedance is Z=40\\u03a9.\nStep 2: State the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Recall the general impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 4: Apply the resonance condition to simplify the impedance expression: since X_L=X_C then X_L\\u2212X_C=0.\nStep 5: Substitute this result into the impedance formula to simplify it: Z=\\u221a(R\\u00b2+0\\u00b2).\nStep 6: Simplify the expression to obtain the relationship between impedance and resistance at resonance: Z=R.\nStep 7: Substitute the measured impedance to determine the resistance: R=40\\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18732,7 +18728,7 @@
   {
     "query_id": "CH002",
     "answer": "80",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given condition and value from the problem: the circuit is in resonance and the measured impedance is Z=80 \\u03a9.\nStep 2: State the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Recall the general impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 4: Apply the resonance condition to simplify the impedance expression: since X_L=X_C then X_L\\u2212X_C=0.\nStep 5: Substitute this result into the impedance formula to simplify it: Z=\\u221a(R\\u00b2+0\\u00b2).\nStep 6: Simplify the expression to obtain the relationship between impedance and resistance at resonance: Z=R.\nStep 7: Substitute the given impedance to determine the resistance: R=80 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18751,7 +18747,7 @@
   {
     "query_id": "CH003",
     "answer": "120",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given condition and value from the problem: the circuit operates at resonance and the measured impedance is Z=120 \\u03a9.\nStep 2: State the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Recall the general impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 4: Apply the resonance condition to simplify the impedance expression: since X_L=X_C then X_L\\u2212X_C=0.\nStep 5: Substitute this result into the impedance formula to simplify it: Z=\\u221a(R\\u00b2+0\\u00b2).\nStep 6: Simplify the expression to obtain the relationship between impedance and resistance at resonance: Z=R.\nStep 7: Substitute the given impedance to determine the resistance: R=120 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18770,7 +18766,7 @@
   {
     "query_id": "CH004",
     "answer": "60",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given condition and value from the problem: the circuit is at resonance where current is maximum and the measured impedance is Z=60 \\u03a9.\nStep 2: State the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Recall the general impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 4: Apply the resonance condition to simplify the impedance expression: since X_L=X_C then X_L\\u2212X_C=0.\nStep 5: Substitute this result into the impedance formula to simplify it: Z=\\u221a(R\\u00b2+0\\u00b2).\nStep 6: Simplify the expression to obtain the relationship between impedance and resistance at resonance: Z=R.\nStep 7: Substitute the given impedance to determine the resistance: R=60 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18789,7 +18785,7 @@
   {
     "query_id": "CH005",
     "answer": "25",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information: the circuit is an RLC circuit operating at resonance and the measured impedance is Z=25 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: State the consequence of the resonance condition: the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the formula for the total impedance of a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 5: Simplify the impedance expression using the resonance condition: Z=\\u221a(R\\u00b2+0\\u00b2).\nStep 6: Determine the relationship between impedance and resistance at resonance: Z=R.\nStep 7: Substitute the given impedance value to determine the resistance: R=25 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18808,7 +18804,7 @@
   {
     "query_id": "CH006",
     "answer": "200",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given condition and value from the problem: the circuit is a series RLC circuit at resonance and the measured impedance is Z=200 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the net reactance under the resonance condition: X_L\\u2212X_C=0.\nStep 4: Recall the impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 5: Simplify the impedance expression using the resonance condition: Z=\\u221a(R\\u00b2+0\\u00b2).\nStep 6: Determine the relationship between impedance and resistance at resonance: Z=R.\nStep 7: Substitute the given impedance value to determine the resistance: R=200 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18827,7 +18823,7 @@
   {
     "query_id": "CH007",
     "answer": "75",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the circuit is at resonance and the measured impedance is Z=75 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of the resonance condition: the inductive and capacitive reactances cancel so the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance expression for a series RLC circuit and apply the resonance condition: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2)=\\u221a(R\\u00b2+0\\u00b2)=R.\nStep 5: Substitute the given impedance value to determine the resistance: R=75 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18844,7 +18840,7 @@
   {
     "query_id": "CH008",
     "answer": "32",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the circuit is at resonance where the current is maximum and the measured impedance is Z=32 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of the resonance condition: the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance formula for a series RLC circuit and apply the resonance condition: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2)=\\u221a(R\\u00b2+0\\u00b2)=R.\nStep 5: Substitute the given impedance value to determine the resistance: R=32 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18861,7 +18857,7 @@
   {
     "query_id": "CH009",
     "answer": "95",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the circuit is at resonance and the measured impedance is Z=95 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the net reactance under the resonance condition: X_L\\u2212X_C=0.\nStep 4: Recall the impedance formula for a series RLC circuit and apply the resonance condition: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2)=\\u221a(R\\u00b2+0\\u00b2)=R.\nStep 5: Substitute the given impedance value to determine the resistance: R=95 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18878,7 +18874,7 @@
   {
     "query_id": "CH010",
     "answer": "18",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the circuit is a series RLC circuit at resonance and the measured impedance is Z=18 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of the resonance condition: the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 5: Simplify the impedance expression using the resonance condition: Z=\\u221a(R\\u00b2+0\\u00b2).\nStep 6: Determine the relationship between impedance and resistance at resonance: Z=R.\nStep 7: Substitute the given impedance value to determine the resistance: R=18 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18897,7 +18893,7 @@
   {
     "query_id": "CH011",
     "answer": "250",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the impedance of the resonant circuit is Z=250 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of the resonance condition: the inductive and capacitive reactances cancel so the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance formula for a series RLC circuit and apply the resonance condition: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2)=\\u221a(R\\u00b2+0\\u00b2)=R.\nStep 5: Substitute the given impedance value to determine the resistance: R=250 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18914,7 +18910,7 @@
   {
     "query_id": "CH012",
     "answer": "145",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the impedance of the resonant circuit is Z=145 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of the resonance condition: the inductive and capacitive reactances cancel so the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance formula for a series RLC circuit and apply the resonance condition: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2)=\\u221a(R\\u00b2+0\\u00b2)=R.\nStep 5: Substitute the given impedance value to determine the resistance: R=145 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18931,7 +18927,7 @@
   {
     "query_id": "CH013",
     "answer": "52",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the circuit is at resonance and the measured impedance is Z=52 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of the resonance condition: the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 5: Simplify the impedance expression using the resonance condition: Z=\\u221a(R\\u00b2+0\\u00b2).\nStep 6: Determine the relationship between impedance and resistance at resonance: Z=R.\nStep 7: Substitute the given impedance value to determine the resistance: R=52 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18950,7 +18946,7 @@
   {
     "query_id": "CH014",
     "answer": "68",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the circuit is at resonance and the measured impedance is Z=68 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of the resonance condition: the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 5: Simplify the impedance expression using the resonance condition: Z=\\u221a(R\\u00b2+0\\u00b2).\nStep 6: Determine the relationship between impedance and resistance at resonance: Z=R.\nStep 7: Substitute the given impedance value to determine the resistance: R=68 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18969,7 +18965,7 @@
   {
     "query_id": "CH015",
     "answer": "180",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the circuit is at resonance and the measured impedance is Z=180 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Recall the impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 4: Simplify the impedance expression using the resonance condition: Z=\\u221a(R\\u00b2+0\\u00b2)=R.\nStep 5: Substitute the given impedance value to determine the resistance: R=180 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -18986,7 +18982,7 @@
   {
     "query_id": "CH016",
     "answer": "20",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the circuit is a series RLC circuit at resonance and the measured impedance is Z=20 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of the resonance condition: the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 5: Simplify the impedance expression using the resonance condition: Z=\\u221a(R\\u00b2+0\\u00b2)=R.\nStep 6: Substitute the given impedance value to determine the resistance: R=20 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -19004,7 +19000,7 @@
   {
     "query_id": "CH017",
     "answer": "10",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the circuit is at resonance and the measured impedance is Z=10 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of the resonance condition: the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance formula for a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 5: Simplify the impedance expression using the resonance condition: Z=\\u221a(R\\u00b2+0\\u00b2)=R.\nStep 6: Substitute the given impedance value to determine the resistance: R=10 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -19022,7 +19018,7 @@
   {
     "query_id": "CH018",
     "answer": "115",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the circuit is at resonance and the total impedance is Z=115 \\u03a9.\nStep 2: Recall the resonance condition in an RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of this condition: the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance expression of a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 5: Simplify the impedance expression using the resonance condition: Z=\\u221a(R\\u00b2+0\\u00b2)=R.\nStep 6: Substitute the given impedance value to determine the resistance: R=115 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -19040,7 +19036,7 @@
   {
     "query_id": "CH019",
     "answer": "90",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given information from the problem: the impedance of the RLC circuit at resonance is Z=90 \\u03a9.\nStep 2: Recall the resonance condition in a series RLC circuit: X_L=X_C.\nStep 3: Determine the consequence of this condition: the net reactance becomes X_L\\u2212X_C=0.\nStep 4: Recall the impedance expression of a series RLC circuit: Z=\\u221a(R\\u00b2+(X_L\\u2212X_C)\\u00b2).\nStep 5: Simplify the impedance expression using the resonance condition: Z=\\u221a(R\\u00b2+0\\u00b2)=R.\nStep 6: Substitute the given impedance value to determine the resistance: R=90 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -19058,7 +19054,7 @@
   {
     "query_id": "CH020",
     "answer": "300",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: The question states that the total impedance of the circuit at resonance is Z = 300 \\u03a9.\nStep 2: In a series RLC circuit, the total impedance (Z) is Z = \\u221a(R\\u00b2 + (ZL - ZC)\\u00b2), and at resonance, the inductive reactance (ZL) is equal to the capacitive reactance (ZC).\nStep 3: At resonance, the total impedance (Z) of a series RLC circuit is purely resistive and is equal to the magnitude of the resistance (R).\nStep 4: Therefore, Z = R = 300 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -19713,7 +19709,7 @@
   {
     "query_id": "CH061",
     "answer": "10.13",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: The given inductance is L = 1 H and the desired resonant frequency is f = 50 Hz.\nStep 2: The resonant angular frequency (\\u03c9) for an RLC circuit is given by the formula \\u03c9 = 1 / \\u221a(LC).\nStep 3: The relationship between angular frequency (\\u03c9) and frequency (f) is \\u03c9 = 2\\u03c0f.\nStep 4: Equating the two expressions for \\u03c9, we get 2\\u03c0f = 1 / \\u221a(LC). Squaring both sides gives (2\\u03c0f)\\u00b2 = 1 / (LC), we arrange the fomula: C = 1 / (4\\u03c0\\u00b2f\\u00b2L) = 1 / (4\\u03c0\\u00b2 * 50\\u00b2 * 1) = 10.13 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -19729,7 +19725,7 @@
   {
     "query_id": "CH062",
     "answer": "12.67",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: The problem asks for the capacitance (C) of an L-C circuit given the inductance (L) and the resonance frequency (f).\nStep 2: The given values are L = 0.2 H and f = 100 Hz.\nStep 3: The formula for the resonance frequency of an L-C circuit is f = 1 / (2\\u03c0\\u221a(LC)).\nStep 4: To solve for C, we rearrange the formula: C = 1 / (4\\u03c0\\u00b2f\\u00b2L) = 1 / (4\\u03c0\\u00b2 * 100\\u00b2 * 0.2) = 12.67 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -19745,7 +19741,7 @@
   {
     "query_id": "CH063",
     "answer": "14.07",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance L = 0.5 H and resonance frequency f = 60 Hz.\nStep 2: Recall the formula for the resonance frequency (f) of an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance (C): C = 1 / ((2\\u03c0f)\\u00b2L).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / (4\\u03c0\\u00b2 * 60\\u00b2 * 0.5) = 14.07 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -19761,7 +19757,7 @@
   {
     "query_id": "CH064",
     "answer": "12.67",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given inductance L = 0.05 H.\nStep 2: Identify the given resonant frequency f = 200 Hz.\nStep 3: Recall the formula for resonant frequency in an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 4: Rearrange the formula to solve for capacitance C: C = 1 / (4\\u03c0\\u00b2f\\u00b2L) = 1 / (4\\u03c0\\u00b2 * 200\\u00b2 * 0.05) = 12.67 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -19777,7 +19773,7 @@
   {
     "query_id": "CH065",
     "answer": "5.86",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given inductance (L) as 0.3 H and the resonant frequency (f) as 120 Hz.\nStep 2: Recall the formula for the resonant frequency of an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance (C): C = 1 / ( (2\\u03c0f)\\u00b2 * L ).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / (4\\u03c0\\u00b2 * 120\\u00b2 * 0.3) = 5.86 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -19873,7 +19869,7 @@
   {
     "query_id": "CH071",
     "answer": "15.83",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: The given resonant frequency is f = 400 Hz and the inductance is L = 0.01 H.\nStep 2: The formula for the resonant frequency (f) of an LC circuit is f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: To find C, rearrange the formula: 2\\u03c0f = 1 / \\u221a(LC) => (2\\u03c0f)\\u00b2 = 1 / (LC) => C = 1 / (4\\u03c0\\u00b2f\\u00b2L).\nStep 4: Substitute the given values into the formula: C = 1 / (4\\u03c0\\u00b2 * 400\\u00b2 * 0.01) = 15.83 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -19889,7 +19885,7 @@
   {
     "query_id": "CH072",
     "answer": "10.13",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values for inductance (L) and resonant frequency (f).\nStep 2: Recall the formula for the resonant frequency of an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for the capacitance (C): C = 1 / (4\\u03c0\\u00b2f\\u00b2L).\nStep 4: Substitute the given values L = 0.04 H and f = 250 Hz into the rearranged formula: C = 1 / (4\\u03c0\\u00b2 * 250\\u00b2 * 0.04) = 10.13 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -19921,7 +19917,7 @@
   {
     "query_id": "CH074",
     "answer": "10.05",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the formula for resonant frequency (f) in an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 2: Rearrange the formula to solve for capacitance (C): C = 1 / (4\\u03c0\\u00b2Lf\\u00b2).\nStep 3: Substitute the given values L = 0.5 H and f = 71 Hz into the rearranged formula.\nStep 4: Calculate C = 1 / (4\\u03c0\\u00b2 * 0.5 * 71\\u00b2) = 10.05 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -19937,7 +19933,7 @@
   {
     "query_id": "CH075",
     "answer": "2.5",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: The given inductance L is 0.2 H.\nStep 2: The desired resonant frequency f is 225 Hz.\nStep 3: The formula for the resonant frequency f of an LC circuit is f = 1 / (2\\u03c0\\u221a(LC)).\nStep 4: Rearrange the formula to solve for capacitance C: C = 1 / (4\\u03c0\\u00b2f\\u00b2L) = 1 / (4\\u03c0\\u00b2 * 225\\u00b2 * 0.2) = 2.5 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -19969,7 +19965,7 @@
   {
     "query_id": "CH077",
     "answer": "6.76",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance L = 0.015 H and resonance frequency f = 500 Hz.\nStep 2: Recall the formula for the resonance frequency in an RLC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for the capacitance C: C = 1 / ( (2\\u03c0f)\\u00b2 * L ).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / ( (2\\u03c0 * 500)\\u00b2 * 0.015) = 6.75 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -19985,7 +19981,7 @@
   {
     "query_id": "CH078",
     "answer": "5.63",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: frequency f = 75 Hz and inductance L = 0.8 H.\nStep 2: Recall the formula for the resonant frequency (f) of an LC circuit: f = 1 / (2\\u03c0\\u221aLC).\nStep 3: Rearrange the formula to solve for the capacitance (C): C = 1 / (4\\u03c0\\u00b2Lf\\u00b2).\nStep 4: Substitute the given values into the formula: C = 1 / (4\\u03c0\\u00b2 * 0.8 * 75\\u00b2) = 5.63 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20017,7 +20013,7 @@
   {
     "query_id": "CH080",
     "answer": "12.51",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance L = 0.25 H and resonance frequency f = 90 Hz.\nStep 2: Recall the formula for the resonance frequency in an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance C: C = 1 / (4\\u03c0\\u00b2f\\u00b2L).\nStep 4: Substitute the given values into the formula: C = 1 / (4\\u03c0\\u00b2 * 90\\u00b2 * 0.25) = 12.51 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20049,7 +20045,7 @@
   {
     "query_id": "CH082",
     "answer": "1.58",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: The given values are inductance L = 0.1 H and resonance frequency f = 400 Hz. The goal is to find the capacitance C.\nStep 2: The formula for the resonance frequency (f) in an LC circuit is f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: To solve for C, rearrange the formula: square both sides to get f\\u00b2 = 1 / (4\\u03c0\\u00b2LC), then isolate C to get C = 1 / (4\\u03c0\\u00b2Lf\\u00b2).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / (4\\u03c0\\u00b2 * 0.1 * 400\\u00b2) = 1.58 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20097,7 +20093,7 @@
   {
     "query_id": "CH085",
     "answer": "5.07",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values: resonance frequency (f) = 1000 Hz and inductance (L) = 0.005 H.\nStep 2: Recall the formula for the resonance frequency (f) in an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance (C): C = 1 / ((2\\u03c0f)\\u00b2L).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / ((2\\u03c0 * 1000)\\u00b2 * 0.005) = 5.07 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20129,7 +20125,7 @@
   {
     "query_id": "CH087",
     "answer": "1.32",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance L = 0.03 H and resonant frequency f = 800 Hz.\nStep 2: Recall the formula for resonant frequency in an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance C: C = 1 / ((2\\u03c0f)\\u00b2L).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / ((2\\u03c0 * 800)\\u00b2 * 0.03) = 1.32 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20145,7 +20141,7 @@
   {
     "query_id": "CH088",
     "answer": "13.19",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance L = 1.2 H and resonant frequency f = 40 Hz.\nStep 2: Recall the formula for the resonant frequency of an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance C: C = 1 / (4\\u03c0\\u00b2Lf\\u00b2).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / (4\\u03c0\\u00b2 * 1.2 * 40\\u00b2) = 13.19 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20193,7 +20189,7 @@
   {
     "query_id": "CH091",
     "answer": "46.9",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance (L) = 0.6 H and Resonant frequency (f) = 30 Hz.\nStep 2: Recall the formula for the resonant frequency of an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance (C): C = 1 / ((2\\u03c0f)\\u00b2L).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / ((2\\u03c0 * 30)\\u00b2 * 0.6) = 46.9 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20209,7 +20205,7 @@
   {
     "query_id": "CH092",
     "answer": "2.96",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance L = 0.07 H and resonant frequency f = 350 Hz.\nStep 2: Recall the formula for the resonant frequency of an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance C: C = 1 / (4\\u03c0\\u00b2f\\u00b2L).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / (4\\u03c0\\u00b2 * 350\\u00b2 * 0.07) = 2.95 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20273,7 +20269,7 @@
   {
     "query_id": "CH096",
     "answer": "0.88",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values: inductance L = 0.02 H and resonance frequency f = 1200 Hz.\nStep 2: Recall the formula for the resonance frequency of an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance C: C = 1 / (4\\u03c0\\u00b2f\\u00b2L).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / (4\\u03c0\\u00b2 * 1200\\u00b2 * 0.02) = 0.88 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20289,7 +20285,7 @@
   {
     "query_id": "CH097",
     "answer": "1.01",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given resonance frequency, f = 1000 Hz.\nStep 2: Identify the given inductance, L = 0.025 H.\nStep 3: Recall the formula for the resonance frequency in an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 4: Rearrange the formula to solve for capacitance (C): C = 1 / (4\\u03c0\\u00b2f\\u00b2L) = 1 / (4\\u03c0\\u00b2 * 1000\\u00b2 * 0.025) = 1.01 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20305,7 +20301,7 @@
   {
     "query_id": "CH098",
     "answer": "1.27",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given inductance L = 0.005 H and the desired resonance frequency f = 2000 Hz.\nStep 2: Recall the formula for the resonance frequency (f) of an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance (C): C = 1 / (4\\u03c0\\u00b2f\\u00b2L).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / (4\\u03c0\\u00b2 * 2000\\u00b2 * 0.005) = 1.27 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20321,7 +20317,7 @@
   {
     "query_id": "CH099",
     "answer": "5.07",
-    "unit": "\\u03bcF",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance L = 0.08 H and resonant frequency f = 250 Hz.\nStep 2: Recall the formula for the resonant frequency of an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance C: Square both sides to get f\\u00b2 = 1 / (4\\u03c0\\u00b2LC), then solve for C to get C = 1 / (4\\u03c0\\u00b2f\\u00b2L).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / (4\\u03c0\\u00b2 * 250\\u00b2 * 0.08) = 5.07 \\u03bcF.",
     "premises_used": [],
     "reasoning": {
@@ -20353,7 +20349,7 @@
   {
     "query_id": "CH101",
     "answer": "34.64",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Determine the source voltage U at resonance (f = 100 Hz). At resonance, total impedance Z\\u2081 = R = 30 \\u03a9. Current I = 2 A. U = I * R = 2 * 30 = 60 V.\nStep 2: Calculate total impedance Z\\u2082 at the new frequency (f = 200 Hz). Current I = 1 A. Z\\u2082 = U / I = 60 / 1 = 60 \\u03a9.\nStep 3: Calculate net reactance X_net at 200 Hz. From the impedance formula: Z\\u2082\\u00b2 = R\\u00b2 + X_net\\u00b2. Therefore, |X_net| = \\u221a(60\\u00b2 - 30\\u00b2) =\\u221a2700 = 30\\u221a3 \\u03a9.\nStep 4: Relate reactances and solve for Z_L at 100 Hz. At resonance (100 Hz): Z_L = Z_C. At 200 Hz (doubled frequency): Z_L2 = 2Z_L, Z_C2 = Z_C / 2 = Z_L / 2. Net reactance: X_net = Z_L2 - Z_C2 = 2X_L - X_L / 2 = (3/2)X_L. Rearranged formula: X_L = (2/3) * 30\\u221a3 = 34.64 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -20369,7 +20365,7 @@
   {
     "query_id": "CH102",
     "answer": "23.09",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Calculate the source voltage (U) from the resonance condition.\nAt resonance (f = 60 Hz), the circuit's total impedance Z\\u2081 equals the resistance R. U = I_resonance * R = 4 * 20 = 80 V\nStep 2: Determine the total impedance (Z\\u2082) and net reactance (X_net) at the new frequency (f' = 120 Hz). Using the source voltage U and the new current I_resonance: Z\\u2082 = U / I_resonance = 80 / 2 = 40 \\u03a9. The net reactance |X_L2 - X_C2| is found using the impedance formula Z\\u2082\\u00b2 = R\\u00b2 + (X_L2 - X_C2)\\u00b2. We have: |X_L2 - X_C2| = \\u221a1200 = 20\\u221a3 \\u03a9\nStep 3: Relate the reactances at f\\u2082 to the reactances at resonance. Let X_L and X_C be the reactances at 60 Hz (where X_L = X_C). Since f'= 2f, the new reactances are: inductive reactance: X_L2 = 2X_L (directly proportional to f) and capacitive reactance: X_C2 = X_C / 2 = X_L / 2 (inversely proportional to f).\nStep 4: Solve for the initial inductive reactance X_L. Substitute the relations from Step 3 into the net reactance equation: |2X_L - X_L / 2| = 20\\u221a3 \\u21d2 X_L = (20\\u221a3 * 2)/3 = (40\\u221a3) / 3 = 23.09 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -20386,7 +20382,7 @@
   {
     "query_id": "CH103",
     "answer": "20",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Determine the source voltage (U) using the resonance condition. At the resonant frequency (f = 50 Hz), the total impedance of the circuit is equal to the resistance R because the reactances cancel each other out (Z_L = Z_C). U = I * R = 1 * 40 = 40 V\nStep 2: Calculate the total impedance (Z') and net reactance at the doubled frequency (2f = 100 Hz). When the frequency is doubled, the new current is I' = 0.8 A. The new total impedance Z' is: Z' = U / I' = 40 / 0.8 = 50 \\u03a9. The net reactance |Z_L' - Z_C'| is calculated from the impedance formula (Z')\\u00b2 = R\\u00b2 + (Z_L' - Z_C')\\u00b2: (Z_L' - Z_C')\\u00b2 = (Z')\\u00b2 - R\\u00b2 = 50\\u00b2 - 40\\u00b2 = 2500 - 1600 = 900. Therefore, |Z_L' - Z_C'| = \\u221a900 = 30 \\u03a9\nStep 3: Relate the new reactances to the initial inductive reactance (Z_L). Let Z_L and Z_C be the reactances at the resonant frequency (50 Hz), where Z_L = Z_C. When the frequency is doubled: The new inductive reactance is Z_L' = 2*Z_L and The new capacitive reactance is Z_C' = Z_C / 2 = Z_L / 2. The net reactance becomes: |Z_L' - Z_C'| = |2*Z_L - Z_L / 2| = (3*Z_L) / 2\nStep 4: Solve for the inductive reactance (Z_L) at the resonant frequency. Substitute the expression from Step 3 into the result from Step 2: Z_L = (30 * 2) / 3 = 20 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -20402,7 +20398,7 @@
   {
     "query_id": "CH104",
     "answer": "28.87",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Determine the source voltage (U) from the resonance condition. At the resonant frequency (f = 120 Hz), the circuit's total impedance is equal to the resistance R since the reactances cancel each other out (Z_L = Z_C). U = I * R = 5 * 25 = 125 V\nStep 2: Calculate the total impedance (Z') and net reactance at the new frequency (f' = 240 Hz). Given the new current I' = 2.5 A at 240 Hz, the new total impedance Z' is: Z' = U / I' = 125 V / 2.5 A = 50 \\u03a9. Using the impedance formula (Z')\\u00b2 = R\\u00b2 + (Z_L' - Z_C')\\u00b2, we find the net reactance: (Z_L' - Z_C')\\u00b2 = (Z')\\u00b2 - R\\u00b2 = 50\\u00b2 - 25\\u00b2 = 2500 - 625 = 1875. Therefore, |Z_L' - Z_C'| = \\u221a1875 = 25\\u221a3 \\u03a9\nStep 3: Relate the new reactances to the initial inductive reactance (Z_L). At resonance (120 Hz), Z_L = Z_C. Since the frequency is doubled (f' = 2f): The new inductive reactance is Z_L' = 2*Z_L and The new capacitive reactance is Z_C' = Z_C / 2 = Z_L / 2. The net reactance becomes: |Z_L' - Z_C'| = |2*Z_L - Z_L / 2| = (3*Z_L) / 2\nStep 4: Solve for the inductive reactance (Z_L) at the resonant frequency. Substitute the expression from Step 3 into the result from Step 2: Z_L = (25\\u221a3 * 2) / 3 = 28.87 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -20418,7 +20414,7 @@
   {
     "query_id": "CH105",
     "answer": "115.47",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Determine the source voltage (U) using the resonance condition. At the resonant frequency (f\\u2081 = 40 Hz), the circuit is purely resistive because the inductive reactance and capacitive reactance are equal (Z_L1 = Z_C1). U = I * R = 3 * 50 = 150 V\nStep 2: Calculate the total impedance (Z) and the net reactance at the increased frequency (f\\u2082 = 80 Hz). When the frequency increases to 80 Hz, the current is I' = 1.5 A. The new total impedance Z is: Z = U / I' = 150 / 1.5 = 100 \\u03a9. Using the impedance formula Z\\u00b2 = R\\u00b2 + (Z_L - Z_C)\\u00b2, where Z_L and Z_C are the reactances at 80 Hz: (Z_L - Z_C)\\u00b2 = Z\\u00b2 - R\\u00b2 = 100\\u00b2 - 50\\u00b2 = 10000 - 2500 = 7500. Therefore, |Z_L - Z_C| = \\u221a7500 = 50\\u221a3 = 86.6 \\u03a9\nStep 3: Relate the reactances at 80 Hz to the reactances at resonance (40 Hz). Let Z_L1 be the inductive reactance at 40 Hz. At this frequency, Z_L1 = Z_C1. Since the frequency has doubled (80 Hz = 2 \\u00d7 40 Hz): The inductive reactance at 80 Hz is Z_L = 2Z_L1 and The capacitive reactance at 80 Hz is Z_C = Z_C1 / 2 = Z_L1 / 2. The net reactance at 80 Hz is: |Z_L - Z_C| = 2Z_L1 - Z_L1 / 2 = (3*Z_L1) / 2\nStep 4: Solve for Z_L1 and calculate the final inductive reactance Z_L at 80 Hz. From Step 2 and Step 3: Z_L1 = (50\\u221a3 * 2) / 3 \\u2248 57.74 \\u03a9. The inductive reactance at the required frequency of 80 Hz (Z_L) is: Z_L = 2Z_L1 = 2 * (100\\u221a3)/3 = (200\\u221a3)/3 = 115.47 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -20434,7 +20430,7 @@
   {
     "query_id": "CH106",
     "answer": "11.55",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Determine the total impedance Z at 400 Hz relative to the resistance R. At the resonant frequency (f\\u2080 = 200 Hz), the current is maximum (I= U / R). At 400 Hz, the current I becomes half of the resonant current (I = (1/2) * (U / R)). Using the relationship I = U / Z: U / Z = (1/2) * (U / R) \\u21d2 Z = 2 * R. With R = 10 \\u03a9, the total impedance at 400 Hz is Z = 2 * 10 = 20 \\u03a9.\nStep 2: Calculate the net reactance at 400 Hz. Using the impedance formula Z\\u00b2 = R\\u00b2 + (Z_L' - Z_C')\\u00b2, where Z_L' and Z_C' are the reactances at 400 Hz: (Z_L' - Z_C')\\u00b2 = Z\\u00b2 - R\\u00b2 = 20\\u00b2 - 10\\u00b2 = 400 - 100 = 300 \\u21d2 |Z_L' - Z_C'| = \\u221a300 = 10\\u221a3 \\u03a9\nStep 3: Relate the reactances at 400 Hz to the initial inductive reactance Z_L at resonance (200 Hz). At resonance (200 Hz), Z_L = Z_C. Since the frequency has doubled (400 Hz = 2 * 200 Hz): The inductive reactance at 400 Hz is Z_L' = 2 * Z_L and The capacitive reactance at 400 Hz is Z_C' = Z_C / 2 = Z_L / 2. The net reactance at 400 Hz is: |Z_L' - Z_C'| = 2 * Z_L - Z_L / 2 = (3 * Z_L)/2\nStep 4: Solve for the initial inductive reactance Z_L at 200 Hz. Substitute the expression from Step 3 into the result from Step 2: Z_L = (20\\u221a3)/3 = 11.55 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -20450,7 +20446,7 @@
   {
     "query_id": "CH107",
     "answer": "53.33",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Determine the source voltage (U) from the resonance condition. At the resonant frequency (f\\u2081 = 75 Hz), the total impedance of the circuit is equal to the resistance R because the inductive and capacitive reactances cancel each other out (Z_L1 = Z_C1). U = I * R = 1 A * 60 \\u03a9 = 60 V\nStep 2: Calculate the total impedance (Z) and the net reactance at the increased frequency (f\\u2082 = 150 Hz).\nWhen the frequency increases to 150 Hz, the current is I' = 0.6 A. The new total impedance Z is: Z = U / I' = 60 V / 0.6 A = 100 \\u03a9. Using the impedance formula Z\\u00b2 = R\\u00b2 + (Z_L' - Z_C')\\u00b2, where Z_L' and Z_C' are the reactances at 150 Hz: (Z_L' - Z_C')\\u00b2 = Z\\u00b2 - R\\u00b2 = 100\\u00b2 - 60\\u00b2 = 10000 - 3600 = 6400 \\u21d2 |Z_L' - Z_C'| = \\u221a6400 = 80 \\u03a9\nStep 3: Relate the reactances at 150 Hz to the initial inductive reactance (Z_L). Let Z_L be the inductive reactance at the resonant frequency 75 Hz (where Z_L = Z_C). Since the frequency has doubled (150 Hz = 2 * 75 Hz): The inductive reactance at 150 Hz is Z_L' = 2 * Z_L and The capacitive reactance at 150 Hz is Z_C' = Z_C / 2 = Z_L / 2. The net reactance at 150 Hz is: |Z_L' - Z_C'| = 2 * Z_L - Z_L / 2 = (3 * Z_L)/2\nStep 4: Solve for the inductive reactance (Z_L) at the resonant frequency. Substitute the expression from Step 3 into the result from Step 2: Z_L = 80 * 2 / 3= 160 / 3 \\u2248 53.33 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -20467,7 +20463,7 @@
   {
     "query_id": "CH108",
     "answer": "15",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Determine the source voltage (U) from the resonance condition. At the resonant frequency (f = 50 Hz), the circuit's total impedance is equal to the resistance R because the inductive and capacitive reactances cancel each other out (Z_L = Z_C). U = I * R = 2 A * 30 \\u03a9 = 60 V\nStep 2: Calculate the total impedance (Z') and net reactance at the new frequency (100 Hz). When the frequency is changed to 100 Hz, the current is I' = 1.6 A. The new total impedance Z' is: Z' = U / I' = 60 V / 1.6 A = 37.5 \\u03a9. Using the impedance formula (Z')\\u00b2 = R\\u00b2 + (Z_L' - Z_C')\\u00b2, where Z_L' and Z_C' are the reactances at 100 Hz: (Z_L' - Z_C')\\u00b2 = (Z')\\u00b2 - R\\u00b2 = 37.5\\u00b2 - 30\\u00b2 = 1406.25 - 900 = 506.25 \\u21d2 |Z_L' - Z_C'| = \\u221a506.25 = 22.5 \\u03a9\nStep 3: Relate the reactances at 100 Hz to the initial inductive reactance (Z_L). Let Z_L be the inductive reactance at 50 Hz (where Z_L = Z_C). Since the frequency has doubled (100 Hz = 2 * 50 Hz): The new inductive reactance is Z_L' = 2 * Z_L (proportional to f) and The new capacitive reactance is Z_C' = Z_C / 2 = Z_L / 2 (inversely proportional to f). The net reactance at 100 Hz is: |Z_L' - Z_C'| = 2 * Z_L - Z_L / 2 = (3 * Z_L)/2\nStep 4: Solve for the initial inductive reactance (Z_L) at 50 Hz. Substitute the expression from Step 3 into the result from Step 2: Z_L = 22.5 * 2 / 3= 15 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -20483,7 +20479,7 @@
   {
     "query_id": "CH109",
     "answer": "46.19",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Determine the total impedance (Z') at 120 Hz relative to the resistance (R). At the resonant frequency (f = 60 Hz), the current is at its maximum (I_max = U / R). When the frequency is doubled to 120 Hz, the current I' becomes half of the maximum value (I' = I_max / 2). Using the relationship I = U / Z: U / Z' = (1/2) * (U / R) \\u21d2 Z' = 2 * R. Given R = 40 \\u03a9, the total impedance at 120 Hz is Z' = 2 * 40 = 80 \\u03a9.\nStep 2: Calculate the net reactance at 120 Hz. Using the impedance formula (Z')\\u00b2 = R\\u00b2 + (Z_L' - Z_C')\\u00b2, where Z_L' and Z_C' are the reactances at 120 Hz: (Z_L' - Z_C')\\u00b2 = (Z')\\u00b2 - R\\u00b2 = 80\\u00b2 - 40\\u00b2 = 6400 - 1600 = 4800 \\u21d2 |Z_L' - Z_C'| = \\u221a4800 = 40\\u221a3 \\u03a9\nStep 3: Relate the reactances at 120 Hz to the initial inductive reactance (Z_L). At the resonant frequency (60 Hz), let the inductive reactance be Z_L (where Z_L = Z_C). Since the frequency has doubled (120 Hz = 2 * 60 Hz): The new inductive reactance is Z_L' = 2 * Z_L and The new capacitive reactance is Z_C' = Z_C / 2 = Z_L / 2. The net reactance at 120 Hz is: |Z_L' - Z_C'| = 2 * Z_L - Z_L / 2 = (3 * Z_L)/2\nStep 4: Solve for the initial inductive reactance (Z_L) at 60 Hz. Substitute the expression from Step 3 into the result from Step 2: Z_L = (80\\u221a3)/3 = 46.19 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -20499,7 +20495,7 @@
   {
     "query_id": "CH110",
     "answer": "40",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Determine the source voltage (U) from the resonance condition. At the resonant frequency (f = 100 Hz), the circuit's total impedance is equal to the resistance R because the inductive and capacitive reactances cancel each other out (Z_L = Z_C). U = I * R = 2 * 80 = 160 V\nStep 2: Calculate the total impedance (Z') and net reactance at the new frequency (200 Hz). When the frequency is changed to 200 Hz, the current is I' = 1.6 A. The new total impedance Z' is: Z' = U / I' = 160 V / 1.6 A = 100 \\u03a9. Using the impedance formula (Z')\\u00b2 = R\\u00b2 + (Z_L' - Z_C')\\u00b2, where Z_L' and Z_C' are the reactances at 200 Hz: (Z_L' - Z_C')\\u00b2 = (Z')\\u00b2 - R\\u00b2 = 100\\u00b2 - 80\\u00b2 = 10000 - 6400 = 3600 \\u21d2 |Z_L' - Z_C'| = \\u221a3600 = 60 \\u03a9\nStep 3: Relate the reactances at 200 Hz to the initial inductive reactance (Z_L). Let Z_L be the inductive reactance at 100 Hz (where Z_L = Z_C). Since the frequency has doubled (200 Hz = 2 * 100 Hz): The new inductive reactance is Z_L' = 2 * Z_L (proportional to f) and The new capacitive reactance is Z_C' = Z_C / 2 = Z_L / 2 (inversely proportional to f). The net reactance at 200 Hz is: |Z_L' - Z_C'| = 2 * Z_L - Z_L / 2 = (3 * Z_L)/2\nStep 4: Solve for the initial inductive reactance (Z_L) at 100 Hz. Substitute the expression from Step 3 into the result from Step 2: Z_L = 40 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -20644,7 +20640,7 @@
   {
     "query_id": "CH148",
     "answer": "100",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: The formula for inductive reactance (X_L) is X_L = \\u03c9 L.\nStep 2: From the given voltage equation u = 200\\u221a2 cos(100\\u03c0 t) V, the angular frequency \\u03c9 is 100\\u03c0 rad/s.\nStep 3: From the question, the inductance L is given as 1/\\u03c0 H.\nStep 4: Substitute the values of \\u03c9 and L into the formula for X_L: X_L = (100\\u03c0) * (1/\\u03c0) = 100 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -20660,7 +20656,7 @@
   {
     "query_id": "CH149",
     "answer": "200",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the angular frequency (\\u03c9) from the given voltage equation u = 200\\u221a2 cos 100\\u03c0t (V).\nStep 2: From the standard form u = U_max cos(\\u03c9t), the angular frequency \\u03c9 is 100\\u03c0 rad/s.\nStep 3: Identify the capacitance (C) from the given circuit parameters, C = 10\\u207b\\u2074/(2\\u03c0) F.\nStep 4: Use the formula for capacitive reactance, XC = 1 / (\\u03c9C) = 200 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -20676,7 +20672,7 @@
   {
     "query_id": "CH150",
     "answer": "141.4",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the angular frequency (\\u03c9) from the given voltage equation u = 200\\u221a2 cos 100\\u03c0t (V). Comparing this to u = U_max cos(\\u03c9t), we find \\u03c9 = 100\\u03c0 rad/s.\nStep 2: Calculate the inductive reactance (ZL) using the formula ZL = \\u03c9L. Substitute the given values R = 100 \\u03a9, L = 1/\\u03c0 H, C = 10\\u207b\\u2074/(2\\u03c0) F: XL = (100\\u03c0) * (1/\\u03c0) = 100 \\u03a9.\nStep 3: Calculate the capacitive reactance (ZC) using the formula ZC = 1/(\\u03c9C). Substitute the values: ZC = 1 / (100\\u03c0 * 10\\u207b\\u2074/(2\\u03c0)) = 1 / (100 * 10\\u207b\\u2074 / 2) = 1 / (0.01 / 2) = 1 / 0.005 = 200 \\u03a9.\nStep 4: Calculate the total impedance (Z) for a series RLC circuit using the formula Z = \\u221a(R\\u00b2 + (ZL - ZC)\\u00b2) = \\u221a(100\\u00b2 + 100V) = 141.1 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -21176,7 +21172,7 @@
   {
     "query_id": "CH181",
     "answer": "30",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: In a series RLC circuit, the total impedance Z is given by Z = \\u221a(R\\u00b2 + (ZL - ZC)\\u00b2), where R is resistance, ZL is inductive reactance, and ZC is capacitive reactance.\nStep 2: At resonance in a series RLC circuit, the inductive reactance ZL is equal to the capacitive reactance ZC (ZL = ZC).\nStep 3: Substituting the resonance condition (ZL - ZC = 0) into the impedance formula, we get Z = \\u221a(R\\u00b2 + 0\\u00b2) = \\u221a(R\\u00b2) = R.\nStep 4: Given that R = 30 \\u03a9, the total impedance Z at resonance is 30 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -21192,7 +21188,7 @@
   {
     "query_id": "CH182",
     "answer": "45",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify that the circuit is a series RLC circuit operating at resonance.\nStep 2: Recall that for a series RLC circuit, the total impedance Z is given by Z = \\u221a(R\\u00b2 + (ZL - ZC)\\u00b2), where R is resistance, ZL is inductive reactance, and ZC is capacitive reactance.\nStep 3: At resonance, the inductive reactance (ZL) is equal to the capacitive reactance (ZC), meaning (ZL - ZC) = 0.\nStep 4: Substitute (ZL - ZC) = 0 into the impedance formula, which simplifies it to Z = \\u221a(R\\u00b2 + 0\\u00b2) = \\u221a(R\\u00b2) = R = 45 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -21208,7 +21204,7 @@
   {
     "query_id": "CH183",
     "answer": "60",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: The circuit is a series RLC circuit operating at resonance.\nStep 2: The total impedance Z for a series RLC circuit is generally given by Z = \\u221a(R\\u00b2 + (ZL - ZC)\\u00b2), where R is resistance, ZL is inductive reactance, and ZC is capacitive reactance.\nStep 3: At resonance, the inductive reactance (ZL) is equal to the capacitive reactance (ZC), which means (ZL - ZC) = 0.\nStep 4: Substituting the resonance condition into the impedance formula simplifies it to Z = \\u221a(R\\u00b2 + 0\\u00b2) = \\u221a(R\\u00b2) = R = 60 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -21224,7 +21220,7 @@
   {
     "query_id": "CH184",
     "answer": "80",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: The circuit described is a series RLC circuit operating at resonance.\nStep 2: In a series RLC circuit, the total impedance Z is given by Z = \\u221a(R\\u00b2 + (ZL - ZC)\\u00b2), where R is resistance, ZL is inductive reactance, and ZC is capacitive reactance.\nStep 3: At resonance, the inductive reactance (ZL) is equal to the capacitive reactance (ZC), meaning (ZL - ZC) = 0.\nStep 4: Substituting this condition into the impedance formula simplifies it to Z = \\u221a(R\\u00b2 + 0\\u00b2) = \\u221a(R\\u00b2) = R = 80 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -21240,7 +21236,7 @@
   {
     "query_id": "CH185",
     "answer": "100",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: The circuit described is a series RLC circuit operating at resonance.\nStep 2: At resonance in a series RLC circuit, the inductive reactance (ZL) is equal to the capacitive reactance (ZC).\nStep 3: This means that the difference between the reactances, (ZL - ZC), becomes zero.\nStep 4: The general formula for the total impedance (Z) of a series RLC circuit is Z = \\u221a(R\\u00b2 + (ZL - ZC)\\u00b2) = 100 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -21899,7 +21895,7 @@
   {
     "query_id": "CH226",
     "answer": "50.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Analyze phase and resonance conditions\nFrom LC\\u03c9\\u00b2 = 1 we have XL = XC; since u_AM \\u22a5 u_MB and tan \\u03c6_AM \\u00b7 tan \\u03c6_MB = -1, substituting XL = XC gives XL\\u00b2 = XC\\u00b2 = R\\u2081 \\u00b7 R\\u2082\nStep 2: Identify total circuit impedance\nBecause XL = XC the circuit reaches total resonance, the reactive parts cancel, and the total impedance is purely resistive: Z_AB = R\\u2081 + R\\u2082\nStep 3: Set up the power equation\nUsing P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting P = 142.86 W, U = 100 V, R\\u2081 = 20 \\u03a9 we get 142.86 = 100\\u00b2 / (20 + R\\u2082)\nStep 4: Calculate the final result\nSolve for R\\u2082: 20 + R\\u2082 = 10000 / 142.86 \\u2248 70 \\u2192 R\\u2082 = 70 - 20 = 50 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -21919,7 +21915,7 @@
   {
     "query_id": "CH227",
     "answer": "34.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Analyze resonance and phase conditions\nFrom LC\\u03c9\\u00b2 = 1 we have Z_L = Z_C; since u_AM \\u22a5 u_MB and tan \\u03c6_AM \\u00b7 tan \\u03c6_MB = -1, substituting Z_L = Z_C gives the relationship: Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082\nStep 2: Determine total circuit impedance\nBecause Z_L = Z_C the circuit reaches full resonance, the reactive components cancel each other out, and the total impedance of AB is purely resistive: Z_AB = R\\u2081 + R\\u2082\nStep 3: Set up the power equation\nUsing the formula P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the values P = 117.65 W, U = 90 V, R\\u2081 = 35 \\u03a9 we get: 117.65 = 90\\u00b2 / (35 + R\\u2082)\nStep 4: Calculate the final result\nSolve the equation for R\\u2082: 35 + R\\u2082 = 8100 / 117.65 \\u2248 68.85 \\u2192 R\\u2082 = 68.85 - 35 = 34 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -21939,7 +21935,7 @@
   {
     "query_id": "CH228",
     "answer": "50.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Analyze resonance and phase conditions\nFrom LC\\u03c9\\u00b2 = 1 we have Z_L = Z_C; since u_AM \\u22a5 u_MB (90\\u00b0 phase difference), we obtain the relationship: Z_L \\u00b7 Z_C = R\\u2081 \\u00b7 R\\u2082 \\u2192 Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082\nStep 2: Determine total circuit impedance\nBecause Z_L = Z_C the circuit reaches full resonance, the reactive components cancel completely, and the total impedance of AB is purely resistive: Z_AB = R\\u2081 + R\\u2082\nStep 3: Set up the power equation\nUsing the formula P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the values P = 100.0 W, U = 100 V, R\\u2081 = 50 \\u03a9 we get: 100.0 = 100\\u00b2 / (50 + R\\u2082)\nStep 4: Calculate the final result\nSolve the equation for R\\u2082: 50 + R\\u2082 = 10000 / 100 = 100 \\u2192 R\\u2082 = 100 - 50 = 50 \\u03a9",
     "premises_used": [],
     "reasoning": {
@@ -21959,7 +21955,7 @@
   {
     "query_id": "CH229",
     "answer": "28.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Analyze resonance and phase conditions\nFrom LC\\u03c9\\u00b2 = 1 we obtain Z_L = Z_C. Since u_AM is perpendicular to u_MB (90\\u00b0 phase difference), we have the relationship Z_L \\u00b7 Z_C = R\\u2081 \\u00b7 R\\u2082 and therefore Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082.\nStep 2: Determine total circuit impedance\nBecause Z_L = Z_C the circuit experiences full electrical resonance. The reactive components completely cancel each other, so the total impedance of AB is purely resistive and equals Z_AB = R\\u2081 + R\\u2082.\nStep 3: Set up the power equation\nUsing the power formula at resonance P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the given values P = 72.73 W, U = 80 V, R\\u2081 = 60 \\u03a9 we get 72.73 = 80\\u00b2 / (60 + R\\u2082).\nStep 4: Calculate the final result\nSolve the equation for R\\u2082: 60 + R\\u2082 = 6400 / 72.73 \\u2248 88 and therefore R\\u2082 = 88 \\u2212 60 = 28 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -21979,7 +21975,7 @@
   {
     "query_id": "CH230",
     "answer": "55.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Analyze resonance and phase conditions\nFrom LC\\u03c9\\u00b2 = 1 we obtain Z_L = Z_C. Since u_AM is perpendicular to u_MB (90\\u00b0 phase difference), we have the relationship between the components through the tangent of the phase angles: Z_L \\u00b7 Z_C = R\\u2081 \\u00b7 R\\u2082 and therefore Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082.\nStep 2: Determine total circuit impedance\nBecause Z_L = Z_C the circuit experiences full electrical resonance. The reactive components completely cancel, so the total impedance of the entire AB circuit at this point is purely resistive and equals Z_AB = R\\u2081 + R\\u2082.\nStep 3: Set up the power equation\nUsing the power formula under resonance conditions P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the given values P = 125.0 W, U = 100 V, and R\\u2081 = 25 \\u03a9 we get 125.0 = 100\\u00b2 / (25 + R\\u2082).\nStep 4: Calculate the final result\nSolve the equation for R\\u2082: 25 + R\\u2082 = 10000 / 125 = 80 and therefore R\\u2082 = 80 \\u2212 25 = 55 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -21999,7 +21995,7 @@
   {
     "query_id": "CH231",
     "answer": "50.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Analyze resonance and phase conditions\nFrom LC\\u03c9\\u00b2 = 1 we obtain Z_L = Z_C. Since u_AM is perpendicular to u_MB (90\\u00b0 phase difference), we have the relationship between the components Z_L \\u00b7 Z_C = R\\u2081 \\u00b7 R\\u2082 and therefore Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082.\nStep 2: Determine total circuit impedance\nBecause Z_L = Z_C the circuit experiences full electrical resonance (Z_LC = 0). The reactive components completely cancel each other, so the total impedance of the entire AB circuit at this point is purely resistive and equals Z_AB = R\\u2081 + R\\u2082.\nStep 3: Set up the power equation\nUsing the power formula under resonance conditions P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the given values P = 100.0 W, U = 100 V, and R\\u2082 = 50 \\u03a9 we get 100.0 = 100\\u00b2 / (R\\u2081 + 50).\nStep 4: Calculate the final result\nSolve the equation for R\\u2081: R\\u2081 + 50 = 10000 / 100 = 100 and therefore R\\u2081 = 100 \\u2212 50 = 50 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -22019,7 +22015,7 @@
   {
     "query_id": "CH232",
     "answer": "24.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Analyze resonance and phase conditions\nFrom LC\\u03c9\\u00b2 = 1 we obtain Z_L = Z_C. Since u_AM is perpendicular to u_MB (90\\u00b0 phase difference), we have the linking relationship between the resistive and reactive components: Z_L \\u00b7 Z_C = R\\u2081 \\u00b7 R\\u2082 and therefore Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082.\nStep 2: Determine total circuit impedance\nBecause Z_L = Z_C the circuit experiences full electrical resonance. The reactive components completely cancel each other out, so the total impedance of the entire AB circuit is purely resistive and equals Z_AB = R\\u2081 + R\\u2082.\nStep 3: Set up the power equation\nUsing the formula for power consumption under resonance conditions P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the given values P = 150.0 W, U = 90 V, and R\\u2082 = 30 \\u03a9 we get 150.0 = 90\\u00b2 / (R\\u2081 + 30).\nStep 4: Calculate the final result\nSolve the equation for R\\u2081: R\\u2081 + 30 = 8100 / 150 = 54 and therefore R\\u2081 = 54 \\u2212 30 = 24 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -22039,7 +22035,7 @@
   {
     "query_id": "CH233",
     "answer": "60.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Analyze resonance and phase conditions\nFrom LC\\u03c9\\u00b2 = 1 we obtain Z_L = Z_C. Since u_AM is perpendicular to u_MB (90\\u00b0 phase difference), we have the relationship linking resistance and reactance: Z_L \\u00b7 Z_C = R\\u2081 \\u00b7 R\\u2082 and therefore Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082.\nStep 2: Determine total circuit impedance\nBecause Z_L = Z_C the circuit experiences full electrical resonance. The reactive components completely cancel each other, so the total impedance of the entire AB circuit is purely resistive and equals Z_AB = R\\u2081 + R\\u2082.\nStep 3: Set up the power equation\nUsing the formula for power consumption under resonance conditions P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the given values P = 96.0 W, U = 120 V, and R\\u2082 = 90 \\u03a9 we get 96.0 = 120\\u00b2 / (R\\u2081 + 90).\nStep 4: Calculate the final result\nSolve the equation for R\\u2081: R\\u2081 + 90 = 14400 / 96 = 150 and therefore R\\u2081 = 150 \\u2212 90 = 60 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -22059,7 +22055,7 @@
   {
     "query_id": "CH234",
     "answer": "10.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Analyze resonance and phase conditions\nFrom LC\\u03c9\\u00b2 = 1 we obtain Z_L = Z_C. Since u_AM is perpendicular to u_MB (90\\u00b0 phase difference), we have the relationship linking resistance and reactance: Z_L \\u00b7 Z_C = R\\u2081 \\u00b7 R\\u2082 and therefore Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082.\nStep 2: Determine total circuit impedance\nBecause Z_L = Z_C the circuit experiences full electrical resonance. The reactive components completely cancel each other, so the total impedance of the entire AB circuit is purely resistive and equals Z_AB = R\\u2081 + R\\u2082.\nStep 3: Set up the power equation\nUsing the formula for power consumption under resonance conditions P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the given values P = 100.0 W, U = 50 V, and R\\u2082 = 15 \\u03a9 we get 100.0 = 50\\u00b2 / (R\\u2081 + 15).\nStep 4: Calculate the final result\nSolve the equation for R\\u2081: R\\u2081 + 15 = 2500 / 100 = 25 and therefore R\\u2081 = 25 \\u2212 15 = 10 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -22079,7 +22075,7 @@
   {
     "query_id": "CH235",
     "answer": "90.0",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Analyze resonance and phase conditions\nFrom LC\\u03c9\\u00b2 = 1 we obtain Z_L = Z_C. Since u_AM is perpendicular to u_MB (90\\u00b0 phase difference), we have the relationship linking resistance and reactance: Z_L \\u00b7 Z_C = R\\u2081 \\u00b7 R\\u2082 and therefore Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082.\nStep 2: Determine total circuit impedance\nBecause Z_L = Z_C the circuit experiences full electrical resonance. The reactive components completely cancel each other, so the total impedance of the entire AB circuit is purely resistive and equals Z_AB = R\\u2081 + R\\u2082.\nStep 3: Set up the power equation\nUsing the formula for power consumption under resonance conditions P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the given values P = 76.92 W, U = 100 V, and R\\u2082 = 40 \\u03a9 we get 76.92 = 100\\u00b2 / (R\\u2081 + 40).\nStep 4: Calculate the final result\nSolve the equation for R\\u2081: R\\u2081 + 40 = 10000 / 76.92 \\u2248 130 and therefore R\\u2081 = 130 \\u2212 40 = 90 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -23055,7 +23051,7 @@
   {
     "query_id": "CH349",
     "answer": "70.36",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance (L) = 0.10 H and Resonant frequency (f) = 60 Hz.\nStep 2: Recall the formula for resonant frequency in an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance (C): C = 1 / ( (2\\u03c0f)\\u00b2 * L ).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / ( (2 * \\u03c0 * 60 Hz)\\u00b2 * 0.10 H ) = 70.36 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -23071,7 +23067,7 @@
   {
     "query_id": "CH350",
     "answer": "50.66",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values: inductance (L) = 0.20 H and resonant frequency (f) = 50 Hz. The quantity to find is capacitance (C).\nStep 2: Recall the formula for the resonant frequency of an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for C: C = 1 / (L * (2\\u03c0f)\\u00b2).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / (0.20 H * (2 * \\u03c0 * 50 Hz)\\u00b2) = 50.66 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -23087,7 +23083,7 @@
   {
     "query_id": "CH351",
     "answer": "50.66",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance (L) = 0.05 H and Resonance frequency (f) = 100 Hz.\nStep 2: Recall the formula for the resonance frequency (f) in an LC circuit: f = 1 / (2 * \\u03c0 * \\u221a(L * C)).\nStep 3: Rearrange the formula to solve for the capacitance (C): C = 1 / ( (2 * \\u03c0 * f)\\u00b2 * L ).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / ( (2 * \\u03c0 * 100 Hz)\\u00b2 * 0.05 H ) = 50.66 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -23103,7 +23099,7 @@
   {
     "query_id": "CH352",
     "answer": "56.28",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given inductance (L) and resonance frequency (f0) from the question.\nStep 2: Recall the formula for the resonance frequency (f0) of an LC circuit: f0 = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for the capacitance (C): C = 1 / (L * (2\\u03c0f0)\\u00b2).\nStep 4: Substitute the given values L = 0.08 H and f0 = 75 Hz into the rearranged formula. Then, C = 56.29 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -23119,7 +23115,7 @@
   {
     "query_id": "CH353",
     "answer": "105.54",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values: inductance (L) = 0.15 H and resonant frequency (f) = 40 Hz. The quantity to be calculated is capacitance (C).\nStep 2: Recall the formula for the resonant frequency of an LC circuit, which is f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance (C): C = 1 / ((2\\u03c0f)\\u00b2L).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / ((2 * \\u03c0 * 40 Hz)\\u00b2 * 0.15 H) = 105.54 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -23135,7 +23131,7 @@
   {
     "query_id": "CH354",
     "answer": "26.06",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question.\nStep 2: State the formula for the resonant frequency (f) of an LC circuit, which is f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for the capacitance C: C = 1 / (4\\u03c0\\u00b2 f\\u00b2 L).\nStep 4: Substitute the given values: L = 0.12 H and f = 90 Hz into the rearranged formula. Then, C = 26.06 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -23151,7 +23147,7 @@
   {
     "query_id": "CH355",
     "answer": "162.11",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values: Inductance (L) = 0.25 H and resonance frequency (f) = 25 Hz.\nStep 2: Recall the formula for the resonance frequency in an LC circuit: f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance (C): C = 1 / (L * (2\\u03c0f)\\u00b2).\nStep 4: Substitute the given values into the rearranged formula: C = 1 / (0.25 H * (2 * \\u03c0 * 25 Hz)\\u00b2) = 162.11 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -23167,7 +23163,7 @@
   {
     "query_id": "CH356",
     "answer": "87.94",
-    "unit": "\\u00b5F",
+    "unit": "uF",
     "explanation": "Step 1: Identify the given values from the question: Inductance (L) = 0.02 H, Resonant frequency (f) = 120 Hz.\nStep 2: The formula for resonant frequency (f) in an LC circuit is f = 1 / (2\\u03c0\\u221a(LC)).\nStep 3: Rearrange the formula to solve for capacitance (C): C = 1 / (4\\u03c0\\u00b2Lf\\u00b2).\nStep 4: Substitute the given values into the formula: C = 1 / (4\\u03c0\\u00b2 * 0.02 H * (120 Hz)\\u00b2) = 87.95 \\u00b5F.",
     "premises_used": [],
     "reasoning": {
@@ -23559,7 +23555,7 @@
   {
     "query_id": "CH379",
     "answer": "58.31",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given resistance R and reactances XL and XC from the question.\nStep 2: Recall the formula for the total impedance Z of a series RLC circuit: Z = \\u221a[R\\u00b2 + (XL - XC)\\u00b2].\nStep 3: Calculate the difference between the inductive reactance XL and the capacitive reactance XC.\nStep 4: Substitute the values of R and (XL - XC) into the impedance formula. Then, Z = 58.31 \\u03a9.",
     "premises_used": [],
     "reasoning": {
@@ -23575,7 +23571,7 @@
   {
     "query_id": "CH380",
     "answer": "42.43",
-    "unit": "\\u03a9",
+    "unit": "ohm",
     "explanation": "Step 1: Identify the given values: resistance R = 30 \\u03a9, inductive reactance XL = 40 \\u03a9, and capacitive reactance XC = 70 \\u03a9.\nStep 2: Recall the formula for the total impedance Z in a series RLC circuit: Z = \\u221a(R\\u00b2 + (XL - XC)\\u00b2).\nStep 3: Calculate the net reactance (XL - XC): 40 \\u03a9 - 70 \\u03a9 = -30 \\u03a9.\nStep 4: Substitute the values into the impedance formula: Z = \\u221a((30 \\u03a9)\\u00b2 + (-30 \\u03a9)\\u00b2) = 42.43 \\u03a9 .",
     "premises_used": [],
     "reasoning": {
