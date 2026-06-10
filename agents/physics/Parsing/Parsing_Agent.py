@@ -8,6 +8,8 @@ from typing import Any
 from agents.formatting import extract_json
 from agents.llm import LLMClientBase
 
+from .unit_normalizer import normalize_parser_units
+
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -75,4 +77,5 @@ class ParsingAgent:
                 "Physics parser response must be a JSON object. "
                 f"Raw response preview: {response_preview}"
             )
-        return self._minimal_output(parsed, question)
+        output = self._minimal_output(parsed, question)
+        return normalize_parser_units(output, question)
