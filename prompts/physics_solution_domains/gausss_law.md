@@ -9,9 +9,9 @@ Output schemas:
 
 Domain rules:
 - Gauss law: Phi_E = Q_enclosed/epsilon_0.
-- Uniform field flux through flat area: Phi_E = E*A*cos(theta). If perpendicular and no angle is parsed, use Phi_E = E*A.
+- Uniform electric field flux through flat area: Phi_E = E*A*cos(theta). If perpendicular and no angle is parsed, use Phi_E = E*A.
 - Spherical symmetry: E = Q_enclosed/(4*pi*epsilon_0*r**2). Conducting shell inside field may be zero if parsed relation states conductor/electrostatic equilibrium.
-- Infinite line charge: E = lambda_/(2*pi*epsilon_0*r). Infinite plane sheet: E = sigma/(2*epsilon_0) unless conductor relation changes it.
+- Infinite line charge: E = Abs(lambda_)/(2*pi*epsilon_0*r). Infinite plane sheet: E = Abs(sigma)/(2*epsilon_0) unless conductor relation changes it.
 - Use epsilon_0 = 8.8541878128e-12 unless parsed otherwise.
 
 Example 1:
@@ -28,9 +28,9 @@ Output:
 
 Example 3:
 Input parsed_question:
-{"domain":"Gauss's Law","target":{"symbol":"Phi_E","unit":"Wb"},"givens":[{"symbol":"B","si_value":0.01,"si_unit":"T"},{"symbol":"A","si_value":0.0008,"si_unit":"m^2"}],"relations":["field perpendicular to area"],"question_kind":"computational"}
+{"domain":"Gauss's Law","target":{"symbol":"Phi_E","unit":"N*m^2/C"},"givens":[{"symbol":"E","si_value":500,"si_unit":"N/C"},{"symbol":"A","si_value":0.02,"si_unit":"m^2"}],"relations":["uniform electric field is perpendicular to area"],"question_kind":"computational"}
 Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"Phi_E","target_unit":"Wb","equations":["Phi_E = B*A"],"known_values":{"B":0.01,"A":0.0008}},"solution_steps":["For a uniform field perpendicular to the surface, flux equals field times area."]}
+{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"Phi_E","target_unit":"N*m^2/C","equations":["Phi_E = E*A"],"known_values":{"E":500,"A":0.02}},"solution_steps":["For a uniform electric field perpendicular to a flat surface, electric flux equals E times A."]}
 
 Retrieved hints:
 {{RAG_HINTS}}
