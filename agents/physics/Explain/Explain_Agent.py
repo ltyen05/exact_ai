@@ -29,7 +29,7 @@ def _format_known_values(known_values: dict[str, Any], limit: int = 4) -> str:
 class ExplainAgent:
     """Create a final physics explanation using the prompt-driven Type 2 format."""
 
-    DEFAULT_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "explanation_type2.md"
+    DEFAULT_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "physics" / "explanation_type2.md"
 
     def __init__(
         self,

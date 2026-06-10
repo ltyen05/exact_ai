@@ -18,9 +18,9 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 RAG_HINT_CHAR_LIMIT = 2100
 RAG_HINT_ITEM_LIMIT = 2
 DETERMINISTIC_HINT_CHAR_LIMIT = 2600
-DOMAIN_PROMPT_DIR = _PROJECT_ROOT / "prompts" / "physics_solution_domains"
-CONVERT_TO_SYMPY_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "convert_to_sympy.md"
-VERIFY_SOLUTION_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "verify_solution_against_parser.md"
+DOMAIN_PROMPT_DIR = _PROJECT_ROOT / "prompts" / "physics" / "physics_solution_domains"
+CONVERT_TO_SYMPY_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "physics" / "convert_to_sympy.md"
+VERIFY_SOLUTION_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "physics" / "verify_solution_against_parser.md"
 IGNORED_PARSED_TARGETS = {"", "answer", "result", "each_energy"}
 TARGET_EQUIVALENCE_GROUPS = (
     {"q", "Q", "Q_source", "q_source", "charge"},
@@ -90,7 +90,7 @@ def _unit_key(unit: Any) -> str:
 class LLMSolutionProvider(SolutionProvider):
     """Build solution prompts and return the LLM's JSON specification."""
 
-    DEFAULT_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "solution_type2.md"
+    DEFAULT_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "physics" / "solution_type2.md"
 
     def __init__(
         self,

@@ -14,7 +14,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 class ParsingAgent:
     """Ask the LLM to parse physics questions into structured JSON."""
 
-    DEFAULT_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "semantic_parser_type2.md"
+    DEFAULT_PROMPT_PATH = _PROJECT_ROOT / "prompts" / "physics" / "semantic_parser_type2.md"
     OPTIONAL_FIELDS = ("geometry", "comparison", "options", "answer_format", "warnings")
 
     def __init__(
