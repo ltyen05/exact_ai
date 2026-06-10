@@ -1,0 +1,801 @@
+[
+  {
+    "query_id": "THCB133",
+    "type": "type2",
+    "query": "Three temperature measurements: 20.1\\u00b0C; 20.0\\u00b0C; 19.9\\u00b0C. Calculate the average temperature and the average absolute error.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "THCB076",
+    "type": "type2",
+    "query": "Two light bulbs with resistances R\\u2081 = 20\\u03a9 and R\\u2082 = 10\\u03a9 are connected in parallel. A voltage of U = 10V is applied across the combination. Calculate the current flowing through each bulb.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0332",
+    "type": "type1",
+    "query": "Based on the above premises, is the following statement true?\nStatement: If everyone attends the English club, then everyone improves their English communication skills.",
+    "premises": [
+      "If a person attends the English club, then they improve English communication skills.",
+      "There exists someone who signed up for the English club.",
+      "Everyone attends the English club.",
+      "If everyone attends the English club, then if a person attends the club, they improve their communication skills.",
+      "If (a person attending the club implies they improve their communication), then someone has signed up for the club.",
+      "Everyone improves their English communication skills.",
+      "If a person was invited by a teacher, then they attend the English club."
+    ],
+    "options": [
+      "True",
+      "False",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "DDT158",
+    "type": "type2",
+    "query": "A solenoid has a magnetic flux density of 0.01 T and a cross-sectional area of 8 cm\\u00b2. Calculate the magnetic flux through one turn of the wire.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0304",
+    "type": "type1",
+    "query": "Do all library users have valid reservations?",
+    "premises": [
+      "If someone is not a library user, then they cannot borrow books.",
+      "Everyone has a library card.",
+      "If someone is allowed to borrow books, then they are allowed to take a book home.",
+      "Everyone is allowed to borrow books.",
+      "If someone has a valid reservation, then they are allowed to borrow books.",
+      "If someone is not allowed to take a book home, then they don’t have a library card.",
+      "If someone is not allowed to borrow books, then they are not allowed to take a book home.",
+      "If someone is not a library user, then they don’t have a library card.",
+      "If someone is not allowed to borrow books, then they are not a library user.",
+      "If someone does not have a library card, then they are not allowed to borrow books.",
+      "If someone is allowed to borrow books, then they must have a valid reservation.",
+      "If valid reservations lead to borrowing privileges, then everyone can borrow books.",
+      "If valid reservations lead to borrowing privileges, then non-library users cannot borrow books.",
+      "If everyone can borrow books, then any valid reservation leads to borrowing privileges.",
+      "If non-library users not having library cards implies valid reservation leads to borrowing privileges.",
+      "If being allowed to borrow books means being allowed to take books home, then non-library users don't have library cards.",
+      "If someone is not allowed to borrow books, then they don’t have a library card.",
+      "Everyone is allowed to take books home"
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "T1_0208",
+    "type": "type1",
+    "query": "Are all students part of a research group?",
+    "premises": [
+      "All students attend lectures.",
+      "At least one student is part of a research group.",
+      "All students complete their assignments.",
+      "If at least one student is part of a research group, then all students attend lectures.",
+      "If all students attending lectures implies that all students complete their assignments, then all students complete their assignments.",
+      "At least one student participates in extracurricular activities.",
+      "If a student is part of a research group, then they also complete their assignments."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "LD119",
+    "type": "type2",
+    "query": "Two point charges, q1 = +7 \\u00d7 10^-8 C and q2 = -3 \\u00d7 10^-8 C, are placed at points A and B, separated by 3 cm in the air. A third charge, q3 = +2 \\u00d7 10^-8 C, is placed at point C, such that the distance from C to A is 3 cm and the distance from C to B is 4 cm. Calculate the net electric force acting on q3.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0108",
+    "type": "type1",
+    "query": "Based on the above premises, which statement can be inferred?",
+    "premises": [
+      "Every transportation system in the city is equipped with modern technology.",
+      "Every transportation system in the city is safe.",
+      "There exists at least one transportation system that is cost-effective.",
+      "If a transportation system is not equipped with modern technology, then it is not cost-effective.",
+      "If a transportation system is not eco-friendly, then it is not thoroughly tested.",
+      "If a transportation system is not eco-friendly, then it is not equipped with modern technology.",
+      "If there exists at least one cost-effective transportation system, then every transportation system in the city is safe.",
+      "If not being equipped with modern technology implies not being cost-effective, then every transportation system in the city is safe.",
+      "If a transportation system is not thoroughly tested, then it is not reliable.",
+      "If a transportation system is not safe, then it is not equipped with modern technology.",
+      "If a transportation system is eco-friendly, then it is cost-effective.",
+      "If a transportation system is safe but not eco-friendly, then it is not necessarily cost-effective."
+    ],
+    "options": [
+      "It is false that if every transportation system in the city is safe, then there exists at least one transportation system that is cost-effective.",
+      "Both (every transportation system in the city is safe implies there exists at least one cost-effective transportation system) and its negation hold, leading to a contradiction.",
+      "If every transportation system in the city is safe implies there exists at least one cost-effective transportation system, then this implication is always true.",
+      "If every transportation system in the city is safe, then there exists at least one transportation system that is cost-effective."
+    ]
+  },
+  {
+    "query_id": "LD265",
+    "type": "type2",
+    "query": "Three identical charges, q = -7 \\u00d7 10^-6 C, are placed at the three vertices of an isosceles right triangle with legs of 15 cm. Calculate the net force acting on the charge at the right-angle vertex.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "LD274",
+    "type": "type2",
+    "query": "Two point charges, q1 = +8 \\u00d7 10^-6 C and q2 = -8 \\u00d7 10^-6 C, are placed at points A and B, separated by 10 cm. A test charge q with a magnitude of 10^-6 C is placed at point M, which lies on the perpendicular bisector of AB, at a distance of 3 cm from AB. Calculate the net electric force acting on the test charge q.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0199",
+    "type": "type1",
+    "query": "Based on the premises above, which statement can be inferred?",
+    "premises": [
+      "Every student participates in class according to the class schedule.",
+      "If a student completes assignments, then the student will receive points.",
+      "If a student does not complete assignments, the student will lose points.",
+      "There exists at least one student who participates in extracurricular activities.",
+      "There exists at least one student who has completed their final project.",
+      "If a student participates in extracurricular activities, then the student will gain additional points.",
+      "There exists at least one student who has failed to complete their assignments.",
+      "If a student violates the school policy on mobile phones, the student will receive a warning.",
+      "If a student has completed their assignments, then the student is eligible for extra participation points.",
+      "If a student does not follow the attendance policy, then the student will lose participation points.",
+      "If a student violates the school rules on mobile phones, then the student will be penalized.",
+      "Every student must follow the attendance policy.",
+      "Every student must participate in group projects."
+    ],
+    "options": [
+      "'If a student participates in extracurricular activities and completes assignments, they will receive points and gain additional points.'",
+      "'If a student does not complete assignments and does not follow the attendance policy, they will lose points and lose participation points.'",
+      "'If a student participates in extracurricular activities and violates the school policy on mobile phones, they will gain additional points and receive a warning.'",
+      "'If a student participates in group projects and completes their final project, they will be penalized and eligible for extra participation points.'"
+    ]
+  },
+  {
+    "query_id": "T1_0774",
+    "type": "type1",
+    "query": "Which traits do all students possess?",
+    "premises": [
+      "All students pass the course.",
+      "If a student does not have high attendance, then they do not have good performance.",
+      "If a student does not submit assignments, then they do not have good performance.",
+      "If a student does not submit their thesis, then they do not pass the course.",
+      "If a student submits assignments, then they receive feedback.",
+      "If a student passes the course, then they have good performance.",
+      "All students have high attendance.",
+      "If a student does not receive feedback, then they did not submit assignments."
+    ],
+    "options": [
+      "Good performance, high attendance, submitting thesis, submitting assignments.",
+      "Good performance, submitting thesis, receiving feedback.",
+      "High attendance, submitting assignments, receiving feedback.",
+      "Passing course, good performance, submitting thesis."
+    ]
+  },
+  {
+    "query_id": "LD301",
+    "type": "type2",
+    "query": "Three electric charges, q1 = q2 = q3 = 3.5 \\u00d7 10^-6 C, are placed at the three vertices of an equilateral triangle with a side length of 6.6 cm. Calculate the net electric field strength at the position of q3. Give your answer two decimal places.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0065",
+    "type": "type1",
+    "query": "Can Mai successfully change majors from Information Technology to Biomedical Engineering, considering the entrance exam score, scholarship, and make-up course requirements, while assessing the risks of academic warnings or scholarship loss if she doesn't meet the requirements within 1 year after the transfer?",
+    "premises": [
+      "Students are allowed to change majors if their cumulative GPA is 7.0 or higher.",
+      "Students must complete at least 2 semesters in their current major before changing.",
+      "Accumulated credits must be at least 50% of the total credits of the current program.",
+      "The new major must have a professional similarity of 60% or higher, as determined by the professional council.",
+      "If students have taken major-specific courses, these courses must be assessed for knowledge equivalence with the new major.",
+      "The major change must be approved by the academic council after reviewing grades, professional competence, and personal aspirations.",
+      "The academic council only meets for review in March and September each year.",
+      "Students must submit their major change application at least 30 days before the council meeting.",
+      "Late applications require waiting until the next meeting and paying a 10% tuition fee penalty.",
+      "The major change fee is 50% of the current semester's tuition, unless the student is eligible for priority policies.",
+      "Scholarship students must be reviewed separately by the finance department before changing majors.",
+      "If the scholarship is revoked after changing majors, students must repay 25% of the scholarship value received.",
+      "Students must complete missing courses in the new major within 1 year, with a maximum of 15 additional credits.",
+      "Failure to complete make-up courses within the specified time will result in academic suspension.",
+      "If the cumulative GPA falls below 6.0 after changing majors, students will receive academic warnings for 2 consecutive semesters.",
+      "Academic warnings are only lifted if the GPA is above 6.5 in the next semester and there are no violations of school regulations.",
+      "Students can only change majors a maximum of 1 time, except in special cases approved by the council.",
+      "Accumulated courses are only retained if they are 70% compatible with the new major, otherwise they must be retaken.",
+      "Students eligible for policies or with disabilities receive a 20% discount on the major change fee and priority review.",
+      "If the new major requires an entrance exam, students must achieve at least 75% of the standard score.",
+      "The academic council can reject major changes if they discover students have falsified their applications.",
+      "Mai has a cumulative GPA of 7.2 and has completed 3 semesters in Information Technology.",
+      "Mai wants to switch to Biomedical Engineering, which has a 65% similarity.",
+      "Mai has completed 45/90 credits in her current major and submitted her application on time in August.",
+      "Mai has a 50% tuition scholarship and has not changed majors before.",
+      "Biomedical Engineering requires an entrance exam with a standard score of 80%.",
+      "Mai scored 78% on the new major's entrance exam."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "THCB110",
+    "type": "type2",
+    "query": "An object has an **actual length** of 150.0 cm. A student measured it as 149.2 cm. Calculate the **absolute error** and **relative error.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0748",
+    "type": "type1",
+    "query": "If Phong has an average semester score of 2.3, does it follow that Phong’s academic ranking is Average?",
+    "premises": [
+      "Students are ranked based on their average semester scores as follows: Excellent (3.6 to 4.0), Good (3.2 to 3.6), Fair (2.5 to 3.2), Average (2.0 to 2.5), Weak (1.0 to 2.0), Poor (below 1.0).",
+      "Phong has an average semester score of 2.3.",
+      "Students with an Excellent ranking receive a scholarship of $500 per semester.",
+      "Phong is in his third semester and has taken 15 credits this term.",
+      "Another student, Hoa, has an average score of 3.7 and is ranked Excellent.",
+      "Scores are calculated based on a weighted average of exams (60%) and projects (40%).",
+      "Phong scored 2.5 on exams and 2.0 on projects this semester.",
+      "Students ranked below Fair must attend a study skills workshop.",
+      "The maximum score per course is 4.0, and Phong is enrolled in four courses.",
+      "Hoa has a part-time job and still maintains her ranking.",
+      "Rankings are reviewed at the end of each semester, with a deadline of December 20th.",
+      "Phong submitted his final project on time, avoiding a 0.5-point penalty."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "NL125",
+    "type": "type2",
+    "query": "A capacitor has a capacitance of 60 \\u03bcF and an electric field energy of 1.08 mJ. Calculate the voltage U (V).",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "LD015",
+    "type": "type2",
+    "query": "Two electric forces with magnitudes of 5 N and 12 N act at an angle of 60\\u00b0 to each other. Calculate the resultant force.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0104",
+    "type": "type1",
+    "query": "Based on the above premises, which of the following conclusions can be inferred?",
+    "premises": [
+      "Every EV charging station supports fast charging.",
+      "There exists at least one EV charging station that is widely available.",
+      "If an EV charging station supports fast charging, then it is reliable.",
+      "Every EV charging station meets safety standards.",
+      "If an EV charging station is not widely available, then it is not thoroughly maintained.",
+      "If an EV charging station is widely available, then it supports fast charging.",
+      "If not being widely available implies not being thoroughly maintained, then any widely available EV charging station supports fast charging.",
+      "If not being widely available implies not being thoroughly maintained, then every EV charging station meets safety standards.",
+      "If an EV charging station meets safety standards, then it is thoroughly maintained.",
+      "If an EV charging station is not cost-effective, then it is not widely available.",
+      "Every EV charging station is thoroughly maintained."
+    ],
+    "options": [
+      "It is not the case that if an EV charging station being not widely available implies that it is not thoroughly maintained then every EV charging station meets safety standards.",
+      "If it is true that if an EV charging station being not widely available implies that it is not thoroughly maintained then every EV charging station meets safety standards, then it follows that if an EV charging station being not widely available implies that it is not thoroughly maintained then every EV charging station meets safety standards.",
+      "Both that if an EV charging station being not widely available implies that it is not thoroughly maintained then every EV charging station meets safety standards, and that it is not the case that if an EV charging station being not widely available implies that it is not thoroughly maintained then every EV charging station meets safety standards.",
+      "If an EV charging station being not widely available implies that it is not thoroughly maintained, then every EV charging station meets safety standards."
+    ]
+  },
+  {
+    "query_id": "T1_0660",
+    "type": "type1",
+    "query": "If all students have passed the Philosophy prerequisite, does it follow that passing Philosophy (P) requires enrollment in Research Methods (R)?",
+    "premises": [
+      "If a student x is enrolled in Research Methods (R), then they have passed the Philosophy prerequisite (P).",
+      "There is at least one student x who has qualified for the Quantum Physics competition (Q).",
+      "If a student x is enrolled in Research Methods (R), they are eligible for the University Honors program (U).",
+      "A student x who hasn't passed the Philosophy prerequisite (P) cannot qualify for the Quantum Physics competition (Q).",
+      "All students x have passed the Philosophy prerequisite (P).",
+      "Students x in the University Honors program (U) receive a full Scholarship (S).",
+      "If a student x hasn't completed the Thesis Writing course (T), they cannot enroll in Research Methods (R).",
+      "At least one student x has been admitted to the University Honors program (U).",
+      "All students x receive a full Scholarship (S).",
+      "There exists at least one student x who has passed the Philosophy prerequisite (P).",
+      "Students x who pass the Philosophy prerequisite (P) are automatically enrolled in Research Methods (R).",
+      "There is at least one student x enrolled in Research Methods (R).",
+      "Every student x is part of the University Honors program (U).",
+      "Enrollment in Research Methods (R) guarantees a full Scholarship (S) for student x.",
+      "All students x have qualified for the Quantum Physics competition (Q).",
+      "If all students have passed Philosophy (P), then any student x who passes P is automatically enrolled in Research Methods (R).",
+      "If all students have passed Philosophy (P), then every student x is admitted to the University Honors program (U).",
+      "Students x who haven't completed Thesis Writing (T) are disqualified from the Quantum Physics competition (Q).",
+      "Qualifying for the Quantum Physics competition (Q) requires passing the Philosophy prerequisite (P).",
+      "Every student x is enrolled in Research Methods (R).",
+      "Students x who qualify for the Quantum Physics competition (Q) must enroll in Research Methods (R).",
+      "A student x without a Scholarship (S) cannot qualify for the Quantum Physics competition (Q).",
+      "Receiving a Scholarship (S) obligates student x to enroll in Research Methods (R).",
+      "Scholarship recipients (S) automatically qualify for the Quantum Physics competition (Q)."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "T1_0625",
+    "type": "type1",
+    "query": "Which statement can be inferred about Dio?",
+    "premises": [
+      "Students who come to the library to borrow books will gain books.",
+      "Students who got a book and are hardworking will read them.",
+      "Students who read books will gain knowledge.",
+      "Students who have knowledge will pass the course.",
+      "Dio comes to the library to borrow a book, and he passes the course."
+    ],
+    "options": [
+      "Dio is not hardworking.",
+      "Dio did not gain knowledge.",
+      "Dio read books.",
+      "It is uncertain whether Dio read books."
+    ]
+  },
+  {
+    "query_id": "TD359",
+    "type": "type2",
+    "query": "A capacitor with a capacitance of 4 \\u03bcF is charged to a voltage of 6 V. Calculate the electric field energy of the capacitor.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0105",
+    "type": "type1",
+    "query": "Based on the above premises, answer the following: Is the following statement true?\n\"If an EV charging station being not widely available implies that it is not thoroughly maintained, then every EV charging station that is widely available supports fast charging.\"",
+    "premises": [
+      "Every EV charging station supports fast charging.",
+      "There exists at least one EV charging station that is widely available.",
+      "If an EV charging station supports fast charging, then it is reliable.",
+      "Every EV charging station meets safety standards.",
+      "If an EV charging station is not widely available, then it is not thoroughly maintained.",
+      "If an EV charging station is widely available, then it supports fast charging.",
+      "If not being widely available implies not being thoroughly maintained, then any widely available EV charging station supports fast charging.",
+      "If not being widely available implies not being thoroughly maintained, then every EV charging station meets safety standards.",
+      "If an EV charging station meets safety standards, then it is thoroughly maintained.",
+      "If an EV charging station is not cost-effective, then it is not widely available.",
+      "Every EV charging station is thoroughly maintained."
+    ],
+    "options": [
+      "True",
+      "False",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "T1_0778",
+    "type": "type1",
+    "query": "Which activities do all students perform?",
+    "premises": [
+      "If a student gives a seminar, then they receive a recommendation.",
+      "If a student participates in a project, then they earn a certification.",
+      "All students complete the training module.",
+      "If a student does not earn a certification, then they did not participate in a project.",
+      "All students earn a certification.",
+      "If a student participates in a project, then they give a seminar."
+    ],
+    "options": [
+      "Completing training module, participating in project, giving seminar, earning certification.",
+      "Completing training module, writing paper, giving seminar.",
+      "Participating in project, earning certification, writing paper.",
+      "Completing training module, giving seminar, receiving recommendation."
+    ]
+  },
+  {
+    "query_id": "T1_0103",
+    "type": "type1",
+    "query": "Based on the above premises, is the statement true?\nStatement: If a Raspberry Pi system is cost-effective, then it is necessarily versatile.",
+    "premises": [
+      "If a Raspberry Pi system is simple to use, then it is cost-effective.",
+      "There exists at least one Raspberry Pi system that is cost-effective.",
+      "If a Raspberry Pi system is not simple to use, then it is not versatile.",
+      "If a Raspberry Pi system is simple to use, then it is versatile.",
+      "There exists at least one Raspberry Pi system that is versatile.",
+      "Every Raspberry Pi system is thoroughly tested and well-documented.",
+      "If being simple to use implies cost-effectiveness for a Raspberry Pi system, then every Raspberry Pi system is thoroughly tested and well-documented.",
+      "If there exists at least one cost-effective Raspberry Pi system, then there exists at least one versatile Raspberry Pi system.",
+      "If a Raspberry Pi system is connected to online resources, then it is thoroughly tested and well-documented.",
+      "If a Raspberry Pi system is connected to online resources, then it is versatile.",
+      "There exists at least one Raspberry Pi system that is connected to online resources and benefits from active community support.",
+      "If a Raspberry Pi system is cost-effective but not thoroughly tested and well-documented, then it might not support all versatile use-cases."
+    ],
+    "options": [
+      "True",
+      "False",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "TD060",
+    "type": "type2",
+    "query": "A parallel-plate capacitor has a capacitance of 12.71 pF and is charged to a potential difference of 57.2 V. Calculate the charge stored by the capacitor.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0409",
+    "type": "type1",
+    "query": "Based on the above premises, which statement can be inferred?",
+    "premises": [
+      "If a student does not receive a qualification, then they cannot conduct research.",
+      "There exists at least one student who is engaged in training.",
+      "If a student does not meet the requirements, then they do not receive a qualification.",
+      "There exists at least one student who has received a qualification.",
+      "If a student does not receive a qualification, then they cannot participate in advanced seminars.",
+      "If a student does not engage in independent learning, then they cannot conduct research.",
+      "If a student is engaged in training, then they receive a qualification.",
+      "If a student engages in independent learning, then they meet the requirements.",
+      "There exists at least one student who is participating in advanced seminars.",
+      "If a student does not receive a qualification, then they do not engage in independent learning.",
+      "There exists at least one student who is conducting research.",
+      "All students receive qualifications.",
+      "If independent learning leads to meeting the requirements, then lack of qualification leads to inability to conduct research.",
+      "If the lack of meeting requirements leads to no qualification, then lack of qualification leads to no participation in advanced seminars.",
+      "If a student does not participate in advanced seminars, then they cannot conduct research.",
+      "All students are engaged in training."
+    ],
+    "options": [
+      "∀x (S(x) → Q(x))",
+      "(∀x (Q(x) → S(x)) ∧ ¬∀x (Q(x) → S(x)))",
+      "∀x (Q(x) → S(x))",
+      "¬∀x (Q(x) → S(x))"
+    ]
+  },
+  {
+    "query_id": "T1_0301",
+    "type": "type1",
+    "query": "Do all committee members approve the methodology?",
+    "premises": [
+      "Every committee member agrees that the thesis is acceptable.",
+      "At least one professor has raised a concern about the thesis.",
+      "At least one observer found the thesis presentation clear.",
+      "If a committee member agrees the thesis is acceptable, then they also approve the methodology.",
+      "Every reviewer approves the methodology used in the thesis.",
+      "If someone found the thesis presentation clear, they also approve the methodology.",
+      "If a faculty member believes the thesis should be revised, then they think the topic is weak.",
+      "If someone thinks the topic is weak, then they believe the thesis should be revised.",
+      "If a professor raises a concern about the thesis, then they also approve the methodology.",
+      "If a professor doesn’t raise a concern, then they don’t think the topic is weak.",
+      "Every faculty member believes the thesis should be revised.",
+      "If someone thinks the topic is weak, then they approve the methodology.",
+      "If the statement 'If a professor doesn’t raise a concern, then they don’t think the topic is weak' is true, then it implies that if a professor raises a concern, they approve the methodology.",
+      "If a professor raising a concern implies they approve the methodology, then at least one faculty member believes the thesis should be revised.",
+      "If the implication 'If a professor doesn’t raise a concern, then they don’t think the topic is weak' leads to the implication 'If a professor raises a concern, they approve the methodology', then it also means that if a committee member agrees the thesis is acceptable, they approve the methodology.",
+      "If all committee members agree that the thesis is acceptable, then at least one observer found the presentation clear.",
+      "If there is at least one person who approves the methodology, then if someone thinks the topic is weak, they also believe the thesis should be revised.",
+      "If someone doesn’t believe the thesis should be revised, then they don’t agree the thesis is acceptable.",
+      "Everyone thinks the thesis topic is weak.",
+      "If a professor doesn’t raise a concern, then they don’t believe the thesis should be revised.",
+      "If someone didn’t find the presentation clear, then they don’t believe the thesis should be revised."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "DDT208",
+    "type": "type2",
+    "query": "A solenoid has an electric current of 1 A, L = 0.04 H. Calculate the stored magnetic energy.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "NL029",
+    "type": "type2",
+    "query": "A capacitor has C = 30 \\u03bcF, voltage U = 90 V. Calculate the stored electric field energy (mJ).",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0132",
+    "type": "type1",
+    "query": "Are all research projects highly cited?",
+    "premises": [
+      "Every research project is recognized as innovative.",
+      "Every research project is well-funded.",
+      "Every research project is thoroughly tested.",
+      "If a research project is not well-funded, then it does not meet academic standards.",
+      "If a research project does not meet academic standards, then it is not well-funded.",
+      "If a research project is not successful, then it does not meet academic standards.",
+      "Every research project is published.",
+      "If every research project is published, then every research project is thoroughly tested.",
+      "If the fact that a research project not being successful implies it does not meet academic standards, then not meeting academic standards implies that it is not well-funded.",
+      "If a research project is thoroughly tested, then it is recognized as innovative.",
+      "There exists at least one research project that is successful.",
+      "If a research project meets academic standards, then it is published."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "NL113",
+    "type": "type2",
+    "query": "A capacitor has an electric field energy of 0.9 mJ and a capacitance of 20 \\u03bcF. Calculate the potential difference (unit: V) between its two plates (round the result to two decimal places).",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "DDT372",
+    "type": "type2",
+    "query": "The current through the solenoid is 2 A, the number of turns per meter is 1500, and the permeability of free space is \\u03bc\\u2080 = 4\\u03c0\\u00d710\\u207b\\u2077. Calculate the magnetic field inside.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "CH110",
+    "type": "type2",
+    "query": "In an RLC circuit: The resistance R = 80\\u03a9. At resonance, the current is I = 2A, and this occurs at a frequency f = 100Hz. When the frequency is f = 200Hz, the current is I = 1.6A. What is the inductive reactance (ZL)?",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0232",
+    "type": "type1",
+    "query": "Are all students questioning?",
+    "premises": [
+      "If a student is not studying, then they are not ready.",
+      "Every student is studying.",
+      "If at least one student is studying, then if a student is not studying, they are not ready.",
+      "If at least one student is studying, then the previous statement is true.",
+      "If a student is ready, then they are studying.",
+      "There exists at least one student who is questioning."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "T1_0137",
+    "type": "type1",
+    "query": "Are all biometric systems secure?",
+    "premises": [
+      "If a biometric system can detect presentation attacks, then it is secure.",
+      "If a biometric system is not secure, then it cannot detect presentation attacks.",
+      "There exists at least one biometric system that cannot detect presentation attacks.",
+      "Every biometric system has a machine learning algorithm.",
+      "If a biometric system has a machine learning algorithm, then it can detect presentation attacks.",
+      "If a biometric system has a machine learning algorithm, then it is not necessarily secure.",
+      "If a biometric system has a machine learning algorithm but cannot detect presentation attacks, then it is not secure.",
+      "If a biometric system has a machine learning algorithm and can detect presentation attacks, then it is secure."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "T1_0696",
+    "type": "type1",
+    "query": "If every object has property R, does it follow that there exists at least one object with property Q?",
+    "premises": [
+      "At the university, if an object x has property U, then it has property P.",
+      "At the university, there exists at least one object x that has property Q.",
+      "At the university, every object x has property S.",
+      "At the university, if an object x does not have property Q, then it does not have property U.",
+      "At the university, every object x has property R.",
+      "At the university, every object x has property P.",
+      "At the university, if an object x has property U, then it has property T.",
+      "At the university, every object x has property Q.",
+      "At the university, if it is true that if an object x has property U then it has property T, then every object x has property P.",
+      "At the university, if every object x has property R, then there exists at least one object x that has property Q.",
+      "At the university, if it is true that if an object x having property U implies it has property T then every object x has property P, then every object x has property P.",
+      "At the university, if an object x does not have property U, then it does not have property R.",
+      "At the university, if an object x does not have property S, then it does not have property P.",
+      "At the university, if an object x does not have property Q, then it does not have property S."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "T1_0130",
+    "type": "type1",
+    "query": "Are there any courses offered online?",
+    "premises": [
+      "If a course is offered online, then it is engaging.",
+      "If a course is not engaging, then it does not meet curriculum standards.",
+      "There does not exist any course that is engaging.",
+      "Not every course is offered online.",
+      "If a course is well-structured, then it does not meet curriculum standards.",
+      "Not every course has sufficient resources.",
+      "If offering a course online implies that it is engaging, then a well-structured course does not meet curriculum standards.",
+      "If a well-structured course meets curriculum standards, then offering a course online does not imply that it is engaging.",
+      "If a course has sufficient resources, then it is not well-structured.",
+      "Not every course meets curriculum standards.",
+      "If a course is engaging, then it does not receive positive reviews."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "LD330",
+    "type": "type2",
+    "query": "Three identical charges q = 2.6 \\u00d7 10^-6 C are placed at the three vertices of an isosceles right triangle with side length 10.3 cm. Calculate the net electric field strength at the right-angle vertex. Give your answer rounded two decimal places.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "NL112",
+    "type": "type2",
+    "query": "An inductor has L = 0.4 H, the current through it is 3 A. Calculate the magnetic field energy (mJ).",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "TD088",
+    "type": "type2",
+    "query": "An air-filled parallel plate capacitor has a capacitance of 27.63 pF and is charged to a potential difference of 91.9 V. Calculate the electric field energy stored in the capacitor.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "CH023",
+    "type": "type2",
+    "query": "What is the resonance frequency of a series AC circuit consisting of an inductor L = 1.5 H and a capacitor C = 2 \\u03bcF?",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "DDT203",
+    "type": "type2",
+    "query": "A solenoid has L = 0.1 H. The current increases from 0 to 3 A in 0.01 s. Calculate the induced electromotive force.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0309",
+    "type": "type1",
+    "query": "Do all people study?",
+    "premises": [
+      "If a person studies, then they will pass the exam.",
+      "If a person does not prepare, then they will not pass the exam.",
+      "If a person trains regularly, they will become fit.",
+      "If a person is not motivated, then they will not become fit.",
+      "If a person becomes fit, then they study.",
+      "If a person does not train regularly, then they are not motivated.",
+      "If a person does not prepare, then they do not study.",
+      "Everyone prepares.",
+      "Everyone becomes fit.",
+      "If a person does not study, then they are not motivated.",
+      "If a person is not motivated, then they do not train regularly.",
+      "If it is true that 'if a person does not study then they are not motivated', then it is also true that 'if a person does not train regularly then they are not motivated.'",
+      "If someone passes the exam, then it follows that if a person does not train regularly, they are not motivated.",
+      "If everyone prepares, then if it's true that 'if a person does not study then they are not motivated', then it is also true that 'if a person does not train regularly then they are not motivated.'",
+      "If the previous implication holds, then it must be true that if a person studies, they will pass the exam.",
+      "If becoming fit leads to studying, then if a person does not train regularly, they are not motivated.",
+      "If a person is motivated, then they train regularly.",
+      "If a person is not motivated, then they do not prepare.",
+      "If a person becomes fit, then they train regularly.",
+      "Everyone passes the exam."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "CH226",
+    "type": "type2",
+    "query": "Circuit AB consists of a resistor R1 = 20 \\u03a9 and a section MB. Section MB contains a resistor R2 and an inductor L, satisfying the condition LC\\u03c9\\u00b2 = 1. The voltage across AM (uAM) is 90 degrees out of phase with the voltage across MB (uMB). When an RMS voltage U = 100 V is applied to AB, the total power consumed is 142.86 W. What is the value of R2?",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "LD094",
+    "type": "type2",
+    "query": "Two point charges q1 = +2 \\u00d7 10^-6 C and q2 = \\u22122 \\u00d7 10^-6 C are placed at points A and B, separated by 6 cm in air. Calculate the net electric field strength at point M, which is on the line connecting A and B, 2 cm away from q1.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "CH228",
+    "type": "type2",
+    "query": "The circuit AB consists of R1 = 50 \\u03a9 and a segment MB (containing R2 and an inductor L), satisfying the condition LC\\u03c9\\u00b2 = 1. The voltage uAM and uMB are in quadrature (90 degrees out of phase). When an RMS voltage U = 100 V is applied across AB, the total power consumed is 100.0 W. Find the value of R2.",
+    "premises": [],
+    "options": []
+  },
+  {
+    "query_id": "T1_0284",
+    "type": "type1",
+    "query": "Based on the premises, is the following statement true?\nStatement: In C++, 'new' is used to dynamically allocate memory and 'delete' is used to deallocate it, allowing for memory management through pointers.",
+    "premises": [
+      "In C++, variables need to be declared with a type before they can be used.",
+      "C++ supports both primitive data types, such as int, char, and float, and user-defined types like structs and classes.",
+      "Functions in C++ can return a value and are declared with a return type.",
+      "C++ supports function overloading, allowing multiple functions with the same name but different parameters.",
+      "Classes in C++ are defined with the 'class' keyword and support encapsulation, inheritance, and polymorphism.",
+      "C++ uses pointers to reference memory locations, and pointers can be used to dynamically allocate memory.",
+      "In C++, the 'new' keyword is used to dynamically allocate memory, and 'delete' is used to deallocate it.",
+      "C++ supports exception handling with 'try', 'catch', and 'throw' keywords.",
+      "Templates in C++ allow generic programming by defining functions and classes that work with any data type.",
+      "The Standard Template Library (STL) in C++ includes data structures like vectors, maps, and sets, and algorithms like sort and find."
+    ],
+    "options": [
+      "True",
+      "False",
+      "Uncertain"
+    ]
+  },
+  {
+    "query_id": "T1_0687",
+    "type": "type1",
+    "query": "Considering the above premises from the University of Technology, which of the following statements can be logically deduced if we know that there exists at least one object x that has property U?",
+    "premises": [
+      "At the University of Technology, there exists at least one object x that has property U.",
+      "At the University of Technology, if an object x does not have property S, then it does not have property P.",
+      "At the University of Technology, every object x has property P.",
+      "At the University of Technology, if an object x has property U, then it has property S.",
+      "At the University of Technology, there exists at least one object x that has property S.",
+      "At the University of Technology, there exists at least one object x that has property P.",
+      "At the University of Technology, if an object x has property R, then it has property U.",
+      "At the University of Technology, there exists at least one object x that has property T.",
+      "At the University of Technology, if it is true that if an object x does not have property S then it does not have property P, then there exists at least one object x that has property P.",
+      "At the University of Technology, if there exists at least one object x that has property U, then if an object x does not have property S it does not have property P.",
+      "At the University of Technology, if an object x has property U, then it has property Q.",
+      "At the University of Technology, if an object x does not have property P, then it does not have property S.",
+      "At the University of Technology, if an object x does not have property U, then it does not have property P.",
+      "At the University of Technology, if an object x does not have property R, then it does not have property P.",
+      "At the University of Technology, there exists at least one object x that has property Q."
+    ],
+    "options": [
+      "It is not the case that if there exists an object with property U then if an object lacks property S it does not have property P.",
+      "If it is true that if there exists an object with property U then if an object lacks property S it does not have property P, then it is indeed true that if there exists an object with property U then if an object lacks property S it does not have property P.",
+      "If there exists an object with property U then if an object lacks property S it does not have property P.",
+      "It is both true and not true that if there exists an object with property U then if an object lacks property S it does not have property P."
+    ]
+  },
+  {
+    "query_id": "T1_0120",
+    "type": "type1",
+    "query": "Are all autonomous vehicles market-adopted?",
+    "premises": [
+      "Every autonomous vehicle is reliable.",
+      "If an autonomous vehicle is thoroughly tested, then it is reliable.",
+      "There does not necessarily exist an autonomous vehicle that is thoroughly tested.",
+      "If an autonomous vehicle is safe, then it is thoroughly tested.",
+      "If an autonomous vehicle is thoroughly tested, then it is safe.",
+      "There exists at least one autonomous vehicle that is energy-efficient.",
+      "If there exists at least one energy-efficient autonomous vehicle, then any safe vehicle is thoroughly tested.",
+      "If every safe vehicle is thoroughly tested, then every thoroughly tested vehicle is not necessarily safe.",
+      "If an autonomous vehicle is not reliable, then it is not adopted by the market.",
+      "If an autonomous vehicle is not reliable, then it is not necessarily thoroughly tested."
+    ],
+    "options": [
+      "Yes",
+      "No",
+      "Uncertain"
+    ]
+  }
+]

@@ -1,0 +1,719 @@
+[
+  {
+    "query_id": "THCB133",
+    "answer": "20.0; 0.067",
+    "unit": "degC; degC",
+    "explanation": "Step 1: Calculate average temperature: (20.1 + 20.0 + 19.9) / 3 = 20.0 \\u00b0C.\nStep 2: Calculate individual deviations: |20.1 - 20.0| = 0.1; |20.0 - 20.0| = 0.0; |19.9 - 20.0| = 0.1.\nStep 3: Calculate the average absolute error: (0.1 + 0.0 + 0.1) / 3.\nStep 4: Final calculation: \\u2248 0.067 \\u00b0C.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Calculate average temperature: (20.1 + 20.0 + 19.9) / 3 = 20.0 \\u00b0C.",
+        "Step 2: Calculate individual deviations: |20.1 - 20.0| = 0.1; |20.0 - 20.0| = 0.0; |19.9 - 20.0| = 0.1.",
+        "Step 3: Calculate the average absolute error: (0.1 + 0.0 + 0.1) / 3.",
+        "Step 4: Final calculation: \\u2248 0.067 \\u00b0C."
+      ]
+    }
+  },
+  {
+    "query_id": "THCB076",
+    "answer": "I\\u2081 = 0.5; I\\u2082 = 1.0",
+    "unit": "A; A",
+    "explanation": "Step 1: Current through D1: I1 = 10V / 20\\u03a9 = 0.5 A.\nStep 2: Current through D2 (measured by A2): I2 = 10V / 10\\u03a9 = 1.0 A.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Current through D1: I1 = 10V / 20\\u03a9 = 0.5 A.",
+        "Step 2: Current through D2 (measured by A2): I2 = 10V / 10\\u03a9 = 1.0 A."
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0332",
+    "answer": "False",
+    "unit": "",
+    "explanation": "From premise 3, we know that everyone attends the English club. From premise 4, if everyone attends the English club, then if a person attends the club, they improve their communication skills. Therefore, if everyone attends the English club, then everyone improves their English communication skills (from premises 3 and 4), making the statement true.",
+    "premises_used": [
+      2,
+      3
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "DDT158",
+    "answer": "8",
+    "unit": "uWb",
+    "explanation": "Step 1: Identify the given magnetic flux density (B) as 0.01 T and the cross-sectional area (A) as 8 cm\\u00b2.\nStep 2: The quantity to be calculated is the magnetic flux (\\u03a6) through one turn of the wire.\nStep 3: Convert the cross-sectional area from square centimeters to square meters: A = 8 cm\\u00b2 = 8 \\u00d7 (10\\u207b\\u00b2 m)\\u00b2 = 8 \\u00d7 10\\u207b\\u2074 m\\u00b2.\nStep 4: Use the formula for magnetic flux, \\u03a6 = B \\u00d7 A, assuming the magnetic field is perpendicular to the area.\nStep 5: Substitute the values into the formula: Phi = 0.01 T * 8 * 10\\u207b\\u2074 m\\u00b2 = 8 * 10\\u207b\\u2076 Wb = 8 \\u03bcWb.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given magnetic flux density (B) as 0.01 T and the cross-sectional area (A) as 8 cm\\u00b2.",
+        "Step 2: The quantity to be calculated is the magnetic flux (\\u03a6) through one turn of the wire.",
+        "Step 3: Convert the cross-sectional area from square centimeters to square meters: A = 8 cm\\u00b2 = 8 \\u00d7 (10\\u207b\\u00b2 m)\\u00b2 = 8 \\u00d7 10\\u207b\\u2074 m\\u00b2.",
+        "Step 4: Use the formula for magnetic flux, \\u03a6 = B \\u00d7 A, assuming the magnetic field is perpendicular to the area.",
+        "Step 5: Substitute the values into the formula: Phi = 0.01 T * 8 * 10\\u207b\\u2074 m\\u00b2 = 8 * 10\\u207b\\u2076 Wb = 8 \\u03bcWb."
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0304",
+    "answer": "Yes",
+    "unit": "",
+    "explanation": "Premise 4 states that everyone is allowed to borrow books, and premise 11 says that being allowed to borrow books implies having a valid reservation. Thus, all library users have valid reservations.",
+    "premises_used": [
+      3,
+      10
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0208",
+    "answer": "Uncertain",
+    "unit": "",
+    "explanation": "Premise 2 states at least one student is part of a research group, premise 3 says all students complete their assignments, and premise 7 links research group membership to completing assignments. However, no premise guarantees that all students are in a research group, so it’s uncertain.",
+    "premises_used": [
+      1,
+      2,
+      6
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "LD119",
+    "answer": "12*10^-3",
+    "unit": "N",
+    "explanation": "Step 1: Identify Coulomb's constant (k) and convert all distances to meters.\nStep 2: Calculate the magnitude of the electric force F13 exerted by q1 on q3 using Coulomb's Law, F = k * |q1 * q3| / r_CA^2.\nStep 3: Calculate the magnitude of the electric force F23 exerted by q2 on q3 using Coulomb's Law, F = k * |q2 * q3| / r_CB^2.\nStep 4: Determine the angle (\\u03b8) between the force vectors F13 and F23 at point C. F13 is repulsive (away from A along CA), F23 is attractive (towards B along CB). The angle between these two vectors is the angle ACB, which can be found using the Law of Cosines: AB^2 = CA^2 + CB^2 - 2 * CA * CB * cos(ACB).\nStep 5: The magnitude of the net electric force acting on q3 is approximately 12 \\u00d7 10^-3 N.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify Coulomb's constant (k) and convert all distances to meters.",
+        "Step 2: Calculate the magnitude of the electric force F13 exerted by q1 on q3 using Coulomb's Law, F = k * |q1 * q3| / r_CA^2.",
+        "Step 3: Calculate the magnitude of the electric force F23 exerted by q2 on q3 using Coulomb's Law, F = k * |q2 * q3| / r_CB^2.",
+        "Step 4: Determine the angle (\\u03b8) between the force vectors F13 and F23 at point C. F13 is repulsive (away from A along CA), F23 is attractive (towards B along CB). The angle between these two vectors is the angle ACB, which can be found using the Law of Cosines: AB^2 = CA^2 + CB^2 - 2 * CA * CB * cos(ACB).",
+        "Step 5: The magnitude of the net electric force acting on q3 is approximately 12 \\u00d7 10^-3 N."
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0108",
+    "answer": "If every transportation system in the city is safe, then there exists at least one transportation system that is cost-effective.",
+    "unit": "",
+    "explanation": "Answer D is correct because premises 7 and 8 imply that every transportation system being safe leads to at least one cost-effective system. The negation of this is false.",
+    "premises_used": [
+      6,
+      7
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "LD265",
+    "answer": "27.68",
+    "unit": "N",
+    "explanation": "Step 1: Identify the magnitude of each charge q = 7 \\u00d7 10^-6 C and the length of the legs (distance between charges) r = 15 cm = 0.15 m.\nStep 2: Recognize that all charges are identical and negative, meaning the electrostatic forces between them are repulsive.\nStep 3: Define the two forces acting on the charge at the right-angle vertex: one from each of the other two charges. Due to symmetry and equal distances, the magnitudes of these two forces (F) will be equal.\nStep 4: Calculate the magnitude of one of these forces using Coulomb's Law: F = k * q^2 / r^2, where k = 8.9875 \\u00d7 10^9 N\\u00b7m^2 / C^2.\nStep 5: The magnitude of the net electric force acting on the charge at the right-angle vertex is approximately 27.68 N.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the magnitude of each charge q = 7 \\u00d7 10^-6 C and the length of the legs (distance between charges) r = 15 cm = 0.15 m.",
+        "Step 2: Recognize that all charges are identical and negative, meaning the electrostatic forces between them are repulsive.",
+        "Step 3: Define the two forces acting on the charge at the right-angle vertex: one from each of the other two charges. Due to symmetry and equal distances, the magnitudes of these two forces (F) will be equal.",
+        "Step 4: Calculate the magnitude of one of these forces using Coulomb's Law: F = k * q^2 / r^2, where k = 8.9875 \\u00d7 10^9 N\\u00b7m^2 / C^2.",
+        "Step 5: The magnitude of the net electric force acting on the charge at the right-angle vertex is approximately 27.68 N."
+      ]
+    }
+  },
+  {
+    "query_id": "LD274",
+    "answer": "36.32",
+    "unit": "N",
+    "explanation": "Step 1: Identify given values and convert units to SI.\nStep 2: Determine the geometry.\nStep 3: Calculate the distance (r) from each source charge (q1 and q2) to the test charge (q).\nStep 4: Calculate the magnitude of the force (F_mag) exerted by q1 on q and q2 on q using Coulomb's Law (F = k * |Q1 * Q2| / r^2).\nStep 5: The magnitude of the net electric force acting on the test charge $q$ is approximately 36.32 N.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify given values and convert units to SI.",
+        "Step 2: Determine the geometry.",
+        "Step 3: Calculate the distance (r) from each source charge (q1 and q2) to the test charge (q).",
+        "Step 4: Calculate the magnitude of the force (F_mag) exerted by q1 on q and q2 on q using Coulomb's Law (F = k * |Q1 * Q2| / r^2).",
+        "Step 5: The magnitude of the net electric force acting on the test charge $q$ is approximately 36.32 N."
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0199",
+    "answer": "'If a student does not complete assignments and does not follow the attendance policy, they will lose points and lose participation points.'",
+    "unit": "",
+    "explanation": "From premise 3, we know that if a student does not complete assignments, they will lose points. From premise 10, we know that if a student does not follow the attendance policy, they will lose participation points. Therefore, if a student does not complete assignments and does not follow the attendance policy, they will lose points and lose participation points, making option B correct.",
+    "premises_used": [
+      2,
+      9
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0774",
+    "answer": "Good performance, high attendance, submitting thesis, submitting assignments.",
+    "unit": "",
+    "explanation": "Premise 1 states all students pass the course, premise 6 states passing implies good performance, premise 7 states all have high attendance, premise 4 implies all submit their thesis, and premise 3 implies all submit assignments, so option A is correct.",
+    "premises_used": [
+      0,
+      2,
+      3,
+      5,
+      6
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "LD301",
+    "answer": "1.25 \\u00d7 10^7",
+    "unit": "V/m",
+    "explanation": "Step 1: Identify the charges contributing to the electric field at the position of q3. These are q1 and q2, as q3 itself does not create a field at its own location.\nStep 2: List the given values: charges q1 = q2 = 3.5 \\u00d7 10\\u207b\\u2076 C, and the side length of the equilateral triangle is r = 6.6 cm.\nStep 3: Convert the side length from centimeters to meters: r = 6.6 cm = 0.066 m.\nStep 4: State the value of Coulomb's constant, k \\u2248 8.9875 \\u00d7 10\\u2079 N\\u00b7m\\u00b2/C\\u00b2. Calculate the magnitude of the individual electric fields E1 and E2 produced by q1 and q2 at point q3 using E = k * |q| / r\\u00b2, where E1 = E2 = (8.9875 \\u00d7 10\\u2079 N\\u00b7m\\u00b2/C\\u00b2) * (3.5 \\u00d7 10\\u207b\\u2076 C) / (0.066 m)\\u00b2 = 0.7221 \\u00d7 10\\u2077 V/m.\nStep 5: Determine the resultant electric field using vector addition for two vectors of equal magnitude at a 60\\u00b0 angle. Since both charges are positive, the vectors point outward. The net field is E1 + E2, where E_net = E1 * \\u221a3 = (0.7221 \\u00d7 10\\u2077 V/m) * \\u221a3 = 1.2508 \\u00d7 10\\u2077 V/m \\u2248 1.25 x \\u00d7 10\\u2077 V/m.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the charges contributing to the electric field at the position of q3. These are q1 and q2, as q3 itself does not create a field at its own location.",
+        "Step 2: List the given values: charges q1 = q2 = 3.5 \\u00d7 10\\u207b\\u2076 C, and the side length of the equilateral triangle is r = 6.6 cm.",
+        "Step 3: Convert the side length from centimeters to meters: r = 6.6 cm = 0.066 m.",
+        "Step 4: State the value of Coulomb's constant, k \\u2248 8.9875 \\u00d7 10\\u2079 N\\u00b7m\\u00b2/C\\u00b2. Calculate the magnitude of the individual electric fields E1 and E2 produced by q1 and q2 at point q3 using E = k * |q| / r\\u00b2, where E1 = E2 = (8.9875 \\u00d7 10\\u2079 N\\u00b7m\\u00b2/C\\u00b2) * (3.5 \\u00d7 10\\u207b\\u2076 C) / (0.066 m)\\u00b2 = 0.7221 \\u00d7 10\\u2077 V/m.",
+        "Step 5: Determine the resultant electric field using vector addition for two vectors of equal magnitude at a 60\\u00b0 angle. Since both charges are positive, the vectors point outward. The net field is E1 + E2, where E_net = E1 * \\u221a3 = (0.7221 \\u00d7 10\\u2077 V/m) * \\u221a3 = 1.2508 \\u00d7 10\\u2077 V/m \\u2248 1.25 x \\u00d7 10\\u2077 V/m."
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0065",
+    "answer": "No",
+    "unit": "",
+    "explanation": "No, Mai cannot successfully change majors to Biomedical Engineering. Although she meets many requirements—GPA of 7.2 (Premise 1, 22), 3 semesters (Premise 2, 22), 50% credits (Premise 3, 24), 65% similarity (Premise 4, 23), timely application in August for September (Premise 8, 24), and council approval is feasible (Premise 6)—she fails the entrance exam requirement. Biomedical Engineering requires an 80% standard score (Premise 26), and Premise 20 mandates at least 75% of that (60%), but interpreting the major’s specific 80% as the threshold, Mai’s 78% falls short. Additionally, her scholarship requires separate review (Premise 12, 24), and post-transfer risks include academic warnings if GPA drops below 6.0 (Premise 14) or scholarship repayment if revoked (Premise 13) due to unfinished make-up courses within 1 year (Premise 13). The exam failure prevents the change outright.",
+    "premises_used": [
+      0,
+      1,
+      2,
+      3,
+      5,
+      7,
+      11,
+      12,
+      13,
+      19,
+      21,
+      22,
+      23,
+      25
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "THCB110",
+    "answer": "0.8; 0.53",
+    "unit": "cm; %",
+    "explanation": "Step 1: Calculate the absolute error: |149.2 - 150.0| = 0.8 cm.\nStep 2: Calculate the relative error using the actual length as the reference: 0.8 / 150.0.\nStep 3: Convert to a percentage for clarity: (0.8 / 150.0) * 100%.\nStep 4: Final calculation: \\u2248 0.53%.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Calculate the absolute error: |149.2 - 150.0| = 0.8 cm.",
+        "Step 2: Calculate the relative error using the actual length as the reference: 0.8 / 150.0.",
+        "Step 3: Convert to a percentage for clarity: (0.8 / 150.0) * 100%.",
+        "Step 4: Final calculation: \\u2248 0.53%."
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0748",
+    "answer": "Yes",
+    "unit": "",
+    "explanation": "From premise 7 (Phong has an average semester score of 2.3), we know AverageScore(Phong) = 2.3. From premise 4, students are ranked as Average if their average score is between 2.0 and 2.5 (∀s ((AverageScore(s) ≥ 2.0 ∧ AverageScore(s) < 2.5) → Ranking(s, Average))). Since premise 7 states that Phong's average score is 2.3, which falls within the range of 2.0 to 2.5, if Phong has an average semester score of 2.3, it follows that Phong’s academic ranking is Average.",
+    "premises_used": [
+      0,
+      3
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "NL125",
+    "answer": "6.00",
+    "unit": "V",
+    "explanation": "Step 1: Identify the given values: capacitance (C) = 60 \\u03bcF and electric field energy (E) = 1.08 mJ.\nStep 2: Convert the given values to standard SI units: C = 60 \\u00d7 10\\u207b\\u2076 F and E = 1.08 \\u00d7 10\\u207b\\u00b3 J.\nStep 3: Recall the formula for the energy stored in a capacitor: E = (1/2) * C * U\\u00b2, where U is the voltage.\nStep 4: Rearrange the formula to solve for U: U\\u00b2 = (2 * E) / C, which means U = \\u221a((2 * E) / C) = 6.00 V.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given values: capacitance (C) = 60 \\u03bcF and electric field energy (E) = 1.08 mJ.",
+        "Step 2: Convert the given values to standard SI units: C = 60 \\u00d7 10\\u207b\\u2076 F and E = 1.08 \\u00d7 10\\u207b\\u00b3 J.",
+        "Step 3: Recall the formula for the energy stored in a capacitor: E = (1/2) * C * U\\u00b2, where U is the voltage.",
+        "Step 4: Rearrange the formula to solve for U: U\\u00b2 = (2 * E) / C, which means U = \\u221a((2 * E) / C) = 6.00 V."
+      ]
+    }
+  },
+  {
+    "query_id": "LD015",
+    "answer": "15.13",
+    "unit": "N",
+    "explanation": "Step 1: Identify the magnitudes of the two electric forces as 5 N and 12 N.\nStep 2: Identify the angle between the two forces as 60\\u00b0.\nStep 3: Use the formula for the resultant force: R = sqrt(F1^2 + F2^2 + 2 * F1 * F2 * cos(theta)).\nStep 4: Substitute the given values: R = sqrt(5^2 + 12^2 + 2 * 5 * 12 * cos(60\\u00b0)).",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the magnitudes of the two electric forces as 5 N and 12 N.",
+        "Step 2: Identify the angle between the two forces as 60\\u00b0.",
+        "Step 3: Use the formula for the resultant force: R = sqrt(F1^2 + F2^2 + 2 * F1 * F2 * cos(theta)).",
+        "Step 4: Substitute the given values: R = sqrt(5^2 + 12^2 + 2 * 5 * 12 * cos(60\\u00b0))."
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0104",
+    "answer": "If an EV charging station being not widely available implies that it is not thoroughly maintained, then every EV charging station meets safety standards.",
+    "unit": "",
+    "explanation": "Option D is correct because Premise 7 supports the conclusion that widely available stations support fast charging, and Premise 8 ensures that safety standards apply universally when certain conditions are met.",
+    "premises_used": [
+      3,
+      6
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0660",
+    "answer": "No",
+    "unit": "",
+    "explanation": "From premise 5 (All students x have passed the Philosophy prerequisite (P)), we know ∀x P(x). From premise 16, if all students have passed Philosophy (P), then any student x who passes P is automatically enrolled in Research Methods (R) (∀x P(x) → ∀x (P(x) → R(x))). Since premise 5 states that all students have passed Philosophy, premise 16's antecedent is true, so the consequent must be true. Therefore, if all students have passed the Philosophy prerequisite, it follows that passing Philosophy (P) requires enrollment in Research Methods (R).",
+    "premises_used": [
+      4,
+      15
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0625",
+    "answer": "It is uncertain whether Dio read books.",
+    "unit": "",
+    "explanation": "Premise 5 states Dio borrowed a book and passed, premise 1 confirms he got a book, and premise 2 says reading requires hard work, which is not guaranteed, making it uncertain whether Dio read books, so D is correct.",
+    "premises_used": [
+      0,
+      1,
+      4
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "TD359",
+    "answer": "72",
+    "unit": "uJ",
+    "explanation": "Step 1: Identify C = 4 \\u03bcF and V = 6 V.\nStep 2: Use the energy formula: W = (1/2) * C * V\\u00b2.\nStep 3: Calculate: W = 0.5 * 4 * 6\\u00b2 = 0.5 * 4 * 36 = 72 \\u03bcJ",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify C = 4 \\u03bcF and V = 6 V.",
+        "Step 2: Use the energy formula: W = (1/2) * C * V\\u00b2.",
+        "Step 3: Calculate: W = 0.5 * 4 * 6\\u00b2 = 0.5 * 4 * 36 = 72 \\u03bcJ"
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0105",
+    "answer": "True",
+    "unit": "",
+    "explanation": "The statement holds true because Premise 6 affirms that widely available stations support fast charging, and Premise 7 ensures this remains valid under the given conditions.",
+    "premises_used": [
+      3,
+      5
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0778",
+    "answer": "Completing training module, participating in project, giving seminar, earning certification.",
+    "unit": "",
+    "explanation": "Premise 3 states all students complete the training module, premise 5 states all earn a certification, premise 4 implies all participate in a project, and premise 6 states participating implies giving a seminar, so option A is correct.",
+    "premises_used": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0103",
+    "answer": "Uncertain",
+    "unit": "",
+    "explanation": "The statement assumes that cost-effectiveness guarantees versatility, but no premise explicitly affirms this. In fact, Premise 12 suggests the opposite under certain conditions. So we cannot definitively say it's true — thus, the answer is 'Uncertain'.",
+    "premises_used": [],
+    "reasoning": null
+  },
+  {
+    "query_id": "TD060",
+    "answer": "0.73",
+    "unit": "nC",
+    "explanation": "Step 1: Identify the given values: C = 12.71 pF, V = 57.2 V.\nStep 2: Convert the capacitance to SI units: C = 12.71 \\u00d7 10^-12 F.\nStep 3: Recall the formula for the charge (Q) stored in a capacitor: Q = C * V.\nStep 4: The charge stored by the capacitor is approximately 0.73 nC.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given values: C = 12.71 pF, V = 57.2 V.",
+        "Step 2: Convert the capacitance to SI units: C = 12.71 \\u00d7 10^-12 F.",
+        "Step 3: Recall the formula for the charge (Q) stored in a capacitor: Q = C * V.",
+        "Step 4: The charge stored by the capacitor is approximately 0.73 nC."
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0409",
+    "answer": "∀x (Q(x) → S(x))",
+    "unit": "",
+    "explanation": "The statement that if a student meets the requirements, they participate in advanced seminars follows because meeting the requirements implies receiving a qualification (premise 3), and receiving a qualification implies participating in advanced seminars (premise 5), so meeting the requirements leads to seminar participation.",
+    "premises_used": [
+      2,
+      4
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0301",
+    "answer": "Yes",
+    "unit": "",
+    "explanation": "Premise 1 states that every committee member agrees the thesis is acceptable, and premise 4 says that agreeing implies approving the methodology. Thus, all committee members approve the methodology.",
+    "premises_used": [
+      0,
+      3
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "DDT208",
+    "answer": "20.0",
+    "unit": "mJ",
+    "explanation": "Step 1: Identify the given values from the question: current (I) = 1 A and inductance (L) = 0.04 H.\nStep 2: Recall the formula for the magnetic energy (U_B) stored in an inductor: U_B = (1/2) \\u00d7 L \\u00d7 I^2.\nStep 3: Substitute the given values into the formula: U_B = (1/2) \\u00d7 (0.04 H) \\u00d7 (1 A)^2.\nStep 4: Calculate the square of the current: (1 A)^2 = 1 A^2.\nStep 5: Calculate U_B = 0.5 \\u00d7 0.04 \\u00d7 1 = 0.02 J.\nStep 6: Convert to millijoules: U_B = 20.0 mJ.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given values from the question: current (I) = 1 A and inductance (L) = 0.04 H.",
+        "Step 2: Recall the formula for the magnetic energy (U_B) stored in an inductor: U_B = (1/2) \\u00d7 L \\u00d7 I^2.",
+        "Step 3: Substitute the given values into the formula: U_B = (1/2) \\u00d7 (0.04 H) \\u00d7 (1 A)^2.",
+        "Step 4: Calculate the square of the current: (1 A)^2 = 1 A^2.",
+        "Step 5: Calculate U_B = 0.5 \\u00d7 0.04 \\u00d7 1 = 0.02 J.",
+        "Step 6: Convert to millijoules: U_B = 20.0 mJ."
+      ]
+    }
+  },
+  {
+    "query_id": "NL029",
+    "answer": "121.50",
+    "unit": "mJ",
+    "explanation": "Step 1: Identify the given values from the question.\nStep 2: The capacitance (C) is 30 \\u03bcF and the voltage (U) is 90 V.\nStep 3: Convert the capacitance from microfarads to farads: C = 30 \\u00d7 10\\u207b\\u2076 F.\nStep 4: Recall the formula for the energy (E) stored in a capacitor: E = \\u00bdCU\\u00b2 = 0.1215 J = 121.50 mJ.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given values from the question.",
+        "Step 2: The capacitance (C) is 30 \\u03bcF and the voltage (U) is 90 V.",
+        "Step 3: Convert the capacitance from microfarads to farads: C = 30 \\u00d7 10\\u207b\\u2076 F.",
+        "Step 4: Recall the formula for the energy (E) stored in a capacitor: E = \\u00bdCU\\u00b2 = 0.1215 J = 121.50 mJ."
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0132",
+    "answer": "Uncertain",
+    "unit": "",
+    "explanation": "Premise 7 states all projects are published, and premise 12 links meeting academic standards to publication. However, no premise addresses whether all projects are highly cited, leaving it uncertain whether all research projects receive high citation counts.",
+    "premises_used": [
+      6,
+      11
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "NL113",
+    "answer": "9.49",
+    "unit": "V",
+    "explanation": "Step 1: The electric field energy stored in the capacitor (E) is 0.9 mJ, which is 0.9 \\u00d7 10\\u207b\\u00b3 J.\nStep 2: The capacitance of the capacitor (C) is 20 \\u03bcF, which is 20 \\u00d7 10\\u207b\\u2076 F.\nStep 3: The formula relating energy stored (E), capacitance (C), and potential difference (U) is E = (1/2) * C * U\\u00b2.\nStep 4: To find the potential difference (U), we rearrange the formula to U = \\u221a(2E / C) = 3\\u221a10 V \\u2248 9.49 V.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: The electric field energy stored in the capacitor (E) is 0.9 mJ, which is 0.9 \\u00d7 10\\u207b\\u00b3 J.",
+        "Step 2: The capacitance of the capacitor (C) is 20 \\u03bcF, which is 20 \\u00d7 10\\u207b\\u2076 F.",
+        "Step 3: The formula relating energy stored (E), capacitance (C), and potential difference (U) is E = (1/2) * C * U\\u00b2.",
+        "Step 4: To find the potential difference (U), we rearrange the formula to U = \\u221a(2E / C) = 3\\u221a10 V \\u2248 9.49 V."
+      ]
+    }
+  },
+  {
+    "query_id": "DDT372",
+    "answer": "3.77\\u00d710\\u207b\\u00b3",
+    "unit": "T",
+    "explanation": "Step 1: Identify the given values from the question: the current through the solenoid is I = 2 A, the number of turns per unit length is n = 1500 turns/m, and the permeability of free space is \\u03bc\\u2080 = 4*pi \\u00d7 10\\u207b\\u2077 T\\u00b7m/A. The objective is to calculate the magnetic field inside the solenoid.\nStep 2: Recall the formula for the magnetic field inside a long solenoid: B = \\u03bc\\u2080*n*I.\nStep 3: Substitute the given values into the formula: B = (4*pi \\u00d7 10\\u207b\\u2077 T\\u00b7m/A)*(1500 turns/m)*(2 A).\nStep 4: Multiply the numerical factors step by step: 1500 \\u00d7 2 = 3000, therefore B = 4*pi \\u00d7 10\\u207b\\u2077 \\u00d7 3000.\nStep 5: Express 3000 in scientific notation: 3000 = 3 \\u00d7 10\\u00b3, therefore B = 4*pi \\u00d7 10\\u207b\\u2077 \\u00d7 3 \\u00d7 10\\u00b3.\nStep 6: Combine the powers of ten: 10\\u207b\\u2077 \\u00d7 10\\u00b3 = 10\\u207b\\u2074, therefore B = 12*pi \\u00d7 10\\u207b\\u2074.\nStep 7: Convert to decimal form: 12*pi \\u2248 37.70, therefore B \\u2248 37.70 \\u00d7 10\\u207b\\u2074 T.\nStep 8: Express the result in standard scientific notation: 37.70 \\u00d7 10\\u207b\\u2074 T = 3.77 \\u00d7 10\\u207b\\u00b3 T.\nStep 9: State the final conclusion: the magnetic field inside the solenoid is B \\u2248 3.77 \\u00d7 10\\u207b\\u00b3 T.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given values from the question: the current through the solenoid is I = 2 A, the number of turns per unit length is n = 1500 turns/m, and the permeability of free space is \\u03bc\\u2080 = 4*pi \\u00d7 10\\u207b\\u2077 T\\u00b7m/A. The objective is to calculate the magnetic field inside the solenoid.",
+        "Step 2: Recall the formula for the magnetic field inside a long solenoid: B = \\u03bc\\u2080*n*I.",
+        "Step 3: Substitute the given values into the formula: B = (4*pi \\u00d7 10\\u207b\\u2077 T\\u00b7m/A)*(1500 turns/m)*(2 A).",
+        "Step 4: Multiply the numerical factors step by step: 1500 \\u00d7 2 = 3000, therefore B = 4*pi \\u00d7 10\\u207b\\u2077 \\u00d7 3000.",
+        "Step 5: Express 3000 in scientific notation: 3000 = 3 \\u00d7 10\\u00b3, therefore B = 4*pi \\u00d7 10\\u207b\\u2077 \\u00d7 3 \\u00d7 10\\u00b3.",
+        "Step 6: Combine the powers of ten: 10\\u207b\\u2077 \\u00d7 10\\u00b3 = 10\\u207b\\u2074, therefore B = 12*pi \\u00d7 10\\u207b\\u2074.",
+        "Step 7: Convert to decimal form: 12*pi \\u2248 37.70, therefore B \\u2248 37.70 \\u00d7 10\\u207b\\u2074 T.",
+        "Step 8: Express the result in standard scientific notation: 37.70 \\u00d7 10\\u207b\\u2074 T = 3.77 \\u00d7 10\\u207b\\u00b3 T.",
+        "Step 9: State the final conclusion: the magnetic field inside the solenoid is B \\u2248 3.77 \\u00d7 10\\u207b\\u00b3 T."
+      ]
+    }
+  },
+  {
+    "query_id": "CH110",
+    "answer": "40",
+    "unit": "ohm",
+    "explanation": "Step 1: Determine the source voltage (U) from the resonance condition. At the resonant frequency (f = 100 Hz), the circuit's total impedance is equal to the resistance R because the inductive and capacitive reactances cancel each other out (Z_L = Z_C). U = I * R = 2 * 80 = 160 V\nStep 2: Calculate the total impedance (Z') and net reactance at the new frequency (200 Hz). When the frequency is changed to 200 Hz, the current is I' = 1.6 A. The new total impedance Z' is: Z' = U / I' = 160 V / 1.6 A = 100 \\u03a9. Using the impedance formula (Z')\\u00b2 = R\\u00b2 + (Z_L' - Z_C')\\u00b2, where Z_L' and Z_C' are the reactances at 200 Hz: (Z_L' - Z_C')\\u00b2 = (Z')\\u00b2 - R\\u00b2 = 100\\u00b2 - 80\\u00b2 = 10000 - 6400 = 3600 \\u21d2 |Z_L' - Z_C'| = \\u221a3600 = 60 \\u03a9\nStep 3: Relate the reactances at 200 Hz to the initial inductive reactance (Z_L). Let Z_L be the inductive reactance at 100 Hz (where Z_L = Z_C). Since the frequency has doubled (200 Hz = 2 * 100 Hz): The new inductive reactance is Z_L' = 2 * Z_L (proportional to f) and The new capacitive reactance is Z_C' = Z_C / 2 = Z_L / 2 (inversely proportional to f). The net reactance at 200 Hz is: |Z_L' - Z_C'| = 2 * Z_L - Z_L / 2 = (3 * Z_L)/2\nStep 4: Solve for the initial inductive reactance (Z_L) at 100 Hz. Substitute the expression from Step 3 into the result from Step 2: Z_L = 40 \\u03a9",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Determine the source voltage (U) from the resonance condition. At the resonant frequency (f = 100 Hz), the circuit's total impedance is equal to the resistance R because the inductive and capacitive reactances cancel each other out (Z_L = Z_C). U = I * R = 2 * 80 = 160 V",
+        "Step 2: Calculate the total impedance (Z') and net reactance at the new frequency (200 Hz). When the frequency is changed to 200 Hz, the current is I' = 1.6 A. The new total impedance Z' is: Z' = U / I' = 160 V / 1.6 A = 100 \\u03a9. Using the impedance formula (Z')\\u00b2 = R\\u00b2 + (Z_L' - Z_C')\\u00b2, where Z_L' and Z_C' are the reactances at 200 Hz: (Z_L' - Z_C')\\u00b2 = (Z')\\u00b2 - R\\u00b2 = 100\\u00b2 - 80\\u00b2 = 10000 - 6400 = 3600 \\u21d2 |Z_L' - Z_C'| = \\u221a3600 = 60 \\u03a9",
+        "Step 3: Relate the reactances at 200 Hz to the initial inductive reactance (Z_L). Let Z_L be the inductive reactance at 100 Hz (where Z_L = Z_C). Since the frequency has doubled (200 Hz = 2 * 100 Hz): The new inductive reactance is Z_L' = 2 * Z_L (proportional to f) and The new capacitive reactance is Z_C' = Z_C / 2 = Z_L / 2 (inversely proportional to f). The net reactance at 200 Hz is: |Z_L' - Z_C'| = 2 * Z_L - Z_L / 2 = (3 * Z_L)/2",
+        "Step 4: Solve for the initial inductive reactance (Z_L) at 100 Hz. Substitute the expression from Step 3 into the result from Step 2: Z_L = 40 \\u03a9"
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0232",
+    "answer": "Uncertain",
+    "unit": "",
+    "explanation": "Premise 6 states that at least one student is questioning, but no premise guarantees that every student is questioning, so it’s uncertain if all are questioning.",
+    "premises_used": [
+      5
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0137",
+    "answer": "No",
+    "unit": "",
+    "explanation": "Premise 4 states all biometric systems have a machine learning algorithm, and premise 5 implies all can detect presentation attacks, suggesting all are secure via premise 1. However, premise 6 guarantees at least one system is not secure despite having machine learning, indicating not all systems are secure.",
+    "premises_used": [
+      3,
+      4,
+      5
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0696",
+    "answer": "Yes",
+    "unit": "",
+    "explanation": "From premise 5 (Every object x has property R), we know ∀x R(x). From premise 6, every object x has property P (∀x P(x)). From premise 10, if every object x has property R, then there exists at least one object x that has property Q (∀x R(x) → ∃x Q(x)). Since premise 5 states that all objects have property R, premise 10's antecedent is true, so the consequent must be true. Therefore, if every object has property R, it follows that there exists at least one object with property Q.",
+    "premises_used": [
+      4,
+      9
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0130",
+    "answer": "No",
+    "unit": "",
+    "explanation": "Premise 3 states no course is engaging, and premise 1 says if a course is offered online, it must be engaging. Since no course can be engaging, no course can be offered online, implying there are no online courses.",
+    "premises_used": [
+      2,
+      0
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "LD330",
+    "answer": "3.12 \\u00d7 10^6",
+    "unit": "V/m",
+    "explanation": "Step 1: Identify the charges and their locations. Three identical charges, q = 2.6 \\u00d7 10\\u207b\\u2076 C, are placed at the three vertices of an isosceles right triangle with side length r = 10.3 cm (0.103 m).\nStep 2: Identify the point where the net electric field strength is to be calculated. This point is the right-angle vertex.\nStep 3: Recognize which charges contribute to the field at that point. The electric field at the right-angle vertex is created only by the two charges located at the other two vertices (the ends of the equal sides). The charge located at the right-angle vertex itself does not contribute to the field at its own position because the distance r would be zero.\nStep 4: Calculate the magnitude of the electric field (E1) at the right-angle vertex due to one of the charges. Using k = 8.99 \\u00d7 10\\u2079 N\\u00b7m\\u00b2/C\\u00b2 and following the rounding instruction to round up the fourth digit after the decimal:\nE1 = (8.99 \\u00d7 10\\u2079) * (2.6 \\u00d7 10\\u207b\\u2076) / (0.103)\\u00b2 = 2.2032 \\u00d7 10\\u2076 V/m.\nSince the triangle is isosceles, the second contributing charge is at the same distance, so E2 = E1 = 2.2032 \\u00d7 10\\u2076 V/m.\nStep 5: Calculate the net electric field strength. The two field vectors are perpendicular (at a 90\\u00b0 angle) because they align with the legs of the right triangle. Using the Pythagorean theorem:\nE_net = E1 * \\u221a2 = (2.2032 \\u00d7 10\\u2076 V/m) * 1.41421 = 3.1157 \\u00d7 10\\u2076 V/m \\u2248 3.12 \\u00d7 10\\u2076 V/m.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the charges and their locations. Three identical charges, q = 2.6 \\u00d7 10\\u207b\\u2076 C, are placed at the three vertices of an isosceles right triangle with side length r = 10.3 cm (0.103 m).",
+        "Step 2: Identify the point where the net electric field strength is to be calculated. This point is the right-angle vertex.",
+        "Step 3: Recognize which charges contribute to the field at that point. The electric field at the right-angle vertex is created only by the two charges located at the other two vertices (the ends of the equal sides). The charge located at the right-angle vertex itself does not contribute to the field at its own position because the distance r would be zero.",
+        "Step 4: Calculate the magnitude of the electric field (E1) at the right-angle vertex due to one of the charges. Using k = 8.99 \\u00d7 10\\u2079 N\\u00b7m\\u00b2/C\\u00b2 and following the rounding instruction to round up the fourth digit after the decimal:",
+        "E1 = (8.99 \\u00d7 10\\u2079) * (2.6 \\u00d7 10\\u207b\\u2076) / (0.103)\\u00b2 = 2.2032 \\u00d7 10\\u2076 V/m.",
+        "Since the triangle is isosceles, the second contributing charge is at the same distance, so E2 = E1 = 2.2032 \\u00d7 10\\u2076 V/m.",
+        "Step 5: Calculate the net electric field strength. The two field vectors are perpendicular (at a 90\\u00b0 angle) because they align with the legs of the right triangle. Using the Pythagorean theorem:",
+        "E_net = E1 * \\u221a2 = (2.2032 \\u00d7 10\\u2076 V/m) * 1.41421 = 3.1157 \\u00d7 10\\u2076 V/m \\u2248 3.12 \\u00d7 10\\u2076 V/m."
+      ]
+    }
+  },
+  {
+    "query_id": "NL112",
+    "answer": "1800.00",
+    "unit": "mJ",
+    "explanation": "Step 1: Identify the given values from the question.\nStep 2: The inductance (L) is 0.4 H and the current (I) is 3 A.\nStep 3: The formula for the magnetic field energy (E) stored in an inductor is E = (1/2) * L * I^2.\nStep 4: Substitute the given values into the formula: E = (1/2) * (0.4 H) * (3 A)^2 = 1.8 J = 1800.00 mJ.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given values from the question.",
+        "Step 2: The inductance (L) is 0.4 H and the current (I) is 3 A.",
+        "Step 3: The formula for the magnetic field energy (E) stored in an inductor is E = (1/2) * L * I^2.",
+        "Step 4: Substitute the given values into the formula: E = (1/2) * (0.4 H) * (3 A)^2 = 1.8 J = 1800.00 mJ."
+      ]
+    }
+  },
+  {
+    "query_id": "TD088",
+    "answer": "116.68",
+    "unit": "nJ",
+    "explanation": "Step 1: Identify the given capacitance (C) and potential difference (V).\nStep 2: Convert the capacitance from picofarads (pF) to farads (F).\nStep 3: Use the formula for the electric field energy (U) stored in a capacitor: U = 0.5 * C * V^2.\nStep 4: The electric field energy stored in the capacitor is approximately 116.68 nJ.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given capacitance (C) and potential difference (V).",
+        "Step 2: Convert the capacitance from picofarads (pF) to farads (F).",
+        "Step 3: Use the formula for the electric field energy (U) stored in a capacitor: U = 0.5 * C * V^2.",
+        "Step 4: The electric field energy stored in the capacitor is approximately 116.68 nJ."
+      ]
+    }
+  },
+  {
+    "query_id": "CH023",
+    "answer": "91.89",
+    "unit": "Hz",
+    "explanation": "Step 1: Identify the given values for inductance (L) and capacitance (C).\nStep 2: Convert the capacitance from 2 microfarads (\\u03bcF) to 2 * 10\\u207b\\u2076 farads (F).\nStep 3: State the formula for the resonance frequency (f) of a series LC circuit is f = 1 / (2\\u03c0\\u221a(LC)).\nStep 4: Substitute the values of L and C into the resonance frequency formula: f = 1 / (2\\u03c0\\u221a(1.5 * 2 * 10\\u207b\\u2076) = 91.89 Hz.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given values for inductance (L) and capacitance (C).",
+        "Step 2: Convert the capacitance from 2 microfarads (\\u03bcF) to 2 * 10\\u207b\\u2076 farads (F).",
+        "Step 3: State the formula for the resonance frequency (f) of a series LC circuit is f = 1 / (2\\u03c0\\u221a(LC)).",
+        "Step 4: Substitute the values of L and C into the resonance frequency formula: f = 1 / (2\\u03c0\\u221a(1.5 * 2 * 10\\u207b\\u2076) = 91.89 Hz."
+      ]
+    }
+  },
+  {
+    "query_id": "DDT203",
+    "answer": "30.0",
+    "unit": "V",
+    "explanation": "Step 1: Identify the given inductance (L), initial current (I_initial), final current (I_final), and time interval (\\u0394t) from the question.\nStep 2: Calculate the change in current (\\u0394I) using the final and initial current values.\nStep 3: State the formula for the magnitude of the induced electromotive force (EMF) in a solenoid: EMF = L \\u00d7 (\\u0394I / \\u0394t).\nStep 4: Substitute the given values into the formula: EMF = 0.1 H \\u00d7 (3 A / 0.01 s).\nStep 5: Calculate EMF = 0.1 \\u00d7 300 = 30.0 V.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given inductance (L), initial current (I_initial), final current (I_final), and time interval (\\u0394t) from the question.",
+        "Step 2: Calculate the change in current (\\u0394I) using the final and initial current values.",
+        "Step 3: State the formula for the magnitude of the induced electromotive force (EMF) in a solenoid: EMF = L \\u00d7 (\\u0394I / \\u0394t).",
+        "Step 4: Substitute the given values into the formula: EMF = 0.1 H \\u00d7 (3 A / 0.01 s).",
+        "Step 5: Calculate EMF = 0.1 \\u00d7 300 = 30.0 V."
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0309",
+    "answer": "Yes",
+    "unit": "",
+    "explanation": "Premise 9 states that everyone becomes fit, and premise 5 says that becoming fit implies studying. Thus, all people study.",
+    "premises_used": [
+      4,
+      8
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "CH226",
+    "answer": "50.0",
+    "unit": "ohm",
+    "explanation": "Step 1: Analyze phase and resonance conditions\nFrom LC\\u03c9\\u00b2 = 1 we have XL = XC; since u_AM \\u22a5 u_MB and tan \\u03c6_AM \\u00b7 tan \\u03c6_MB = -1, substituting XL = XC gives XL\\u00b2 = XC\\u00b2 = R\\u2081 \\u00b7 R\\u2082\nStep 2: Identify total circuit impedance\nBecause XL = XC the circuit reaches total resonance, the reactive parts cancel, and the total impedance is purely resistive: Z_AB = R\\u2081 + R\\u2082\nStep 3: Set up the power equation\nUsing P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting P = 142.86 W, U = 100 V, R\\u2081 = 20 \\u03a9 we get 142.86 = 100\\u00b2 / (20 + R\\u2082)\nStep 4: Calculate the final result\nSolve for R\\u2082: 20 + R\\u2082 = 10000 / 142.86 \\u2248 70 \\u2192 R\\u2082 = 70 - 20 = 50 \\u03a9",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Analyze phase and resonance conditions",
+        "From LC\\u03c9\\u00b2 = 1 we have XL = XC; since u_AM \\u22a5 u_MB and tan \\u03c6_AM \\u00b7 tan \\u03c6_MB = -1, substituting XL = XC gives XL\\u00b2 = XC\\u00b2 = R\\u2081 \\u00b7 R\\u2082",
+        "Step 2: Identify total circuit impedance",
+        "Because XL = XC the circuit reaches total resonance, the reactive parts cancel, and the total impedance is purely resistive: Z_AB = R\\u2081 + R\\u2082",
+        "Step 3: Set up the power equation",
+        "Using P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting P = 142.86 W, U = 100 V, R\\u2081 = 20 \\u03a9 we get 142.86 = 100\\u00b2 / (20 + R\\u2082)",
+        "Step 4: Calculate the final result",
+        "Solve for R\\u2082: 20 + R\\u2082 = 10000 / 142.86 \\u2248 70 \\u2192 R\\u2082 = 70 - 20 = 50 \\u03a9"
+      ]
+    }
+  },
+  {
+    "query_id": "LD094",
+    "answer": "5.625 \\u00d7 10^7",
+    "unit": "V/m",
+    "explanation": "Step 1: Identify the given charges, their positions, and the location of point M.\nStep 2: Determine the distances from each charge to point M.\nStep 3: Calculate the magnitude and direction of the electric field E1 due to q1 at M.\nStep 4: Calculate the magnitude and direction of the electric field E2 due to q2 at M.\nStep 5: Determine the net electric field direction: Since both E1 and E2 point in the same direction (from A to B), they add up. E_M = E1 + E2\nStep 6: The magnitude of the net electric field at point M is 5.625 \\u00d7 10^7 V/m.",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Identify the given charges, their positions, and the location of point M.",
+        "Step 2: Determine the distances from each charge to point M.",
+        "Step 3: Calculate the magnitude and direction of the electric field E1 due to q1 at M.",
+        "Step 4: Calculate the magnitude and direction of the electric field E2 due to q2 at M.",
+        "Step 5: Determine the net electric field direction: Since both E1 and E2 point in the same direction (from A to B), they add up. E_M = E1 + E2",
+        "Step 6: The magnitude of the net electric field at point M is 5.625 \\u00d7 10^7 V/m."
+      ]
+    }
+  },
+  {
+    "query_id": "CH228",
+    "answer": "50.0",
+    "unit": "ohm",
+    "explanation": "Step 1: Analyze resonance and phase conditions\nFrom LC\\u03c9\\u00b2 = 1 we have Z_L = Z_C; since u_AM \\u22a5 u_MB (90\\u00b0 phase difference), we obtain the relationship: Z_L \\u00b7 Z_C = R\\u2081 \\u00b7 R\\u2082 \\u2192 Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082\nStep 2: Determine total circuit impedance\nBecause Z_L = Z_C the circuit reaches full resonance, the reactive components cancel completely, and the total impedance of AB is purely resistive: Z_AB = R\\u2081 + R\\u2082\nStep 3: Set up the power equation\nUsing the formula P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the values P = 100.0 W, U = 100 V, R\\u2081 = 50 \\u03a9 we get: 100.0 = 100\\u00b2 / (50 + R\\u2082)\nStep 4: Calculate the final result\nSolve the equation for R\\u2082: 50 + R\\u2082 = 10000 / 100 = 100 \\u2192 R\\u2082 = 100 - 50 = 50 \\u03a9",
+    "premises_used": [],
+    "reasoning": {
+      "type": "cot",
+      "steps": [
+        "Step 1: Analyze resonance and phase conditions",
+        "From LC\\u03c9\\u00b2 = 1 we have Z_L = Z_C; since u_AM \\u22a5 u_MB (90\\u00b0 phase difference), we obtain the relationship: Z_L \\u00b7 Z_C = R\\u2081 \\u00b7 R\\u2082 \\u2192 Z_L\\u00b2 = Z_C\\u00b2 = R\\u2081 \\u00b7 R\\u2082",
+        "Step 2: Determine total circuit impedance",
+        "Because Z_L = Z_C the circuit reaches full resonance, the reactive components cancel completely, and the total impedance of AB is purely resistive: Z_AB = R\\u2081 + R\\u2082",
+        "Step 3: Set up the power equation",
+        "Using the formula P = U\\u00b2 / (R\\u2081 + R\\u2082) and substituting the values P = 100.0 W, U = 100 V, R\\u2081 = 50 \\u03a9 we get: 100.0 = 100\\u00b2 / (50 + R\\u2082)",
+        "Step 4: Calculate the final result",
+        "Solve the equation for R\\u2082: 50 + R\\u2082 = 10000 / 100 = 100 \\u2192 R\\u2082 = 100 - 50 = 50 \\u03a9"
+      ]
+    }
+  },
+  {
+    "query_id": "T1_0284",
+    "answer": "True",
+    "unit": "",
+    "explanation": "From premise 6, we know that C++ uses pointers to reference memory locations and can dynamically allocate memory. From premise 7, we know that the 'new' keyword is used to dynamically allocate memory. From premise 8, we know that the 'delete' keyword is used to deallocate memory. Therefore, in C++, 'new' is used to dynamically allocate memory and 'delete' is used to deallocate it, allowing for memory management through pointers (from premises 6, 7, and 8), making the statement true.",
+    "premises_used": [
+      5,
+      6,
+      7
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0687",
+    "answer": "If there exists an object with property U then if an object lacks property S it does not have property P.",
+    "unit": "",
+    "explanation": "From premise 1 (There exists at least one object x that has property U), we know ∃x U(x). From premise 2, if an object x does not have property S, then it does not have property P (∀x (¬S(x) → ¬P(x))). From premise 4, if an object x has property U, then it has property S (∀x (U(x) → S(x))). From premise 10, if there exists at least one object x that has property U, then if an object x does not have property S it does not have property P (∃x U(x) → ∀x (¬S(x) → ¬P(x))). Since premise 1 states that there exists an object with property U, premise 10's antecedent is true, so the consequent must be true. Therefore, if there exists an object with property U then if an object lacks property S it does not have property P (option C).",
+    "premises_used": [
+      0,
+      2,
+      9
+    ],
+    "reasoning": null
+  },
+  {
+    "query_id": "T1_0120",
+    "answer": "No",
+    "unit": "",
+    "explanation": "From premise 1 ('Every autonomous vehicle is reliable') and premise 9 ('If an autonomous vehicle is not reliable, then it is not adopted by the market'), all vehicles are reliable, so none fail the condition for market adoption. The contrapositive of premise 9 with premise 1 implies all are adopted.",
+    "premises_used": [
+      0,
+      8
+    ],
+    "reasoning": null
+  }
+]
