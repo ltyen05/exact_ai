@@ -24,6 +24,7 @@ ALLOWED_SYMPY_NAMES = {
     "conjugate",
     "sqrt",
     "acos",
+    "asin",
     "sin",
     "cos",
     "diff",
@@ -366,7 +367,7 @@ def validated_context(
             f"{', '.join(unresolved)}. "
             f"Known symbols: {', '.join(sorted(quantities)) or '(none)'}; "
             f"defined_by_equation: {', '.join(lhs_symbols) or '(none)'}; "
-            f"target: {target or '(none)'}."
+            f"target: {target or '(none')}."
         )
     consistency_error = target_consistency_error(str(calculation["target"]), target, unit)
     if consistency_error:
