@@ -72,6 +72,10 @@ UNIT_TO_SI: dict[str, tuple[str, float]] = {
     "mh": ("H", 1e-3),
     "uh": ("H", 1e-6),
     "microh": ("H", 1e-6),
+    "Ohm": ("Ohm", 1.0),
+    "kOhm": ("Ohm", 1e3),
+    "MOhm": ("Ohm", 1e6),
+    "mOhm": ("Ohm", 1e-3),
     "ohm": ("Ohm", 1.0),
     "kohm": ("Ohm", 1e3),
     "mohm": ("Ohm", 1e-3),
@@ -117,6 +121,14 @@ _ASSIGNMENT_RE = re.compile(
 )
 _DISTANCE_RE = re.compile(
     rf"distance\s+from\s+(?P<p1>[A-Z])\s+to\s+(?P<p2>[A-Z])\s+(?:is|=)\s*(?P<value>{_NUMBER_RE})\s*(?P<unit>{_UNIT_RE})(?![A-Za-z0-9_/])",
+    flags=re.I,
+)
+_FREQUENCY_RE = re.compile(
+    rf"(?P<value>{_NUMBER_RE})\s*(?P<unit>GHz|MHz|kHz|Hz|rad/s)(?![A-Za-z0-9_/])",
+    flags=re.I,
+)
+_RESONANCE_YES_NO_RE = re.compile(
+    r"\b(?:does|do|is|are|whether)\b.*\bresonan|\bresonance\s+occur|\bresonant\s+frequency",
     flags=re.I,
 )
 
@@ -216,6 +228,75 @@ def normalize_quantity_item(item: Any, extracted: dict[str, Quantity]) -> Any:
     return output
 
 
+def _find_frequency_in_question(question: str) -> Quantity | None:
+    text = normalize_text(question)
+    matches = list(_FREQUENCY_RE.finditer(text))
+    if not matches:
+        return None
+    match = matches[-1]
+    unit = lookup_unit(match.group("unit"))
+    value = as_number(match.group("value").replace("×", "x"))
+    if unit is None or value is None:
+        return None
+    si_unit, scale = unit
+    symbol = "omega" if si_unit == "rad/s" else "f"
+    return Quantity(symbol, value * scale, si_unit, value, clean_unit(match.group("unit")))
+
+
+def _upsert_given(givens: list[Any], quantity: Quantity) -> list[Any]:
+    updated: list[Any] = []
+    replaced = False
+    for item in givens:
+        if isinstance(item, dict) and canonical_quantity_symbol(item.get("symbol")) == quantity.symbol:
+            output = dict(item)
+            output.update({"symbol": quantity.symbol, "si_value": quantity.si_value, "si_unit": quantity.si_unit})
+            output.setdefault("uncertainty", None)
+            updated.append(output)
+            replaced = True
+        else:
+            updated.append(item)
+    if not replaced:
+        updated.append({"symbol": quantity.symbol, "si_value": quantity.si_value, "si_unit": quantity.si_unit, "uncertainty": None})
+    return updated
+
+
+def _normalize_resonance_comparison(output: dict[str, Any], question: str) -> dict[str, Any]:
+    domain = str(output.get("domain") or "")
+    if domain not in {"Alternating-Current Circuits", "Alternating Current Circuits"}:
+        return output
+    text = str(question or "")
+    if "resonan" not in text.lower():
+        return output
+    if not _RESONANCE_YES_NO_RE.search(text):
+        return output
+    frequency = _find_frequency_in_question(text)
+    if frequency is None:
+        return output
+
+    target_symbol = "omega_res" if frequency.symbol == "omega" else "f_res"
+    output["question_kind"] = "yes_no_computational"
+    output["target"] = {"symbol": target_symbol, "unit": frequency.si_unit}
+    if isinstance(output.get("givens"), list):
+        output["givens"] = _upsert_given(output["givens"], frequency)
+    else:
+        output["givens"] = [
+            {"symbol": frequency.symbol, "si_value": frequency.si_value, "si_unit": frequency.si_unit, "uncertainty": None}
+        ]
+    output["comparison"] = {
+        "present": True,
+        "computed_quantity_symbol": target_symbol,
+        "given_quantity_symbol": frequency.symbol,
+        "given_si_value": frequency.si_value,
+        "given_si_unit": frequency.si_unit,
+    }
+    relations = output.get("relations")
+    if isinstance(relations, list):
+        marker = f"compare resonance with {frequency.symbol} = {frequency.si_value} {frequency.si_unit}"
+        if marker not in relations:
+            output["relations"] = [*relations, marker]
+    return output
+
+
 def normalize_parser_units(parsed: dict[str, Any], question: str) -> dict[str, Any]:
     output = copy.deepcopy(parsed)
     extracted = extract_quantities(question)
@@ -263,4 +344,4 @@ def normalize_parser_units(parsed: dict[str, Any], question: str) -> dict[str, A
                 comparison["given_si_value"], comparison["given_si_unit"] = coerced
         output["comparison"] = comparison
 
-    return output
+    return _normalize_resonance_comparison(output, question)
