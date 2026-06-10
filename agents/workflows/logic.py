@@ -374,6 +374,7 @@ class LogicWorkflow:
             }
 
         idx = extracted.get("idx") if isinstance(extracted.get("idx"), list) else []
+        premises_used = sorted({int(item) - 1 for item in idx if isinstance(item, int) and 1 <= item <= len(premises)})
         premise_steps = [f"Premise {item}: {premises[item - 1]}" for item in idx if 1 <= int(item) <= len(premises)]
         cot = [
             f"Classified question as {logic_spec.get('question_type', 'OpenEnded')}.",
@@ -386,6 +387,7 @@ class LogicWorkflow:
                 "answer": str(extracted.get("final_answer") or "Unknown"),
                 "unit": "",
                 "idx": idx,
+                "premises_used": premises_used,
                 "explanation": str(extracted.get("explanation") or "").strip(),
                 "cot": cot,
                 "premises": premises,

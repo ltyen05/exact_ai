@@ -20,17 +20,16 @@ python main.py demo
 
 Expected output:
 ```json
-{
-  "answer": "...",
-  "explanation": "...",
-  "cot": ["..."],
-  "premises": ["..."]
-}
-{
-  "answer": "Yes",
-  "explanation": "...",
-  "fol": "eligible(john)"
-}
+[
+  {
+    "query_id": "T1_0001",
+    "answer": "Yes",
+    "unit": "",
+    "explanation": "...",
+    "premises_used": [0, 1],
+    "reasoning": {"type": "fol", "steps": ["..."]}
+  }
+]
 ```
 
 ### 4️⃣ Run API Server
@@ -38,16 +37,19 @@ Expected output:
 python -m uvicorn api:app --reload
 ```
 
+The API uses vLLM by default. For local OpenRouter runs, set
+`EXACT_LLM_PROVIDER=openrouter` and `OR_TOKEN`.
+
 Then test:
 ```bash
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
-  -d '{"question":"Is John eligible?","premises":["If a student qualifies, the student is eligible.","John qualifies."]}'
+  -d '{"query_id":"T1_0001","type":"type1","query":"Is John eligible?","premises":["If a student qualifies, the student is eligible.","John qualifies."],"options":["Yes","No","Uncertain"]}'
 ```
 
-`question` is required and `premises` is the only optional request field. The
-response always contains `answer` and `explanation`; `fol`, `cot`, and
-`premises` are included only when non-empty.
+`query_id`, `type`, `query`, `premises`, and `options` are required. The
+response is always a one-item list containing `query_id`, `answer`, `unit`,
+`explanation`, `premises_used`, and `reasoning`.
 
 ### 5️⃣ Run Full Evaluation
 ```bash

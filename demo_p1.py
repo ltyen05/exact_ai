@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import time
 from dataclasses import asdict, dataclass
@@ -17,7 +18,15 @@ from eval.p1_evaluator import evaluate_prediction, summarize_p1
 ROOT = Path(__file__).resolve().parent
 DEFAULT_LOGIC_FILE = ROOT / "data" / "Logic_Based_Educational_Queries.json"
 DEFAULT_PHYSICS_FILE = ROOT / "data" / "Physics_Problems_Text_Only_removeQA.json"
+DEFAULT_COMPETITION_FILE = ROOT / "data" / "EXACT_2026_test_payload.json"
 DEFAULT_OUTPUT = ROOT / "outputs" / "demo_p1_output.json"
+TRUE_VALUES = {"1", "true", "yes", "on"}
+
+
+def configure_tracing() -> None:
+    if os.getenv("EXACT_ENABLE_LANGSMITH", "").strip().lower() not in TRUE_VALUES:
+        os.environ["LANGSMITH_TRACING"] = "false"
+        os.environ["LANGCHAIN_TRACING_V2"] = "false"
 
 
 @dataclass(frozen=True)
@@ -159,8 +168,83 @@ def make_predictor(
     return predict
 
 
+def make_graph(args: argparse.Namespace) -> Any:
+    from agents.llm import OpenRouterClient, VLLMClient
+    from agents.workflows import ExactGraph
+
+    provider = str(args.provider or "openrouter").strip().lower()
+    if provider == "vllm":
+        llm = VLLMClient()
+    else:
+        llm = OpenRouterClient(api_key_env=args.api_key_env)
+    if not llm.enabled:
+        raise SystemExit(f"{llm.provider} is not configured.")
+    return ExactGraph(
+        llm=llm,
+        physics_kb_path=str(args.physics_file),
+        logic_kb_path=str(args.logic_file),
+    )
+
+
+def run_competition_payload_demo(args: argparse.Namespace) -> dict[str, Any]:
+    load_dotenv(ROOT / ".env")
+    configure_tracing()
+    payload_file = Path(args.competition_file)
+    records = [
+        record
+        for record in _as_list(load_json(payload_file))
+        if isinstance(record, dict) and str(record.get("query") or "").strip()
+    ]
+    limit = max(0, int(args.competition_samples))
+    selected = records[:limit] if limit else records
+    if args.dry_run:
+        return {
+            "meta": {
+                "dry_run": True,
+                "competition_file": str(payload_file),
+                "available_payloads": len(records),
+                "selected_payloads": len(selected),
+            },
+            "payloads": selected,
+        }
+
+    graph = make_graph(args)
+    results: list[dict[str, Any]] = []
+    for index, payload in enumerate(selected, start=1):
+        print(f"[{index}/{len(selected)}] {payload.get('type')} {payload.get('query_id')}")
+        started = time.perf_counter()
+        output: dict[str, Any] = {}
+        error = ""
+        try:
+            output = graph.predict(payload)
+        except Exception as exc:
+            error = str(exc)
+        results.append(
+            {
+                "payload": payload,
+                "output": output,
+                "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+                "error": error,
+            }
+        )
+    return {
+        "meta": {
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "competition_file": str(payload_file),
+            "provider": getattr(graph.llm, "provider", "unknown"),
+            "available_payloads": len(records),
+            "selected_payloads": len(selected),
+            "contract": "EXACT 2026 unified input/output schema",
+        },
+        "results": results,
+    }
+
+
 def run_demo(args: argparse.Namespace) -> dict[str, Any]:
     load_dotenv(ROOT / ".env")
+    configure_tracing()
+    if args.competition_file:
+        return run_competition_payload_demo(args)
     logic_pool, physics_pool = load_samples(args)
     samples = select_samples(
         logic_pool,
@@ -205,6 +289,7 @@ def run_demo(args: argparse.Namespace) -> dict[str, Any]:
             predicted_answer,
             sample.expected_answer,
             sample.expected_unit,
+            predicted_unit=str(output.get("unit") or ""),
             rtol=args.rtol,
             atol=args.atol,
         )
@@ -250,12 +335,15 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a P1 correctness demo over the two EXACT data files.")
     parser.add_argument("--logic-file", type=Path, default=DEFAULT_LOGIC_FILE)
     parser.add_argument("--physics-file", type=Path, default=DEFAULT_PHYSICS_FILE)
+    parser.add_argument("--competition-file", type=Path, default=None, help="Run the unified EXACT 2026 payload file instead of gold-labeled demo data.")
+    parser.add_argument("--competition-samples", type=int, default=5, help="Number of competition payloads to run; 0 means all.")
     parser.add_argument("--logic-samples", type=int, default=2)
     parser.add_argument("--physics-samples", type=int, default=2)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--shuffle", action="store_true", help="Randomly sample records before truncating.")
     parser.add_argument("--dry-run", action="store_true", help="Only write selected samples; do not call the model.")
+    parser.add_argument("--provider", choices=["openrouter", "vllm"], default="openrouter", help="LLM provider for local demo runs.")
     parser.add_argument("--api-key-env", default="OR_TOKEN", help="Environment variable used by OpenRouter.")
     parser.add_argument("--rtol", type=float, default=1e-2, help="Relative tolerance for numeric P1 matching.")
     parser.add_argument("--atol", type=float, default=1e-3, help="Absolute tolerance for numeric P1 matching.")
@@ -282,7 +370,8 @@ def main() -> int:
                 f"({task_metrics['correct']}/{task_metrics['total']})"
             )
     else:
-        print(f"Dry run selected {len(report.get('samples', []))} samples.")
+        selected = len(report.get("samples", [])) or len(report.get("payloads", [])) or len(report.get("results", []))
+        print(f"Selected {selected} samples.")
     print(f"Output written to: {args.output}")
     return 0
 

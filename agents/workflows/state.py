@@ -9,7 +9,10 @@ class WorkflowState(TypedDict, total=False):
     """Represent the data shared by the routed LangGraph nodes."""
 
     question: str
+    query_id: str
+    query_type: str
     premises: list[str]
+    options: list[str]
     route: str
     parsed_question: dict[str, Any]
     solution_output: dict[str, Any]
