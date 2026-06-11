@@ -7,18 +7,16 @@ from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
-from agents.classify import TfidfLogisticClassifier
-
 from .state import WorkflowExecutionError, WorkflowState
 from .tracing import trace_step
 
 
 class ClassifyNode:
-    """Route by explicit competition type, with classifier fallback for old calls."""
+    """Route by explicit competition type, with optional injected fallback."""
 
-    def __init__(self, classifier: TfidfLogisticClassifier | None = None) -> None:
-        """Store a supplied classifier or configure the default trained classifier."""
-        self.classifier = classifier or TfidfLogisticClassifier()
+    def __init__(self, classifier: Any = None) -> None:
+        """Store a supplied classifier for legacy/demo payloads only."""
+        self.classifier = classifier
 
     @trace_step("router.classify")
     def __call__(self, state: WorkflowState) -> dict[str, Any]:
@@ -26,6 +24,8 @@ class ClassifyNode:
         route = state.get("route")
         if route in {"logic", "physics"}:
             return {"route": route}
+        if self.classifier is None:
+            raise WorkflowExecutionError("Competition payload must include type='type1' or type='type2'.")
         classified = self.classifier.run(state["question"])
         return {"route": classified["Type"]}
 
@@ -149,7 +149,7 @@ class ExactGraph:
         llm: Any = None,
         physics_kb_path: str | None = None,
         logic_kb_path: str | None = None,
-        classifier: TfidfLogisticClassifier | None = None,
+        classifier: Any = None,
         use_abstract_templates: bool = True,
         use_rag: bool = True,
     ) -> None:

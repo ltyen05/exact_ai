@@ -145,15 +145,25 @@ def select_samples(
 def make_predictor(
     samples: list[DemoSample],
     *,
+    provider: str | None = None,
     api_key_env: str,
     physics_kb_path: Path,
 ) -> Callable[[DemoSample], dict[str, Any]]:
-    from agents.llm import OpenRouterClient
+    from agents.llm import OpenRouterClient, VLLMClient, HFClient
     from agents.workflows import ExactGraph
 
-    llm = OpenRouterClient(api_key_env=api_key_env)
+    resolved_provider = provider or os.getenv("EXACT_LLM_PROVIDER") or "openrouter"
+    resolved_provider = resolved_provider.strip().lower()
+
+    if resolved_provider in {"hf", "huggingface"}:
+        llm = HFClient(api_key_env="HF_TOKEN")
+    elif resolved_provider == "vllm":
+        llm = VLLMClient()
+    else:
+        llm = OpenRouterClient(api_key_env=api_key_env)
+
     if not llm.enabled:
-        raise SystemExit(f"OpenRouter is not configured. Set {api_key_env} in .env before running the demo.")
+        raise SystemExit(f"{llm.provider} is not configured. Set the appropriate environment variable in .env before running the demo.")
 
     route_by_question = {sample.question: sample.task for sample in samples}
     graph = ExactGraph(
@@ -169,14 +179,19 @@ def make_predictor(
 
 
 def make_graph(args: argparse.Namespace) -> Any:
-    from agents.llm import OpenRouterClient, VLLMClient
+    from agents.llm import OpenRouterClient, VLLMClient, HFClient
     from agents.workflows import ExactGraph
 
-    provider = str(args.provider or "openrouter").strip().lower()
-    if provider == "vllm":
+    provider = args.provider or os.getenv("EXACT_LLM_PROVIDER") or "openrouter"
+    provider = provider.strip().lower()
+
+    if provider in {"hf", "huggingface"}:
+        llm = HFClient(api_key_env="HF_TOKEN")
+    elif provider == "vllm":
         llm = VLLMClient()
     else:
         llm = OpenRouterClient(api_key_env=args.api_key_env)
+
     if not llm.enabled:
         raise SystemExit(f"{llm.provider} is not configured.")
     return ExactGraph(
@@ -184,6 +199,7 @@ def make_graph(args: argparse.Namespace) -> Any:
         physics_kb_path=str(args.physics_file),
         logic_kb_path=str(args.logic_file),
     )
+
 
 
 def run_competition_payload_demo(args: argparse.Namespace) -> dict[str, Any]:
@@ -269,6 +285,7 @@ def run_demo(args: argparse.Namespace) -> dict[str, Any]:
 
     predictor = make_predictor(
         samples,
+        provider=args.provider,
         api_key_env=args.api_key_env,
         physics_kb_path=Path(args.physics_file),
     )
@@ -343,7 +360,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--shuffle", action="store_true", help="Randomly sample records before truncating.")
     parser.add_argument("--dry-run", action="store_true", help="Only write selected samples; do not call the model.")
-    parser.add_argument("--provider", choices=["openrouter", "vllm"], default="openrouter", help="LLM provider for local demo runs.")
+    parser.add_argument("--provider", choices=["openrouter", "vllm", "hf", "huggingface"], default=None, help="LLM provider for local demo runs.")
     parser.add_argument("--api-key-env", default="OR_TOKEN", help="Environment variable used by OpenRouter.")
     parser.add_argument("--rtol", type=float, default=1e-2, help="Relative tolerance for numeric P1 matching.")
     parser.add_argument("--atol", type=float, default=1e-3, help="Absolute tolerance for numeric P1 matching.")

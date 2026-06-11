@@ -4,18 +4,17 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Literal
-
 from dotenv import load_dotenv
+
+load_dotenv()
+
+from agents.llm import HFClient, OpenRouterClient, VLLMClient
+from agents.workflows import ExactGraph, WorkflowExecutionError
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict
 import uvicorn
+from typing import Any, Literal
 
-from agents.llm import OpenRouterClient, VLLMClient
-from agents.workflows import ExactGraph, WorkflowExecutionError
-
-
-load_dotenv()
 TRUE_VALUES = {"1", "true", "yes", "on"}
 if os.getenv("EXACT_ENABLE_LANGSMITH", "").strip().lower() not in TRUE_VALUES:
     os.environ["LANGSMITH_TRACING"] = "false"
@@ -31,9 +30,11 @@ LLM_PROVIDER_ENV = "EXACT_LLM_PROVIDER"
 
 def build_llm() -> Any:
     """Use vLLM for submission, while keeping OpenRouter available for demos."""
-    provider = os.getenv(LLM_PROVIDER_ENV, "vllm").strip().lower()
+    provider = os.getenv(LLM_PROVIDER_ENV, "hf").strip().lower()
     if provider in {"openrouter", "or"}:
         return OpenRouterClient(api_key_env=OPENROUTER_API_KEY_ENV)
+    if provider in {"hf", "huggingface"}:
+        return HFClient(api_key_env="HF_TOKEN")
     return VLLMClient()
 
 
