@@ -22,29 +22,31 @@ Domain rules:
 - Do not invent geometry. Use parsed geometry.segments and geometry.derived_distances first.
 - Use k = 9000000000.0 unless parsed_question explicitly gives another Coulomb constant.
 
-Example 1 — easy two-charge force:
+Example 1 — Coulomb's Law:
 Input parsed_question:
-{"domain":"Electric Charges and Fields","target":{"symbol":"F","unit":"N"},"givens":[{"symbol":"q1","si_value":0.000002,"si_unit":"C"},{"symbol":"q2","si_value":-0.000003,"si_unit":"C"},{"symbol":"r","si_value":0.05,"si_unit":"m"}],"question_kind":"computational","answer_format":{"requested_form":"magnitude"}}
+{
+  "question": "Two charges separated by 15 cm exert a force of 4.8 N. Given that q1 = q2 = q, find q.",
+  "domain": "Electric Charges and Fields",
+  "target": {"symbol": "q", "unit": "uC"},
+  "givens": [
+    {"symbol": "r", "si_value": 0.15, "si_unit": "m", "uncertainty": null},
+    {"symbol": "F", "si_value": 4.8, "si_unit": "N", "uncertainty": null}
+  ],
+  "relations": ["q1 = q2 = q", "two charges separated by r exert force F"],
+  "question_kind": "computational"
+}
 Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"F","target_unit":"N","equations":["F = k*Abs(q1*q2)/r**2"],"known_values":{"q1":0.000002,"q2":-0.000003,"r":0.05,"k":9000000000.0}},"solution_steps":["Use Coulomb's law for a single pair of point charges."]}
-
-Example 2 — collinear midpoint field:
-Input parsed_question:
-{"domain":"Electric Charges and Fields","target":{"symbol":"E_M","unit":"N/C"},"givens":[{"symbol":"q1","si_value":0.000001,"si_unit":"C"},{"symbol":"q2","si_value":-0.000001,"si_unit":"C"}],"geometry":{"present":true,"type":"midpoint_1d","line_order":["A","M","B"],"derived_distances":[{"symbol":"AM","si_value":0.05,"si_unit":"m"},{"symbol":"BM","si_value":0.05,"si_unit":"m"}],"direction_convention":"positive from A to B"},"question_kind":"computational","answer_format":{"requested_form":"magnitude"}}
-Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"E_M","target_unit":"N/C","equations":["E1_M = k*q1/AM**2","E2_M = -k*q2/BM**2","E_signed = E1_M + E2_M","E_M = Abs(E_signed)"],"known_values":{"q1":0.000001,"q2":-0.000001,"AM":0.05,"BM":0.05,"k":9000000000.0}},"solution_steps":["Use signed 1D electric fields along AB.","At the midpoint between opposite charges, the field contributions point the same way."]}
-
-Example 3 — three points forming a right triangle:
-Input parsed_question:
-{"domain":"Electric Charges and Fields","target":{"symbol":"F_net","unit":"N"},"givens":[{"symbol":"q1","si_value":0.000002,"si_unit":"C"},{"symbol":"q2","si_value":0.000003,"si_unit":"C"},{"symbol":"q0","si_value":0.000001,"si_unit":"C"}],"geometry":{"present":true,"type":"right_triangle","derived_distances":[{"symbol":"r10","si_value":0.03,"si_unit":"m"},{"symbol":"r20","si_value":0.04,"si_unit":"m"}],"angle_between_forces_deg":90},"question_kind":"computational","answer_format":{"requested_form":"magnitude"}}
-Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"F_net","target_unit":"N","equations":["F10 = k*Abs(q1*q0)/r10**2","F20 = k*Abs(q2*q0)/r20**2","F_net = sqrt(F10**2 + F20**2)"],"known_values":{"q1":0.000002,"q2":0.000003,"q0":0.000001,"r10":0.03,"r20":0.04,"k":9000000000.0}},"solution_steps":["Compute the two pairwise Coulomb forces on the target charge.","Because the force directions are perpendicular, combine them with the Pythagorean theorem."]}
-
-Example 4 — perpendicular bisector symmetry:
-Input parsed_question:
-{"domain":"Electric Charges and Fields","target":{"symbol":"E_M","unit":"V/m"},"givens":[{"symbol":"q1","si_value":5e-7,"si_unit":"C"},{"symbol":"q2","si_value":-5e-7,"si_unit":"C"}],"geometry":{"present":true,"type":"perpendicular_bisector","segments":[{"symbol":"d_mid","si_value":0.03,"si_unit":"m"},{"symbol":"ell","si_value":0.04,"si_unit":"m"}],"derived_distances":[{"symbol":"AM","si_value":0.05,"si_unit":"m"},{"symbol":"BM","si_value":0.05,"si_unit":"m"}]},"question_kind":"computational","answer_format":{"requested_form":"magnitude"}}
-Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"E_M","target_unit":"V/m","equations":["E1 = k*Abs(q1)/AM**2","E2 = k*Abs(q2)/BM**2","cos_theta = d_mid/AM","E_parallel = E1*cos_theta + E2*cos_theta","E_M = Abs(E_parallel)"],"known_values":{"q1":5e-7,"q2":-5e-7,"AM":0.05,"BM":0.05,"d_mid":0.03,"k":9000000000.0}},"solution_steps":["Use perpendicular-bisector geometry to get equal distances.","For opposite charges, perpendicular components cancel and parallel components add."]}
+{
+  "mode": "computational",
+  "answer_type": "numeric",
+  "sympy_spec": {
+    "target_symbol": "q",
+    "target_unit": "uC",
+    "equations": ["F = k_e * q**2 / r**2"],
+    "known_values": {"F": 4.8, "r": 0.15}
+  },
+  "solution_steps": ["Use Coulomb's law F = k_e * q**2 / r**2 to solve for charge q."]
+}
 
 Retrieved hints:
 {{RAG_HINTS}}

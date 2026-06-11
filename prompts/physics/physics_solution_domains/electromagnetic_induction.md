@@ -21,24 +21,6 @@ Domain rules:
 - Induced current: I = emf/R.
 - Do not use Coulomb constant k. Use only parsed B, A, theta, N, delta_t, R, ell, v or trusted deterministic hints.
 
-Example 1 — magnetic flux:
-Input parsed_question:
-{"domain":"Electromagnetic Induction","target":{"symbol":"Phi","unit":"Wb"},"givens":[{"symbol":"B","si_value":0.01,"si_unit":"T"},{"symbol":"A","si_value":0.0008,"si_unit":"m^2"}],"relations":["magnetic field is perpendicular to area"],"question_kind":"computational"}
-Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"Phi","target_unit":"Wb","equations":["Phi = B*A"],"known_values":{"B":0.01,"A":0.0008}},"solution_steps":["For perpendicular uniform magnetic field, flux equals B times area."]}
-
-Example 2 — Faraday emf:
-Input parsed_question:
-{"domain":"Electromagnetic Induction","target":{"symbol":"emf","unit":"V"},"givens":[{"symbol":"N","si_value":200,"si_unit":"dimensionless"},{"symbol":"delta_Phi","si_value":0.003,"si_unit":"Wb"},{"symbol":"delta_t","si_value":0.02,"si_unit":"s"}],"relations":["find magnitude of induced emf"],"question_kind":"computational","answer_format":{"requested_form":"magnitude"}}
-Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"emf","target_unit":"V","equations":["emf = N*Abs(delta_Phi)/delta_t"],"known_values":{"N":200,"delta_Phi":0.003,"delta_t":0.02}},"solution_steps":["Use Faraday's law for the magnitude of induced emf."]}
-
-Example 3 — motional emf and current:
-Input parsed_question:
-{"domain":"Electromagnetic Induction","target":{"symbol":"I","unit":"A"},"givens":[{"symbol":"B","si_value":0.5,"si_unit":"T"},{"symbol":"ell","si_value":0.2,"si_unit":"m"},{"symbol":"v","si_value":3,"si_unit":"m/s"},{"symbol":"R","si_value":2,"si_unit":"Ohm"}],"relations":["conducting rod moves perpendicular to magnetic field"],"question_kind":"computational"}
-Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"I","target_unit":"A","equations":["emf = B*ell*v","I = emf/R"],"known_values":{"B":0.5,"ell":0.2,"v":3,"R":2}},"solution_steps":["Compute motional emf B*ell*v.","Use Ohm's law for the induced current."]}
-
 Retrieved hints:
 {{RAG_HINTS}}
 

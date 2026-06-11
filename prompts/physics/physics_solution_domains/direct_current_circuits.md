@@ -20,30 +20,6 @@ Domain rules:
 - Use Kirchhoff equations only when topology requires branches/loops; define branch currents explicitly.
 - For multiple requested currents/voltages, define helper symbols I1, I2, U1, U2, then choose final target_symbol from parsed_question.target.
 
-Example 1 — single resistor:
-Input parsed_question:
-{"domain":"Direct-Current Circuits","target":{"symbol":"I","unit":"A"},"givens":[{"symbol":"U","si_value":10,"si_unit":"V"},{"symbol":"R","si_value":20,"si_unit":"Ohm"}],"question_kind":"computational"}
-Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"I","target_unit":"A","equations":["I = U/R"],"known_values":{"U":10,"R":20}},"solution_steps":["Use Ohm's law for a single resistor."]}
-
-Example 2 — series resistors:
-Input parsed_question:
-{"domain":"Direct-Current Circuits","target":{"symbol":"I","unit":"A"},"givens":[{"symbol":"U","si_value":10,"si_unit":"V"},{"symbol":"R1","si_value":20,"si_unit":"Ohm"},{"symbol":"R2","si_value":30,"si_unit":"Ohm"}],"relations":["R1 and R2 are connected in series"],"question_kind":"computational"}
-Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"I","target_unit":"A","equations":["R_eq = R1 + R2","I = U/R_eq"],"known_values":{"U":10,"R1":20,"R2":30}},"solution_steps":["Use the series equivalent resistance.","Apply Ohm's law to the whole circuit."]}
-
-Example 3 — parallel resistors:
-Input parsed_question:
-{"domain":"Direct-Current Circuits","target":{"symbol":"I_total","unit":"A"},"givens":[{"symbol":"U","si_value":12,"si_unit":"V"},{"symbol":"R1","si_value":6,"si_unit":"Ohm"},{"symbol":"R2","si_value":3,"si_unit":"Ohm"}],"relations":["R1 and R2 are connected in parallel"],"question_kind":"computational"}
-Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"I_total","target_unit":"A","equations":["I1 = U/R1","I2 = U/R2","I_total = I1 + I2"],"known_values":{"U":12,"R1":6,"R2":3}},"solution_steps":["In parallel, each resistor has the same voltage.","Compute branch currents and add them for total current."]}
-
-Example 4 — source with internal resistance:
-Input parsed_question:
-{"domain":"Direct-Current Circuits","target":{"symbol":"U_terminal","unit":"V"},"givens":[{"symbol":"emf","si_value":12,"si_unit":"V"},{"symbol":"R","si_value":5,"si_unit":"Ohm"},{"symbol":"r","si_value":1,"si_unit":"Ohm"}],"relations":["source has internal resistance"],"question_kind":"computational"}
-Output:
-{"mode":"computational","answer_type":"numeric","sympy_spec":{"target_symbol":"U_terminal","target_unit":"V","equations":["I = emf/(R + r)","U_terminal = emf - I*r"],"known_values":{"emf":12,"R":5,"r":1}},"solution_steps":["Compute current using total resistance including internal resistance.","Terminal voltage is emf minus the internal voltage drop."]}
-
 Retrieved hints:
 {{RAG_HINTS}}
 

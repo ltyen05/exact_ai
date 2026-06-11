@@ -52,6 +52,12 @@ def sanitize_sympy_text(expression: str) -> str:
     }
     for source, replacement in replacements.items():
         text = text.replace(source, replacement)
+    # Convert scientific notation (e.g. 8.98 * 10**9 or 8.98 * 10^9) to (8.98e9) to ensure correct precedence
+    text = re.sub(
+        r"(?P<coeff>\b\d+(?:\.\d+)?)\s*[*·×]\s*10\s*(?:\*\*|\^)\s*(?P<exp>[+-]?\d+)",
+        r"(\g<coeff>e\g<exp>)",
+        text,
+    )
     text = re.sub(r"(?P<base>\b10)\s*\^\s*(?P<exp>[+-]?\d+)", r"\g<base>**\g<exp>", text)
     text = text.replace("^", "**")
     text = re.sub(r"\bsqrt\s*(?P<number>\d+(?:\.\d+)?)", r"sqrt(\g<number>)", text)
