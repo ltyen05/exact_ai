@@ -166,28 +166,27 @@ class PhysicsWorkflow:
         result = dict(state.get("result", {}))
         if result.get("answer") == "Unknown":
             return {"result": result}
-        parsed_question = state.get("parsed_question", {})
         solution_output = state.get("solution_output", {})
-        verified_output = state.get("verified_output", {})
-        cot = self.explain_agent.build_cot(parsed_question, solution_output, verified_output)
-        if _llm_available(self.llm):
-            try:
-                explanation = self.explain_agent.run(
-                    parsed_question,
-                    solution_output,
-                    verified_output,
-                )
-                result["explanation"] = str(explanation["explanation"])
-                result["cot"] = [str(step) for step in explanation.get("cot") or cot]
-                return {"result": result}
-            except Exception as exc:
-                errors = _with_error(state, f"Physics ExplainAgent failed: {exc}")
-        else:
-            errors = state.get("errors", [])
+        
+        # Steps gets the formulas/equations
+        equations = solution_output.get("sympy_spec", {}).get("equations", [])
+        if not equations:
+            # Fallback for direct/conceptual answers
+            equations = solution_output.get("direct_answer", {}).get("rationale_steps", [])
+            if not equations:
+                equations = ["Computed the requested quantity from the selected equations."]
+        result["cot"] = [str(eq) for eq in equations]
+        
+        # Explanation gets the solution_steps text
+        solution_steps = solution_output.get("solution_steps", [])
+        if not solution_steps:
+            solution_steps = solution_output.get("direct_answer", {}).get("rationale_steps", [])
+            if not solution_steps:
+                solution_steps = ["Computed the requested quantity from the selected equations."]
+                
+        explanation_text = " ".join(str(step).strip().rstrip(".") + "." for step in solution_steps)
+        
         unit = str(result.get("unit") or "")
         suffix = f" {unit}" if result.get("append_unit") and unit and unit.lower() != "dimensionless" else ""
-        steps = cot or result.get("cot") or []
-        reasoning = " ".join(str(step) for step in steps) or "Computed the requested quantity from the selected equations."
-        result["cot"] = [str(step) for step in steps]
-        result["explanation"] = f"{reasoning} Therefore, the answer is {result.get('answer')}{suffix}."
-        return {"result": result, "errors": errors}
+        result["explanation"] = f"{explanation_text} Therefore, the answer is {result.get('answer')}{suffix}."
+        return {"result": result, "errors": state.get("errors", [])}

@@ -109,7 +109,7 @@ class LLMSolutionProvider(SolutionProvider):
             self.config.get("convert_to_sympy_prompt_path", CONVERT_TO_SYMPY_PROMPT_PATH)
         )
         self.convert_to_sympy_prompt_template = self.convert_to_sympy_prompt_path.read_text(encoding="utf-8")
-        self.use_solution_parser_verifier = bool(self.config.get("use_solution_parser_verifier", True))
+        self.use_solution_parser_verifier = bool(self.config.get("use_solution_parser_verifier", False))
         self.verify_solution_prompt_path = Path(
             self.config.get("verify_solution_prompt_path", VERIFY_SOLUTION_PROMPT_PATH)
         )
