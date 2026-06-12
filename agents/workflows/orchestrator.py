@@ -65,7 +65,11 @@ class FormatterNode:
         }
         for old, new in replacements.items():
             text = text.replace(old, new)
-        return text.strip()
+        text = text.strip()
+        if text in {"/m", "1/m"}:
+            return "turns/m"
+        return text
+
 
     @classmethod
     def _match_option(cls, answer: str, options: list[str]) -> str:
@@ -124,7 +128,10 @@ class FormatterNode:
         unit = "" if query_type == "type1" else self._ascii_unit(result.get("unit"))
         if query_type == "type2":
             answer = self._strip_unit(answer, unit)
+        if answer.strip().lower() in {"yes", "no"}:
+            unit = ""
         cot = result.get("cot") if isinstance(result.get("cot"), list) else []
+
         options = [str(option) for option in state.get("options", []) if isinstance(option, str)]
         if query_type == "type1":
             answer = self._match_option(answer, options)

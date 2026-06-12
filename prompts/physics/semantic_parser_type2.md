@@ -44,6 +44,8 @@ Rules:
 3. Uncertainty format: {"si_value": dx_in_SI, "si_unit": "...", "kind": "absolute"}.
 4. Normalize symbol names to ASCII equivalents: omega, theta, phi, Phi, lambda_, mu, Ohm.
 5. Capture any explicit algebraic relations, constraints, or equalities between variables (e.g., "q1 = q2 = q", "r1 = 2*r2") directly in the `relations` list.
+6. For target units, preserve the unit string from the question as closely as possible (for example, if the question asks for "turns per meter length" or similar, the target unit should be 'turns/m', NOT '/m' or '1/m').
+
 
 Few-Shot Examples:
 
