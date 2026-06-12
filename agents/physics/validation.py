@@ -336,6 +336,27 @@ def validated_context(
                 return q_key
         return None
 
+    def find_given_by_value(val: float, parsed_q: dict[str, Any]) -> dict[str, Any] | None:
+        for given in parsed_q.get("givens") or []:
+            given_val = given.get("si_value")
+            if given_val is None:
+                given_val = given.get("value")
+            given_numeric = as_number(given_val)
+            if given_numeric is not None and math.isclose(given_numeric, val, rel_tol=1e-9, abs_tol=1e-12):
+                return given
+        geometry = parsed_q.get("geometry") or {}
+        if isinstance(geometry, dict):
+            for field in ("segments", "derived_distances"):
+                for item in geometry.get(field) or []:
+                    if isinstance(item, dict):
+                        item_val = item.get("si_value")
+                        if item_val is None:
+                            item_val = item.get("value")
+                        item_numeric = as_number(item_val)
+                        if item_numeric is not None and math.isclose(item_numeric, val, rel_tol=1e-9, abs_tol=1e-12):
+                            return item
+        return None
+
     for symbol, value in known_values.items():
         numeric = as_number(value)
         if numeric is None:
@@ -358,7 +379,13 @@ def validated_context(
             quantities[symbol] = PHYSICAL_CONSTANTS[symbol]
             trusted_quantities[symbol] = PHYSICAL_CONSTANTS[symbol]
         else:
-            derived_candidates[str(symbol)] = numeric
+            given_match = find_given_by_value(numeric, parsed_question)
+            if given_match is not None:
+                quantities[symbol] = numeric
+                trusted_quantities[symbol] = numeric
+            else:
+                derived_candidates[str(symbol)] = numeric
+
 
     for symbol, numeric in derived_candidates.items():
         defining_equation = any(equation.split("=", 1)[0].strip() == symbol for equation in equations if "=" in equation)
