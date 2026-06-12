@@ -43,25 +43,21 @@ Output Schemas:
 }
 
 Hard SymPy Contract (Invalid if violated):
-1. Equations: ASCII `lhs = rhs`. `lhs` is ASCII identifier (`[A-Za-z_][A-Za-z0-9_]*`).
-2. Math: Explicit `*` (e.g. `2*x`), power `**` (e.g. `x**2`). No implicit multiplication or unicode.
-3. No units inside equations (e.g. `10 V` is invalid). `known_values` keys must be ASCII variables mapped to numbers.
-4. RHS symbols must be defined in `known_values`, an earlier equation `lhs`, or allowed function/constant.
-5. Allowed: `Abs`, `sqrt`, `sin`, `cos`, `tan`, `atan`, `asin`, `acos`, `exp`, `log`, `diff`, `pi`, `Re`, `Im`, `conjugate`.
-6. Variables: Treat `E` and `I` as normal names. Normalize symbols: Greek (e.g. `omega`, `theta`, `phi`, `Phi`, `lambda_`, `mu`, `epsilon`, `pi`) and subscripts (e.g. `R1`, `q0`). Do not use Python/SymPy reserved names (e.g. `lambda`, `for`, `abs`).
-7. Use `k_e` for Coulomb constant (never use in magnetic/inductor/RLC cases). Use `k_factor` for multiplier factors.
-8. Define helper symbols before use. Write equations in their natural physical form (e.g. `F = k_e * q1 * q2 / r**2` or `U = I * R`) rather than rearranging them manually. The `target_symbol` does NOT need to be isolated on the LHS of an equation; SymPy will solve the system of equations automatically.
-9. If answer is magnitude, target equation must use `Abs` or `sqrt(x**2 + y**2)`.
-10. If draft contains un-safe formulas, repair using standard physics.
-11. Every uncertainty or error symbol must be strictly lowercase "delta_<symbol>" (e.g. delta_U, delta_I, delta_R1, delta_R2, delta_R_total).
-12. If the target has a Greek capital Delta letter (Δ), like "ΔR_total", you MUST map it to lowercase "delta_R_total".
-13. Do NOT use capitalized "Delta_R1", "Delta_R_total", "dU", "dI", "dx", "deltaU", "deltaI" (without underscore), or other invented symbols.
-14. Every key in known_values must map exactly to one of these valid symbols (e.g. R1, R2, delta_R1, delta_R2) or standard constants.
-15. You MUST strictly use the exact symbol names defined in `parsed_question.givens` (for example, if a given value is parsed under symbol 'U', use 'U' in your equations and known_values; do NOT change it to 'W' or any other name). Do NOT introduce any new/untrusted symbols in `known_values` that are not present in `parsed_question.givens` or standard physical constants. All keys in `known_values` must match the symbols in `parsed_question.givens` exactly.
-16. You MUST strictly use the exact target unit defined in `parsed_question.target.unit` (for example, if the target unit in parsed_question is 'turns/m', keep 'target_unit' as 'turns/m' exactly; do NOT change or simplify it to '/m', '1/m', or any other equivalent form).
-17. If the target unit is `%`, the equations MUST calculate the value in percentage (i.e. you must explicitly multiply the fractional ratio by 100 inside the equations, for example: `relative_error = (least_count / measured_voltage) * 100`). Do NOT output the fractional ratio as the final target value when the target unit is `%`.
-
-18. Do NOT redefine or assign given quantities or constants directly inside the `equations` array (e.g., do NOT write `"C = 2"` or `"C = 2e-12"` in the equations). All given values must be supplied exclusively in `known_values` in standard SI units (e.g., `"C": 2e-12`). The `equations` array must only contain actual physical relationships.
+1. **Equations & Syntax**:
+   - Write equations as ASCII `lhs = rhs` (e.g., `U = I * R`, `F = k_e * q1 * q2 / r**2`). Use explicit `*` (multiplication) and `**` (power).
+   - Do NOT redefine or assign given quantities directly inside the `equations` array (e.g., do NOT write `"C = 2"` or `"C = 2e-12"`). All given values must be supplied in `known_values` in standard SI units (e.g., `"C": 2e-12`).
+   - Do NOT write units inside the equations (e.g., `10 V` is invalid).
+2. **Allowed Functions & Constants**:
+   - `Abs`, `sqrt`, `sin`, `cos`, `tan`, `atan`, `asin`, `acos`, `exp`, `log`, `diff`, `pi`, `Re`, `Im`, `conjugate`.
+   - Use `k_e` for the Coulomb constant, and `k_factor` for general multiplier factors.
+3. **Symbols & Naming**:
+   - Normalize Greek symbols (`omega`, `theta`, `phi`, `Phi`, `lambda_`, `mu`, `epsilon`, `pi`) and subscripts (`R1`, `q0`). Treat `E` and `I` as normal names. Do not use Python/SymPy keywords.
+   - Use the exact symbols from `parsed_question.givens` in both equations and `known_values`. Do NOT change symbols or introduce new/untrusted symbols.
+   - All uncertainty/error symbols must be strictly lowercase `delta_<symbol>` (e.g., `delta_R1`, `delta_R_total`). Do NOT use capitalized `Delta_`, `dU`, `dx`, etc.
+4. **Target & Units**:
+   - Keep `target_unit` exactly as `parsed_question.target.unit` (do NOT simplify, e.g. keep `turns/m`).
+   - If calculating a magnitude target, use `Abs(...)` or `sqrt(x**2 + y**2)`.
+   - If the target unit is `%`, you must explicitly multiply the fractional ratio by 100 inside the equations (e.g., `relative_error = (least_count / measured_voltage) * 100`).
 
 Few-Shot Examples:
 
