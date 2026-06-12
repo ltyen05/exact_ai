@@ -8,7 +8,7 @@ services:
     environment:
       EXACT_LLM_PROVIDER: "vllm"
       EXACT_LLM_BASE_URL: "http://host.docker.internal:11434/v1"
-      EXACT_LLM_MODEL: "qwen2.5:7b"
+      EXACT_LLM_MODEL: "qwen2.5:7b-instruct"
       EXACT_LLM_API_KEY: "EMPTY"
       EXACT_ENABLE_LANGSMITH: "false"
       LANGSMITH_ENDPOINT: "https://api.smith.langchain.com"
