@@ -20,6 +20,7 @@ Domain rules:
 - Resonance: omega_res = 1/sqrt(L*C), f_res = 1/(2*pi*sqrt(L*C)), and X_L = X_C.
 - For yes_no_computational resonance questions, compute f_res or omega_res and compare to parsed comparison value.
 - Keep RMS/peak wording. Do not convert RMS to peak unless explicitly requested.
+- For AC voltage/current expressions of the form u = U_max * cos(omega*t), the peak voltage is U_max (which might be parsed as 'u') and the RMS voltage is U_rms = U_max/sqrt(2). Derive U_rms and omega in `equations` (e.g., `U_rms = u/sqrt(2)` and `omega = 100*pi`) rather than hardcoding them as knowns in `known_values`. Only put original parsed symbols (like `u`, `R`, `L`, `C`) in `known_values`.
 
 Retrieved hints:
 {{RAG_HINTS}}

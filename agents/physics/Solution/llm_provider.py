@@ -198,6 +198,13 @@ class LLMSolutionProvider(SolutionProvider):
         deterministic_hints = self._format_deterministic_hints(deterministic_solution)
         parsed_question = json.dumps(semantic_output, ensure_ascii=False, default=str)
         prompt_template, prompt_path, prompt_kind = self._select_prompt_template(semantic_output)
+        strict_symbol_rule = (
+            "\nCRITICAL SYMBOL ALIGNMENT RULE:\n"
+            "You MUST strictly use the exact symbol names defined in `parsed_question.givens` (for example, if a given value is parsed under symbol 'U', use 'U' in your equations and known_values; do NOT change it to 'W' or any other name). "
+            "Do NOT introduce any new/untrusted symbols in `known_values` that are not present in `parsed_question.givens` or standard physical constants. "
+            "All keys in `known_values` must match the symbols in `parsed_question.givens` exactly.\n"
+        )
+        prompt_template = prompt_template.replace("parsed_question:", f"{strict_symbol_rule}\nparsed_question:")
         prompt = (
             prompt_template.replace("{{RAG_HINTS}}", rag_hints)
             .replace("{{DETERMINISTIC_HINTS}}", deterministic_hints)
@@ -296,8 +303,8 @@ class LLMSolutionProvider(SolutionProvider):
                         "skipped_convert_to_sympy": "already_valid_and_solved"
                     })
                     return solution_draft
-            except Exception:
-                pass
+            except Exception as exc:
+                validation_error = str(exc)
         return self._convert_to_sympy(semantic_output, solution_draft, validation_error)
 
     @classmethod

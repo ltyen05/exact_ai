@@ -15,7 +15,7 @@ Coverage ladder, easy to hard:
 5. Direction/Lenz law questions: direct conceptual unless sign convention is parsed.
 
 Domain rules:
-- Magnetic flux: Phi = B*A*cos(theta). If field is perpendicular to area and no angle is parsed, use Phi = B*A.
+- Magnetic flux through a single loop: Phi = B * A * cos(theta). For a coil or solenoid with N turns, the total magnetic flux (flux linkage) through the entire solenoid is: Phi_total = N * B * A * cos(theta). If perpendicular to area and no angle is parsed, use Phi_total = N * B * A.
 - Faraday law magnitude: emf = N*Abs(delta_Phi)/delta_t. Signed form: emf = -N*dPhi_dt only when sign/direction is requested.
 - Motional emf for rod moving perpendicular to B and length: emf = B*ell*v.
 - Induced current: I = emf/R.

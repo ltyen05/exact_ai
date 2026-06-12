@@ -194,8 +194,8 @@ def solve_with_sympy_trace(
             if name in symbols and value is not None
         }
         target_defined_by_equation = any(
-            isinstance(lhs_expr, sp.Symbol) and lhs_expr == target_symbol
-            for lhs_expr, _ in equation_pairs
+            target_symbol in eq.free_symbols
+            for eq in equations
         )
         if target_defined_by_equation:
             substitutions.pop(target_symbol, None)

@@ -69,6 +69,9 @@ Input solution_draft:
 Output:
 {"mode": "computational", "answer_type": "yes_no", "sympy_spec": {"target_symbol": "f_res", "target_unit": "Hz", "equations": ["f_res = 1/(2*pi*sqrt(L*C))"], "known_values": {"L": 0.2, "C": 0.00004, "f": 56.3}}, "decision_spec": {"computed_symbol": "f_res", "expected_symbol": "f", "operator": "approximately_equal", "tolerance_policy": "significant_figures", "answer_if_true": "Yes", "answer_if_false": "No"}, "solution_steps": ["Compute resonant frequency.", "Compare f_res with f."]}
 
+validation_error:
+{{VALIDATION_ERROR}}
+
 solution_draft:
 {{SOLUTION_DRAFT}}
 

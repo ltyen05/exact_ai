@@ -10,7 +10,7 @@ Faithfulness Contract:
 1. `answer` must format `verified_output.final_answer`. Do not change/solve the answer.
 2. `explanation` must consist of the steps from `solution_output.solution_steps` (or `solution_output.direct_answer.rationale_steps`) joined with periods, followed by "Therefore, the answer is [answer] [unit]."
 3. No prose before or after the JSON. No mention of internal systems, JSON, SymPy, agents, pipelines, or validation.
-
+4. For `yes/no` type questions, the answer must be `Yes` or `No`.
 Example 1 (numeric):
 verified_output.final_answer = {"symbol": "C", "value": 0.00000444, "unit": "F"}
 solution_output.solution_steps = ["Use Q = C*U rearranged as C = Q/U"]
@@ -28,9 +28,6 @@ Output:
   "answer": "Yes",
   "explanation": "Compute the resonance frequency f_res from L and C. Compare computed f_res with parsed f. Therefore, the answer is Yes."
 }
-
-parsed_question:
-{{PARSED_QUESTION}}
 
 verified_output:
 {{VERIFIED_OUTPUT}}

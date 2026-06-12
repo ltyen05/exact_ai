@@ -296,17 +296,23 @@ def validated_context(
 ) -> tuple[dict[str, float], str, str, list[str]]:
     """Validate the solve graph and return quantities, target, unit, and equations."""
     calculation = build_calculation_input(parsed_question)
+    def normalize_uncertainty_symbols(text: str) -> str:
+        text = re.sub(r"\bd(?P<sym>[A-Z][A-Za-z0-9_]*)\b", r"delta_\g<sym>", text)
+        text = re.sub(r"\bd(?P<sym>[x-z])\b", r"delta_\g<sym>", text)
+        return text
+
     spec = solution_output.get("sympy_spec") or {}
-    equations = [sanitize_sympy_equation(str(item)) for item in spec.get("equations") or []]
-    target = str(spec.get("target_symbol") or calculation["target"])
+    equations = [normalize_uncertainty_symbols(sanitize_sympy_equation(str(item))) for item in spec.get("equations") or []]
+    target = normalize_uncertainty_symbols(str(spec.get("target_symbol") or calculation["target"]))
     unit = str(spec.get("target_unit") or calculation["unit"])
     quantities = dict(calculation["quantities"])
     if not target or not equations:
         raise ValueError("Computational solution is missing target symbol or equations.")
 
-    known_values = spec.get("known_values") or {}
-    if not isinstance(known_values, dict):
+    raw_knowns = spec.get("known_values") or {}
+    if not isinstance(raw_knowns, dict):
         raise ValueError("Computational solution known_values must be an object.")
+    known_values = {normalize_uncertainty_symbols(k): v for k, v in raw_knowns.items()}
     equation_text = " ".join(equations)
     for symbol, value in PHYSICAL_CONSTANTS.items():
         if re.search(rf"\b{re.escape(symbol)}\b", equation_text):

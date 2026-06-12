@@ -3166,17 +3166,28 @@ def _magnetism_solution(semantic_output: dict[str, Any], values: dict[str, float
     if "magnetic flux" in text or "flux through" in text:
         b_value = _lookup_value(values, "B")
         area_value = _lookup_value(values, "A", "S") or _extract_area_from_text(_normalize_text(str(semantic_output.get("question") or "")).lower())
+        n_value = values.get("N")
         if b_value is not None and area_value is not None:
             target = _target_from_terms(semantic_output, "Phi")
             target = target if _is_identifier(target) and target != "result" else "Phi"
-            return _solution(
-                ["magnetism.magnetic_flux_uniform_field"],
-                target,
-                _target_unit_from_semantics(semantic_output, "Wb"),
-                [f"{target} = B * A"],
-                {"B": float(b_value), "A": float(area_value)},
-                ["For a uniform magnetic field perpendicular to the cross-section, magnetic flux is Phi = B*A."],
-            )
+            if n_value is not None:
+                return _solution(
+                    ["magnetism.magnetic_flux_solenoid_total"],
+                    target,
+                    _target_unit_from_semantics(semantic_output, "Wb"),
+                    [f"{target} = N * B * A"],
+                    {"N": float(n_value), "B": float(b_value), "A": float(area_value)},
+                    ["For a solenoid with N turns, the total magnetic flux is Phi = N*B*A."],
+                )
+            else:
+                return _solution(
+                    ["magnetism.magnetic_flux_uniform_field"],
+                    target,
+                    _target_unit_from_semantics(semantic_output, "Wb"),
+                    [f"{target} = B * A"],
+                    {"B": float(b_value), "A": float(area_value)},
+                    ["For a uniform magnetic field perpendicular to the cross-section, magnetic flux is Phi = B*A."],
+                )
     if "solenoid" in text and "magnetic field" in text and all(symbol in values for symbol in ("N", "I", "ell")):
         return _solution(["magnetism.solenoid_magnetic_field"], "B", "T", ["B = mu_0 * N * I / ell"], {symbol: values[symbol] for symbol in ("N", "I", "ell")}, ["Use the long-solenoid magnetic-field formula with mu_0 as a physical constant."])
     if "solenoid" in text and "magnetic field" in text:

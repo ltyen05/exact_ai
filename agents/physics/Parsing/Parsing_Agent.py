@@ -64,7 +64,7 @@ class ParsingAgent:
         response = self.llm_provider.chat(
             [{"role": "user", "content": self._build_prompt(question)}],
             temperature=0.0,
-            max_tokens=self.config.get("max_tokens", 2048),
+            max_tokens=self.config.get("max_tokens", 512),
             response_format={"type": "json_object"},
             stage="physics.parsing",
         )

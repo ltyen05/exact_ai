@@ -92,5 +92,34 @@ Output:
   "answer_format": {"requested_form": "magnitude"}
 }
 
+Example 3 — triangle geometry:
+Input: Two charges q1 = 16e-8 C at A, q2 = 16e-8 C at B, and q3 = 2e-6 C at C form an isosceles triangle with AB = 10 cm, AC = BC = 8 cm. Find the force on q3 at C.
+Output:
+{
+  "question": "Two charges q1 = 16e-8 C at A, q2 = 16e-8 C at B, and q3 = 2e-6 C at C form an isosceles triangle with AB = 10 cm, AC = BC = 8 cm. Find the force on q3 at C.",
+  "domain": "Electric Charges and Fields",
+  "target": {"symbol": "F_C", "unit": "N"},
+  "givens": [
+    {"symbol": "q1", "si_value": 1.6e-7, "si_unit": "C"},
+    {"symbol": "q2", "si_value": 1.6e-7, "si_unit": "C"},
+    {"symbol": "q3", "si_value": 2e-6, "si_unit": "C"}
+  ],
+  "relations": ["q1 = q2", "AC = BC = 8 cm"],
+  "question_kind": "computational",
+  "geometry": {
+    "present": true,
+    "type": "triangle",
+    "points": ["A", "B", "C"],
+    "target_point": "C",
+    "object_locations": {"q1": "A", "q2": "B", "q3": "C"},
+    "segments": [
+      {"symbol": "AB", "si_value": 0.1, "si_unit": "m"},
+      {"symbol": "AC", "si_value": 0.08, "si_unit": "m"},
+      {"symbol": "BC", "si_value": 0.08, "si_unit": "m"}
+    ]
+  },
+  "answer_format": {"requested_form": "magnitude"}
+}
+
 Now parse this question:
 {{QUESTION}}
