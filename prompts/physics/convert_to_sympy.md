@@ -61,6 +61,8 @@ Hard SymPy Contract (Invalid if violated):
 16. You MUST strictly use the exact target unit defined in `parsed_question.target.unit` (for example, if the target unit in parsed_question is 'turns/m', keep 'target_unit' as 'turns/m' exactly; do NOT change or simplify it to '/m', '1/m', or any other equivalent form).
 17. If the target unit is `%`, the equations MUST calculate the value in percentage (i.e. you must explicitly multiply the fractional ratio by 100 inside the equations, for example: `relative_error = (least_count / measured_voltage) * 100`). Do NOT output the fractional ratio as the final target value when the target unit is `%`.
 
+18. Do NOT redefine or assign given quantities or constants directly inside the `equations` array (e.g., do NOT write `"C = 2"` or `"C = 2e-12"` in the equations). All given values must be supplied exclusively in `known_values` in standard SI units (e.g., `"C": 2e-12`). The `equations` array must only contain actual physical relationships.
+
 Few-Shot Examples:
 
 Example 1 — capacitance:
