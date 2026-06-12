@@ -171,7 +171,7 @@ class ExplainAgent:
         response = self.llm_provider.chat(
             [{"role": "user", "content": prompt}],
             temperature=0.0,
-            max_tokens=self.config.get("max_tokens", 256),
+            max_tokens=self.config.get("max_tokens", 512),
             response_format={"type": "json_object"},
             stage="physics.explanation",
         )

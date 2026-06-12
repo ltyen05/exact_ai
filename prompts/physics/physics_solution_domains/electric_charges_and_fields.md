@@ -15,12 +15,12 @@ Coverage ladder, easy to hard:
 5. Zero-field or symbolic-position questions: set magnitudes equal and solve distance relation.
 
 Domain rules:
-- Point-charge force (Coulomb's Law): F = k_e * Abs(q_source * q_target) / r**2.
-- Point-charge field: E = k_e * q / r**2 for signed 1D fields, or Abs(k_e * q / r**2) for magnitudes.
+- Point-charge force: F = k*Abs(q_source*q_target)/r**2.
+- Point-charge field: E = k*q/r**2 for signed 1D fields, or Abs(k*q/r**2) for magnitudes.
 - For collinear cases, choose a signed axis from geometry.direction_convention; take Abs only if requested_form is magnitude.
-- For 2D vector addition of two forces/fields (e.g. angle theta between them), use law of cosines: F_net = sqrt(F1**2 + F2**2 + 2*F1*F2*cos(theta*pi/180)). Avoid projecting components manually.
-- If coordinates are needed, define them explicitly, e.g., A=(0,0), B=(a,0), C=(a/2, a*sqrt(3)/2), and use components: F_x = sum(F_i_x), F_y = sum(F_i_y) with correct signs.
-- Use k_e = 9000000000.0 unless parsed_question explicitly gives another Coulomb constant.
+- For triangle/perpendicular/square cases, define helper components before final magnitude: target = sqrt(x**2 + y**2).
+- Do not invent geometry. Use parsed geometry.segments and geometry.derived_distances first.
+- Use k = 9000000000.0 unless parsed_question explicitly gives another Coulomb constant.
 
 Example 1 — Coulomb's Law:
 Input parsed_question:
