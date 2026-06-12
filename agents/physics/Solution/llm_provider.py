@@ -231,8 +231,18 @@ class LLMSolutionProvider(SolutionProvider):
     ) -> str:
         parsed_question = json.dumps(semantic_output, ensure_ascii=False, default=str)
         draft = json.dumps(solution_draft, ensure_ascii=False, default=str)
+        strict_symbol_rule = (
+            "\nCRITICAL SYMBOL ALIGNMENT RULE:\n"
+            "You MUST strictly use the exact symbol names defined in `parsed_question.givens` (for example, if a given value is parsed under symbol 'U', use 'U' in your equations and known_values; do NOT change it to 'W' or any other name). "
+            "Do NOT introduce any new/untrusted symbols in `known_values` that are not present in `parsed_question.givens` or standard physical constants. "
+            "All keys in `known_values` must match the symbols in `parsed_question.givens` exactly.\n"
+        )
+        template = self.convert_to_sympy_prompt_template.replace("parsed_question:", f"{strict_symbol_rule}\nparsed_question:")
+        if "parsed_question:" not in self.convert_to_sympy_prompt_template:
+            # Fallback if the template structure is different
+            template = strict_symbol_rule + "\n" + self.convert_to_sympy_prompt_template
         prompt = (
-            self.convert_to_sympy_prompt_template.replace("{{PARSED_QUESTION}}", parsed_question)
+            template.replace("{{PARSED_QUESTION}}", parsed_question)
             .replace("{{SOLUTION_DRAFT}}", draft)
             .replace("{{VALIDATION_ERROR}}", validation_error or "None.")
         )
@@ -244,6 +254,7 @@ class LLMSolutionProvider(SolutionProvider):
             }
         )
         return prompt
+
 
     def _chat_json(self, prompt: str, *, stage: str, max_tokens_key: str = "max_tokens") -> dict[str, Any]:
         response = self.llm_provider.chat(

@@ -5,7 +5,10 @@ Your task is to convert a solution draft into a STRICT SymPy-executable specific
 Return exactly one valid JSON object. Do not output markdown, prose, LaTeX, comments, or final numeric answers.
 
 Inputs:
+- `parsed_question`:
+{{PARSED_QUESTION}}
 - `solution_draft`: domain solution draft. Use it as a strategy draft, but repair/normalize it if it is not SymPy-safe.
+
 
 Output Schemas:
 - Computational (numeric/yes_no):
@@ -56,8 +59,7 @@ Hard SymPy Contract (Invalid if violated):
 14. Every key in known_values must map exactly to one of these valid symbols (e.g. R1, R2, delta_R1, delta_R2) or standard constants.
 15. You MUST strictly use the exact symbol names defined in `parsed_question.givens` (for example, if a given value is parsed under symbol 'U', use 'U' in your equations and known_values; do NOT change it to 'W' or any other name). Do NOT introduce any new/untrusted symbols in `known_values` that are not present in `parsed_question.givens` or standard physical constants. All keys in `known_values` must match the symbols in `parsed_question.givens` exactly.
 16. You MUST strictly use the exact target unit defined in `parsed_question.target.unit` (for example, if the target unit in parsed_question is 'turns/m', keep 'target_unit' as 'turns/m' exactly; do NOT change or simplify it to '/m', '1/m', or any other equivalent form).
-
-
+17. If the target unit is `%`, the equations MUST calculate the value in percentage (i.e. you must explicitly multiply the fractional ratio by 100 inside the equations, for example: `relative_error = (least_count / measured_voltage) * 100`). Do NOT output the fractional ratio as the final target value when the target unit is `%`.
 
 Few-Shot Examples:
 
