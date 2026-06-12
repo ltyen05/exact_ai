@@ -339,9 +339,16 @@ class LLMSolutionProvider(SolutionProvider):
     ) -> dict[str, Any]:
         """Ask the LLM to revise a solution after executor-side validation fails."""
         self.last_prompt_diagnostics["used_repair"] = True
+        strict_symbol_rule = (
+            "\nCRITICAL SYMBOL ALIGNMENT RULE:\n"
+            "You MUST strictly use the exact symbol names defined in `parsed_question.givens` (for example, if a given value is parsed under symbol 'U', use 'U' in your equations and known_values; do NOT change it to 'W' or any other name). "
+            "Do NOT introduce any new/untrusted symbols in `known_values` that are not present in `parsed_question.givens` or standard physical constants. "
+            "All keys in `known_values` must match the symbols in `parsed_question.givens` exactly.\n"
+        )
         prompt = (
             "Repair the physics solution JSON so it can be executed by SymPy. "
             "Return exactly one JSON object and no prose.\n\n"
+            f"{strict_symbol_rule}\n"
             f"Validation error:\n{validation_error}\n\n"
             f"Parsed question:\n{json.dumps(semantic_output, ensure_ascii=False, default=str)}\n\n"
             f"Invalid solution:\n{_json_preview(invalid_solution)}\n\n"
@@ -349,3 +356,4 @@ class LLMSolutionProvider(SolutionProvider):
         )
         repaired_draft = self._chat_json(prompt, stage="physics.solution.repair", max_tokens_key="repair_max_tokens")
         return self._finalize_solution(question, semantic_output, repaired_draft, validation_error)
+

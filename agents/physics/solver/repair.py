@@ -108,7 +108,20 @@ class SolutionRepairController:
                     return fallback
                 except ValueError as exc:
                     logger.debug("physics.deterministic_replan_rejected=%s", exc)
+        if self.solution_agent is not None and _llm_available(self.llm):
+            try:
+                logger.debug("physics.repair_using_llm error=%s", validation_error)
+                repaired = self.solution_agent.repair(
+                    semantic_output=state.get("parsed_question", {}),
+                    invalid_solution=solution_output,
+                    validation_error=validation_error,
+                )
+                return repaired
+
+            except Exception as exc:
+                logger.debug("physics.llm_repair_failed=%s", exc)
         raise WorkflowExecutionError(validation_error)
+
 
     @staticmethod
     def _assert_computational_solution(solution_output: dict[str, Any]) -> str:

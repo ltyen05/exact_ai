@@ -2583,25 +2583,28 @@ def _capacitance_solution(semantic_output: dict[str, Any], values: dict[str, flo
         epsilon_r = _lookup_value(values, "epsilon_r", "epsilon", "eps_r", "er")
         if epsilon_r is not None and epsilon_r != 0:
             solved_target = target if _is_identifier(target) and target != "result" else "U_new"
+            initial_voltage_symbol = f"{voltage_symbol}_initial" if solved_target == voltage_symbol else voltage_symbol
             return _solution(
                 ["capacitance.isolated_dielectric_voltage"],
                 solved_target,
                 unit or "V",
-                [f"{solved_target} = {voltage_symbol} / epsilon_r"],
-                {voltage_symbol: float(u_value), "epsilon_r": float(epsilon_r)},
+                [f"{solved_target} = {initial_voltage_symbol} / epsilon_r"],
+                {initial_voltage_symbol: float(u_value), "epsilon_r": float(epsilon_r)},
                 ["For an isolated capacitor, charge stays fixed while the dielectric multiplies capacitance, so voltage divides by epsilon_r."],
             )
 
     if ("isolated" in question_norm or "disconnected" in question_norm) and ("separation is doubled" in question_norm or "plate separation is doubled" in question_norm) and u_value is not None and (_target_is(target, "U", "V", "U_new", "V_new") or "new voltage" in question_norm):
         solved_target = target if _is_identifier(target) and target != "result" else "U_new"
+        initial_voltage_symbol = f"{voltage_symbol}_initial" if solved_target == voltage_symbol else voltage_symbol
         return _solution(
             ["capacitance.isolated_plate_separation_doubled_voltage"],
             solved_target,
             unit or "V",
-            [f"{solved_target} = 2 * {voltage_symbol}"],
-            {voltage_symbol: float(u_value)},
+            [f"{solved_target} = 2 * {initial_voltage_symbol}"],
+            {initial_voltage_symbol: float(u_value)},
             ["For an isolated capacitor, charge remains constant; doubling plate separation halves capacitance and doubles voltage."],
         )
+
 
     if ("lc circuit" in question_norm or "ideal lc" in question_norm) and c_value is not None and text_energy is not None and ("charge" in question_norm or _target_is(target, "Q", "Qmax", "Q_max")):
         solved_target = target if _is_identifier(target) and target != "result" else "Qmax"
