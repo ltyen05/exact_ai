@@ -43,6 +43,7 @@ Rules:
 2. Normalization: length (cm -> m by 1e-2, mm -> m by 1e-3, etc.), prefixes (u/micro -> 1e-6, n -> 1e-9, p -> 1e-12, etc.).
 3. Uncertainty format: {"si_value": dx_in_SI, "si_unit": "...", "kind": "absolute"}.
 4. Normalize symbol names to ASCII equivalents: omega, theta, phi, Phi, lambda_, mu, Ohm.
+5. Capture any explicit algebraic relations, constraints, or equalities between variables (e.g., "q1 = q2 = q", "r1 = 2*r2") directly in the `relations` list.
 
 Few-Shot Examples:
 

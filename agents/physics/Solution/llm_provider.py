@@ -282,6 +282,22 @@ class LLMSolutionProvider(SolutionProvider):
         solution_draft: dict[str, Any],
         validation_error: str = "",
     ) -> dict[str, Any]:
+        if solution_draft.get("mode") == "computational":
+            try:
+                from agents.physics.solver.validator import PhysicsSolutionValidator
+                from agents.physics.solver.executor import SympyExecutor
+                validator = PhysicsSolutionValidator()
+                executor = SympyExecutor()
+                context = validator.validate(semantic_output, solution_draft)
+                computation = executor.solve(context)
+                if computation is not None:
+                    self.last_prompt_diagnostics.update({
+                        "used_convert_to_sympy": False,
+                        "skipped_convert_to_sympy": "already_valid_and_solved"
+                    })
+                    return solution_draft
+            except Exception:
+                pass
         return self._convert_to_sympy(semantic_output, solution_draft, validation_error)
 
     @classmethod

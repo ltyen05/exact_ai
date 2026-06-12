@@ -65,6 +65,25 @@ def sanitize_sympy_text(expression: str) -> str:
     text = re.sub(r"(?<![A-Za-z_][0-9])(?<=\d)(?=[A-DF-Za-df-z_])", "*", text)
     text = re.sub(r"(?<=\))(?=(?:sqrt|sin|cos|tan|pi|[A-Za-z_])\b)", "*", text)
     text = re.sub(r"\b(?P<func>sin|cos|tan|sqrt)\s*\(\s*", r"\g<func>(", text)
+    # Convert degree literals inside sin/cos/tan to radians
+    def convert_deg_to_rad(match: re.Match[str]) -> str:
+        func = match.group("func")
+        val_str = match.group("val")
+        try:
+            val = float(val_str)
+            # If the value is >= 2.0 or is an integer greater than 1, it is degrees
+            if val >= 2.0 or (val.is_integer() and val > 1):
+                return f"{func}({val_str}*pi/180)"
+        except ValueError:
+            pass
+        return match.group(0)
+
+    text = re.sub(
+        r"\b(?P<func>sin|cos|tan)\s*\(\s*(?P<val>\d+(?:\.\d+)?)\s*\)",
+        convert_deg_to_rad,
+        text,
+        flags=re.IGNORECASE,
+    )
     return text
 
 

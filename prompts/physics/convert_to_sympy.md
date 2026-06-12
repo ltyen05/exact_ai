@@ -47,7 +47,7 @@ Hard SymPy Contract (Invalid if violated):
 5. Allowed: `Abs`, `sqrt`, `sin`, `cos`, `tan`, `atan`, `asin`, `acos`, `exp`, `log`, `diff`, `pi`, `Re`, `Im`, `conjugate`.
 6. Variables: Treat `E` and `I` as normal names. Normalize symbols: Greek (e.g. `omega`, `theta`, `phi`, `Phi`, `lambda_`, `mu`, `epsilon`, `pi`) and subscripts (e.g. `R1`, `q0`). Do not use Python/SymPy reserved names (e.g. `lambda`, `for`, `abs`).
 7. Use `k_e` for Coulomb constant (never use in magnetic/inductor/RLC cases). Use `k_factor` for multiplier factors.
-8. Define helper symbols before use. `sympy_spec.target_symbol` must be defined on an equation LHS.
+8. Define helper symbols before use. Write equations in their natural physical form (e.g. `F = k_e * q1 * q2 / r**2` or `U = I * R`) rather than rearranging them manually. The `target_symbol` does NOT need to be isolated on the LHS of an equation; SymPy will solve the system of equations automatically.
 9. If answer is magnitude, target equation must use `Abs` or `sqrt(x**2 + y**2)`.
 10. If draft contains un-safe formulas, repair using standard physics.
 11. Every uncertainty or error symbol must be strictly lowercase "delta_<symbol>" (e.g. delta_U, delta_I, delta_R1, delta_R2, delta_R_total).
