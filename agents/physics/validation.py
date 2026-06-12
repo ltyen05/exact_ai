@@ -9,7 +9,9 @@ from typing import Any
 
 from agents.formatting import as_number, convert_si_to_requested, normalize_unit
 from agents.physics.domain.context import build_calculation_input
+from agents.physics.domain.symbols import canonical_quantity_symbol
 from tools.calculator import PHYSICAL_CONSTANTS, sanitize_sympy_equation, solve_with_sympy_trace
+
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +257,8 @@ def target_consistency_error(parsed_target: str, computed_target: str, unit: str
         return None
     if parsed == computed:
         return None
+    if canonical_quantity_symbol(parsed) == canonical_quantity_symbol(computed):
+        return None
     target_dim = dimension_label_for_unit(unit)
     equivalent_groups = {
         "charge": {"q", "Q", "Q_source", "q_source", "charge"},
@@ -322,17 +326,31 @@ def validated_context(
 
     trusted_quantities = dict(quantities)
     derived_candidates: dict[str, float] = {}
+
+    def find_matching_quantity_key(sym: str, quants: dict[str, float]) -> str | None:
+        if sym in quants:
+            return sym
+        canon_sym = canonical_quantity_symbol(sym)
+        for q_key in quants:
+            if canonical_quantity_symbol(q_key) == canon_sym:
+                return q_key
+        return None
+
     for symbol, value in known_values.items():
         numeric = as_number(value)
         if numeric is None:
             if symbol in PHYSICAL_CONSTANTS:
                 continue
             raise ValueError(f"Known value for {symbol} is not numeric.")
-        if symbol in quantities:
-            if not math.isclose(quantities[symbol], numeric, rel_tol=1e-9, abs_tol=1e-12):
+        
+        matching_key = find_matching_quantity_key(symbol, quantities)
+        if matching_key is not None:
+            quantities[symbol] = quantities[matching_key]
+            trusted_quantities[symbol] = quantities[matching_key]
+            if not math.isclose(quantities[matching_key], numeric, rel_tol=1e-9, abs_tol=1e-12):
                 logger.warning(
-                    "physics.known_value_conflict symbol=%s parser=%s solution=%s - using parser value",
-                    symbol, quantities[symbol], numeric,
+                    "physics.known_value_conflict symbol=%s matching_key=%s parser=%s solution=%s - using parser value",
+                    symbol, matching_key, quantities[matching_key], numeric,
                 )
         elif symbol in PHYSICAL_CONSTANTS:
             if not math.isclose(PHYSICAL_CONSTANTS[symbol], numeric, rel_tol=1e-9, abs_tol=1e-12):

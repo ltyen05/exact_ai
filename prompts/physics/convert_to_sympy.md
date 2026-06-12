@@ -54,6 +54,10 @@ Hard SymPy Contract (Invalid if violated):
 12. If the target has a Greek capital Delta letter (Δ), like "ΔR_total", you MUST map it to lowercase "delta_R_total".
 13. Do NOT use capitalized "Delta_R1", "Delta_R_total", "dU", "dI", "dx", "deltaU", "deltaI" (without underscore), or other invented symbols.
 14. Every key in known_values must map exactly to one of these valid symbols (e.g. R1, R2, delta_R1, delta_R2) or standard constants.
+15. You MUST strictly use the exact symbol names defined in `parsed_question.givens` (for example, if a given value is parsed under symbol 'U', use 'U' in your equations and known_values; do NOT change it to 'W' or any other name). Do NOT introduce any new/untrusted symbols in `known_values` that are not present in `parsed_question.givens` or standard physical constants. All keys in `known_values` must match the symbols in `parsed_question.givens` exactly.
+16. You MUST strictly use the exact target unit defined in `parsed_question.target.unit` (for example, if the target unit in parsed_question is 'turns/m', keep 'target_unit' as 'turns/m' exactly; do NOT change or simplify it to '/m', '1/m', or any other equivalent form).
+
+
 
 Few-Shot Examples:
 

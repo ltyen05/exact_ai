@@ -20,6 +20,8 @@ Domain rules:
 - Toroid: B = mu_0*N*I/(2*pi*r) inside the core when toroid relation is parsed.
 - Never use Coulomb constant k in magnetic-field source equations.
 - Use mu_0 = 1.2566370614359173e-6 unless parsed otherwise.
+- For target_unit, you MUST strictly use the exact target unit defined in `parsed_question.target.unit` (for example, if the target unit is 'turns/m', keep 'target_unit' as 'turns/m' exactly; do NOT change or simplify it to '/m' or '1/m').
+
 
 Retrieved hints:
 {{RAG_HINTS}}
